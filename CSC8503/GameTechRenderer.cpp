@@ -116,6 +116,7 @@ void GameTechRenderer::RenderFrame() {
 	RenderShadowMap();
 	RenderSkybox();
 	RenderCamera();
+	if(renderFullScreenQuad)RenderFullScreenQuad();
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
@@ -305,6 +306,10 @@ void GameTechRenderer::RenderCamera() {
 		}
 	}
 
+	
+}
+
+void GameTechRenderer::RenderFullScreenQuad() {
 	//this was me
 	glDisable(GL_CULL_FACE); //todo reverse winding order
 	BindShader(quad->GetShader());

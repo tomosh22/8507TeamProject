@@ -69,24 +69,7 @@ void GameObject::ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int ra
 	int endIndex = bottomT * (int)transform.GetScale().x * TEXTURE_DENSITY + rightS;
 	numInts = endIndex - startIndex;
 	return;
-	float seed = rand();
-	int freq = TEXTURE_DENSITY * 1.5;
-	int amp = TEXTURE_DENSITY * 3;
-
-	for (int s = leftS; s < rightS; s++)
-	{
-		for (int t = topT; t < bottomT; t++)
-		{
-			float perlin = 0;
-			perlin += db::perlin((float)s / freq, (float)t / freq, seed)* amp;
-			perlin += db::perlin((float)s / (freq*2), (float)t / (freq*2), seed)* amp * 2;
-
-			if ((texCoords - Vector2(s, t)).Length() < newRadius + perlin) {
-				int index = t * (int)transform.GetScale().x * TEXTURE_DENSITY + s;
-				paintData->at(index) = 1;
-			}
-		}
-	}
+	
 
 }
 

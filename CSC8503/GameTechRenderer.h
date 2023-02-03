@@ -25,6 +25,8 @@ namespace NCL {
 			//this was me
 			RenderObject* quad;
 
+			bool renderFullScreenQuad = false;
+
 		protected:
 			void NewRenderLines();
 			void NewRenderText();
@@ -40,6 +42,9 @@ namespace NCL {
 			void RenderShadowMap();
 			void RenderCamera(); 
 			void RenderSkybox();
+
+			//this was me
+			void RenderFullScreenQuad();
 
 			void LoadSkybox();
 

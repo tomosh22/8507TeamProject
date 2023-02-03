@@ -92,7 +92,7 @@ namespace NCL {
 			
 			//this was me
 			OGLComputeShader* computeShader;
-			void RunComputeShader(GameObject* floor, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center);
+			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center);
 			OGLShader* quadShader;
 			OGLTexture* quadTex = nullptr;
 			void InitQuadTexture();

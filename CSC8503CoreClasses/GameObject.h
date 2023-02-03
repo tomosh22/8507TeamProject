@@ -2,10 +2,9 @@
 #include "Transform.h"
 #include "CollisionVolume.h"
 
-#define NUM_WORLD_UNITS 200
-#define NUM_WORLD_UNITS_SQUARED 200 * 200
+
 #define TEXTURE_DENSITY 100
-typedef std::array<char, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY> TEXTURE;
+
 //typedef std::array<int, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY> TEXTURE;
 
 
@@ -84,7 +83,6 @@ namespace NCL::CSC8503 {
 		//unsigned int ssbo;
 		//unsigned int texture;
 		bool isPaintable;
-		TEXTURE* paintData;
 		
 		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
 			int& topT, int& bottomT, Vector2& texCoords);

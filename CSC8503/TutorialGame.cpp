@@ -209,9 +209,13 @@ void TutorialGame::UpdateKeys() {
 			int radius = 10;
 			int startIndex, numInts, leftS, rightS, topT, bottomT;
 			worldFloor->ApplyPaintAtPosition(randVec, halfDims, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-			RunComputeShader(worldFloor, leftS, rightS, topT, bottomT, radius, center);
+			RunComputeShader(worldFloor,200,200, leftS, rightS, topT, bottomT, radius, center);
 		}
 		
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F)) {
+		renderer->renderFullScreenQuad = !renderer->renderFullScreenQuad;
+
 	}
 }
 
@@ -297,7 +301,7 @@ void TutorialGame::InitWorld() {
 	InitDefaultFloor();
 }
 
-void TutorialGame::RunComputeShader(GameObject* floor, int leftS, int rightS, int topT, int bottomT, int radius, Vector2 center) {
+void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius, Vector2 center) {
 	computeShader->Bind();
 	glActiveTexture(GL_TEXTURE0);
 	glBindImageTexture(0, ((OGLTexture*)floor->GetRenderObject()->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_R8);
@@ -305,10 +309,10 @@ void TutorialGame::RunComputeShader(GameObject* floor, int leftS, int rightS, in
 
 
 	int widthLocation = glGetUniformLocation(computeShader->GetProgramID(), "width");
-	glUniform1i(widthLocation, NUM_WORLD_UNITS * TEXTURE_DENSITY);
+	glUniform1i(widthLocation, width * TEXTURE_DENSITY);
 
 	int heightLocation = glGetUniformLocation(computeShader->GetProgramID(), "height");
-	glUniform1i(heightLocation, NUM_WORLD_UNITS * TEXTURE_DENSITY);
+	glUniform1i(heightLocation, height * TEXTURE_DENSITY);
 
 	int leftSLocation = glGetUniformLocation(computeShader->GetProgramID(), "leftS");
 	glUniform1i(leftSLocation, leftS);
@@ -348,8 +352,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 
 	
 	floor->isPaintable = true;
-	TEXTURE** paintDataPtr = &(floor->paintData);
-	*paintDataPtr = new TEXTURE();
+	
 	srand(time(0));
 	int test;
 
@@ -357,20 +360,20 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)floorTex)->GetObjectID());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, NUM_WORLD_UNITS * TEXTURE_DENSITY, NUM_WORLD_UNITS * TEXTURE_DENSITY, 0, GL_RED, GL_BYTE, (*paintDataPtr)->data());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, floorSize.x * 2 * TEXTURE_DENSITY, floorSize.z*2 * TEXTURE_DENSITY, 0, GL_RED, GL_BYTE, nullptr);
 	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), cubeMesh, floorTex, basicShader));
 
 	int radius = 10;
 	int startIndex, numInts, leftS,rightS,topT,bottomT;
 	Vector2 center;
 	floor->ApplyPaintAtPosition(Vector3(-50, 4, 0), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-	RunComputeShader(floor, leftS, rightS, topT, bottomT, radius, center);
+	RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center);
 	floor->ApplyPaintAtPosition(Vector3(50, 4, 0), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-	RunComputeShader(floor, leftS, rightS, topT, bottomT, radius, center);
+	RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center);
 	floor->ApplyPaintAtPosition(Vector3(0, 4, 50), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-	RunComputeShader(floor, leftS, rightS, topT, bottomT, radius, center);
+	RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center);
 	floor->ApplyPaintAtPosition(Vector3(0, 4, -50), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-	RunComputeShader(floor, leftS, rightS, topT, bottomT, radius, center);
+	RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center);
 
 	
 	/*for (int x = 0; x < 10000; x++)
@@ -383,9 +386,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	
 	
 
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &test);
-	std::cout << "max texture size " << test << "\n";
-	std::cout << "trying to use " << NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY << " ints\n";
+	
 
 	//floor->GetRenderObject()->texID = floor->texture;
 

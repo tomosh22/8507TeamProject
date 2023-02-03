@@ -90,7 +90,8 @@ namespace NCL {
 
 			GameObject* worldFloor;
 			
-			OGLComputeShader computeShader;
+			OGLComputeShader* computeShader;
+			void RunComputeShader(GameObject* floor, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center);
 		};
 	}
 }

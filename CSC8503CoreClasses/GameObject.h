@@ -4,7 +4,7 @@
 
 #define NUM_WORLD_UNITS 200
 #define NUM_WORLD_UNITS_SQUARED 200 * 200
-#define TEXTURE_DENSITY 6
+#define TEXTURE_DENSITY 5
 typedef std::array<char, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY> TEXTURE;
 //typedef std::array<int, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY> TEXTURE;
 
@@ -86,7 +86,8 @@ namespace NCL::CSC8503 {
 		bool isPaintable;
 		TEXTURE* paintData;
 		
-		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts);
+		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
+			int& topT, int& bottomT, Vector2& texCoords);
 		int GetLeftS(int centerS, int radius);
 		int GetRightS(int centerS, int radius);
 		int GetTopT(int centerT, int centerS, int radius);

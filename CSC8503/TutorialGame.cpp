@@ -49,7 +49,7 @@ void TutorialGame::InitialiseAssets() {
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
 
 	//this was me
-	//computeShader = OGLComputeShader("compute.glsl");
+	computeShader = new OGLComputeShader("compute.glsl");
 
 	InitCamera();
 	InitWorld();
@@ -68,6 +68,9 @@ TutorialGame::~TutorialGame()	{
 	delete physics;
 	delete renderer;
 	delete world;
+
+	//todo delete texture array
+	//todo delete compute shader
 }
 
 void TutorialGame::UpdateGame(float dt) {
@@ -178,13 +181,11 @@ void TutorialGame::UpdateKeys() {
 		float randX = (rand() % 200) - 100;
 		float randY = (rand() % 200) - 100;
 		Vector3 randVec(randX,2, randY);
-		int startIndex, numInts;
-		worldFloor->ApplyPaintAtPosition(randVec, halfDims, 10,startIndex,numInts);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, worldFloor->ssbo);
-		//glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY * sizeof(int), worldFloor->paintData->data(), GL_DYNAMIC_COPY);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, startIndex * sizeof(int), numInts * sizeof(int), &(worldFloor->paintData->at(startIndex)));
-		//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, worldFloor->ssbo);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		Vector2 center;
+		int radius = 10;
+		int startIndex, numInts, leftS,rightS,topT,bottomT;
+		worldFloor->ApplyPaintAtPosition(randVec, halfDims, radius,startIndex,numInts, leftS, rightS, topT, bottomT, center);
+		RunComputeShader(worldFloor, leftS, rightS, topT, bottomT, radius, center);
 	}
 }
 
@@ -270,6 +271,40 @@ void TutorialGame::InitWorld() {
 	InitDefaultFloor();
 }
 
+void TutorialGame::RunComputeShader(GameObject* floor, int leftS, int rightS, int topT, int bottomT, int radius, Vector2 center) {
+	computeShader->Bind();
+	glActiveTexture(GL_TEXTURE0);
+	glBindImageTexture(0, floor->texture, 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_R8);
+
+
+
+	int widthLocation = glGetUniformLocation(computeShader->GetProgramID(), "width");
+	glUniform1i(widthLocation, NUM_WORLD_UNITS * TEXTURE_DENSITY);
+
+	int heightLocation = glGetUniformLocation(computeShader->GetProgramID(), "height");
+	glUniform1i(heightLocation, NUM_WORLD_UNITS * TEXTURE_DENSITY);
+
+	int leftSLocation = glGetUniformLocation(computeShader->GetProgramID(), "leftS");
+	glUniform1i(leftSLocation, leftS);
+
+	int rightSLocation = glGetUniformLocation(computeShader->GetProgramID(), "rightS");
+	glUniform1i(rightSLocation, rightS);
+
+	int topTLocation = glGetUniformLocation(computeShader->GetProgramID(), "topT");
+	glUniform1i(topTLocation, topT);
+
+	int bottomTLocation = glGetUniformLocation(computeShader->GetProgramID(), "bottomT");
+	glUniform1i(bottomTLocation, bottomT);
+
+	int radiusLocation = glGetUniformLocation(computeShader->GetProgramID(), "radius");
+	glUniform1i(radiusLocation, radius * TEXTURE_DENSITY);
+
+	int centerLocation = glGetUniformLocation(computeShader->GetProgramID(), "center");
+	glUniform2i(centerLocation, center.x,center.y);
+
+	computeShader->Execute(1, 1, 1);
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+}
 /*
 
 A single function to add a large immoveable cube to the bottom of our world
@@ -291,21 +326,36 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	*paintDataPtr = new TEXTURE();
 	srand(time(0));
 	int test;
-	floor->ApplyPaintAtPosition(Vector3(-50, 4, 0), floorSize, 10,test,test);
-	floor->ApplyPaintAtPosition(Vector3(50, 4, 0), floorSize, 10,test,test);
-	floor->ApplyPaintAtPosition(Vector3(0, 4, 50), floorSize, 10,test,test);
-	floor->ApplyPaintAtPosition(Vector3(0, 4, -50), floorSize, 10,test,test);
-	for (int x = 0; x < 10000; x++)
-	{
-		(*paintDataPtr)->at(x) = 1;
-	}
-	//(*paintDataPtr)->fill(1);
+
 	glGenTextures(1, &floor->texture);
 	glBindTexture(GL_TEXTURE_2D, floor->texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, NUM_WORLD_UNITS * TEXTURE_DENSITY, NUM_WORLD_UNITS * TEXTURE_DENSITY, 0, GL_RED, GL_BYTE, (*paintDataPtr)->data());
-	//int test;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, NUM_WORLD_UNITS * TEXTURE_DENSITY, NUM_WORLD_UNITS * TEXTURE_DENSITY, 0, GL_RED, GL_BYTE, (*paintDataPtr)->data());
+
+	int radius = 10;
+	int startIndex, numInts, leftS,rightS,topT,bottomT;
+	Vector2 center;
+	floor->ApplyPaintAtPosition(Vector3(-50, 4, 0), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
+	RunComputeShader(floor, leftS, rightS, topT, bottomT, radius, center);
+	floor->ApplyPaintAtPosition(Vector3(50, 4, 0), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
+	RunComputeShader(floor, leftS, rightS, topT, bottomT, radius, center);
+	floor->ApplyPaintAtPosition(Vector3(0, 4, 50), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
+	RunComputeShader(floor, leftS, rightS, topT, bottomT, radius, center);
+	floor->ApplyPaintAtPosition(Vector3(0, 4, -50), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
+	RunComputeShader(floor, leftS, rightS, topT, bottomT, radius, center);
+
+	
+	/*for (int x = 0; x < 10000; x++)
+	{
+		(*paintDataPtr)->at(x) = 1;
+	}*/
+	//(*paintDataPtr)->fill(1);
+
+	
+	
+	
+
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &test);
 	std::cout << "max texture size " << test << "\n";
 	std::cout << "trying to use " << NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY << " ints\n";

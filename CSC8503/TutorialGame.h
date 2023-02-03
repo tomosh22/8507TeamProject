@@ -96,6 +96,7 @@ namespace NCL {
 			OGLShader* quadShader;
 			OGLTexture* quadTex = nullptr;
 			void InitQuadTexture();
+			TextureBase* floorTex = nullptr;
 
 		};
 	}

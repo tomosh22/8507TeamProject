@@ -81,8 +81,8 @@ namespace NCL::CSC8503 {
 			return worldID;
 		}
 
-		unsigned int ssbo;
-		unsigned int texture;
+		//unsigned int ssbo;
+		//unsigned int texture;
 		bool isPaintable;
 		TEXTURE* paintData;
 		

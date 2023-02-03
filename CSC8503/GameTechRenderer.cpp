@@ -245,9 +245,6 @@ void GameTechRenderer::RenderCamera() {
 		BindShader(shader);
 
 		BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
-		
-		//this was me
-		glBindTexture(GL_TEXTURE_2D, i->texID);
 
 		if (activeShader != shader) {
 			projLocation	= glGetUniformLocation(shader->GetProgramID(), "projMatrix");
@@ -309,8 +306,11 @@ void GameTechRenderer::RenderCamera() {
 	}
 
 	//this was me
-	//BindShader(quad->GetShader());
-	//BindTextureToShader((OGLTexture*)quad->GetDefaultTexture(), "tex", 0);
+	glDisable(GL_CULL_FACE); //todo reverse winding order
+	BindShader(quad->GetShader());
+	BindTextureToShader((OGLTexture*)quad->GetDefaultTexture(), "mainTex", 0);
+	BindMesh(quad->GetMesh());
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 MeshGeometry* GameTechRenderer::LoadMesh(const string& name) {

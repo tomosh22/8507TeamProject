@@ -28,28 +28,23 @@ TutorialGame::TutorialGame()	{
 	inSelectionMode = false;
 
 	InitialiseAssets();
-	InitQuadTexture();
+	
 }
 
 void TutorialGame::InitQuadTexture() {
 	std::array<float, 1280 * 720 * 3>* data = new std::array<float, 1280 * 720 * 3>();//todo dont hardcode
-	/*for (int i = 0; i < 1; i++)
+	quadTex = new OGLTexture();
+	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), quadTex, quadShader);
+	for (int i = 0; i < 1280*720*3; i++)
 	{ 
-		for (int j = 0; j < 2; j++)
-		{
-			for (int k = 0; k < 3; k++)
-			{
-				data->at(i) = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			}
-		}
-		
-	}*/
-	/*quadTex = new OGLTexture();
-	glGenTextures(1, &(quadTex->texID));
-	glBindTexture(GL_TEXTURE_2D, quadTex->texID);
+		data->at(i) = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	}
+	
+	glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)quadTex)->GetObjectID());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 1280, 720, 0, GL_RGBA, GL_FLOAT, data->data());*/
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 1280, 720, 0, GL_RGB, GL_FLOAT, data->data());
+	return;
 
 }
 /*
@@ -73,7 +68,8 @@ void TutorialGame::InitialiseAssets() {
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
 	quadShader = new OGLShader("quad.vert", "quad.frag");
-	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(),quadTex,quadShader);
+	
+	InitQuadTexture();
 	
 
 
@@ -304,7 +300,7 @@ void TutorialGame::InitWorld() {
 void TutorialGame::RunComputeShader(GameObject* floor, int leftS, int rightS, int topT, int bottomT, int radius, Vector2 center) {
 	computeShader->Bind();
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, floor->texture, 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_R8);
+	glBindImageTexture(0, ((OGLTexture*)floor->GetRenderObject()->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_R8);
 
 
 
@@ -350,18 +346,19 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 		.SetScale(floorSize * 2)
 		.SetPosition(position);
 
-	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), cubeMesh, basicTex, basicShader));
+	
 	floor->isPaintable = true;
 	TEXTURE** paintDataPtr = &(floor->paintData);
 	*paintDataPtr = new TEXTURE();
 	srand(time(0));
 	int test;
 
-	glGenTextures(1, &floor->texture);
-	glBindTexture(GL_TEXTURE_2D, floor->texture);
+	floorTex = new OGLTexture();
+	glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)floorTex)->GetObjectID());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, NUM_WORLD_UNITS * TEXTURE_DENSITY, NUM_WORLD_UNITS * TEXTURE_DENSITY, 0, GL_RED, GL_BYTE, (*paintDataPtr)->data());
+	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), cubeMesh, floorTex, basicShader));
 
 	int radius = 10;
 	int startIndex, numInts, leftS,rightS,topT,bottomT;
@@ -390,7 +387,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	std::cout << "max texture size " << test << "\n";
 	std::cout << "trying to use " << NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY << " ints\n";
 
-	floor->GetRenderObject()->texID = floor->texture;
+	//floor->GetRenderObject()->texID = floor->texture;
 
 	/*glGenBuffers(1, &(floor->ssbo));
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, floor->ssbo);

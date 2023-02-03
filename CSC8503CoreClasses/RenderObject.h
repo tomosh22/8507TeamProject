@@ -46,7 +46,7 @@ namespace NCL {
 			}
 
 			//this was me
-			unsigned int texID;
+			//unsigned int texID;
 
 		protected:
 			MeshGeometry*	mesh;

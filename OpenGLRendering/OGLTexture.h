@@ -29,6 +29,10 @@ namespace NCL {
 			GLuint GetObjectID() const	{
 				return texID;
 			}
+
+			GLuint* GetObjectIDPtr(){
+				return &texID;
+			}
 		protected:						
 			GLuint texID;
 		};

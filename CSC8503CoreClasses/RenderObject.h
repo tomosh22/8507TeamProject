@@ -1,6 +1,7 @@
 #pragma once
 #include "TextureBase.h"
 #include "ShaderBase.h"
+#include <array>
 
 namespace NCL {
 	using namespace NCL::Rendering;
@@ -44,12 +45,17 @@ namespace NCL {
 				return colour;
 			}
 
+	
+
 		protected:
 			MeshGeometry*	mesh;
 			TextureBase*	texture;
 			ShaderBase*		shader;
 			Transform*		transform;
 			Vector4			colour;
+
+			
+			
 		};
 	}
 }

@@ -74,6 +74,15 @@ namespace NCL::CSC8503 {
 			return worldID;
 		}
 
+		unsigned int ssbo;
+		bool isPaintable;
+		std::array<int, 200 * 200>* paintData; //dimensions of floor, shouldnt be hardcoded
+		
+		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, std::array<int, 200 * 200>** paintDataPtr);
+		int GetLeftS(int centerS, int radius);
+		int GetRightS(int centerS, int radius);
+		int GetTopT(int centerT, int centerS, int radius);
+		int GetBottomT(int centerT, int centerS, int radius);
 	protected:
 		Transform			transform;
 

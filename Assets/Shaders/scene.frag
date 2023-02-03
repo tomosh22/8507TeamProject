@@ -1,4 +1,5 @@
 #version 400 core
+#extension GL_ARB_shader_storage_buffer_object :     enable
 
 uniform vec4 		objectColour;
 uniform sampler2D 	mainTex;
@@ -12,6 +13,15 @@ uniform vec3	cameraPos;
 
 uniform bool hasTexture;
 
+uniform bool isPaintable;
+
+uniform int width;
+uniform int height;
+
+layout(std430, binding = 4) buffer PaintSSBO{
+	int paintData[];
+};
+
 in Vertex
 {
 	vec4 colour;
@@ -22,6 +32,36 @@ in Vertex
 } IN;
 
 out vec4 fragColor;
+
+bool isAdjacentToInk(){
+	float ut = (IN.texCoord.x * width) - floor(IN.texCoord.x * width);
+	float vt = (IN.texCoord.y * height) - floor(IN.texCoord.y * height);
+	int u = int(floor(IN.texCoord.x * width));
+	int v = int(floor(IN.texCoord.y * height));
+	int dataIndex;
+	if(ut < 0.5f && vt < 0.5f){
+		u = max(u-1,0);
+		v = max(v-1,0);
+		dataIndex = v * width + u;
+	}
+	if(ut > 0.5f && vt < 0.5f){
+		u = min(u+1,width-1);
+		v = max(v-1,0);
+		dataIndex = v * width + u;
+	}
+	if(ut < 0.5f && vt > 0.5f){
+		u = max(u-1,0);
+		v = min(v+1,height-1);
+		dataIndex = v * width + u;
+	}
+	if(ut > 0.5f && vt > 0.5f){
+		u = min(u+1,width-1);
+		v = min(v+1,height-1);
+		dataIndex = v * width + u;
+	}
+	
+	return paintData[dataIndex] == 1;
+}
 
 void main(void)
 {
@@ -58,6 +98,16 @@ void main(void)
 	
 	fragColor.a = albedo.a;
 
+	fragColor.rbg += height + width;
+	fragColor = vec4(0);
+	fragColor.a = 1;
+	fragColor.rg = IN.texCoord;
+
+	
+
+	int dataIndex = int(floor(IN.texCoord.y * height)) * width + int(floor(IN.texCoord.x * width));
+	if(paintData[dataIndex] == 1 || isAdjacentToInk()){fragColor = vec4(0,0,1,1);}
+
 //fragColor.rgb = IN.normal;
 
 	//fragColor = IN.colour;
@@ -66,3 +116,5 @@ void main(void)
 	
 	//fragColor = IN.colour;
 }
+
+// needs to go back to line 84

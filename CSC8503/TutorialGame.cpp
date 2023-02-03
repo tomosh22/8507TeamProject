@@ -7,7 +7,7 @@
 #include "PositionConstraint.h"
 #include "OrientationConstraint.h"
 #include "StateGameObject.h"
-
+#include <minmax.h>
 
 
 using namespace NCL;
@@ -249,9 +249,6 @@ void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
 
-	InitMixedGridWorld(15, 15, 3.5f, 3.5f);
-
-	InitGameExamples();
 	InitDefaultFloor();
 }
 
@@ -263,7 +260,7 @@ A single function to add a large immoveable cube to the bottom of our world
 GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	GameObject* floor = new GameObject();
 
-	Vector3 floorSize = Vector3(200, 2, 200);
+	Vector3 floorSize = Vector3(100, 2, 100);
 	AABBVolume* volume = new AABBVolume(floorSize);
 	floor->SetBoundingVolume((CollisionVolume*)volume);
 	floor->GetTransform()
@@ -271,6 +268,19 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 		.SetPosition(position);
 
 	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), cubeMesh, basicTex, basicShader));
+	floor->isPaintable = true;
+	std::array<int, 200 * 200>** paintDataPtr = &(floor->paintData);
+	*paintDataPtr = new std::array<int, 200 * 200>();
+	floor->ApplyPaintAtPosition(Vector3(-75, 4, 0), floorSize, 5, paintDataPtr);
+	floor->ApplyPaintAtPosition(Vector3(-50, 4, 0), floorSize, 10, paintDataPtr);
+	floor->ApplyPaintAtPosition(Vector3(-25, 4, 0), floorSize, 20, paintDataPtr);
+
+	glGenBuffers(1, &(floor->ssbo));
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, floor->ssbo);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, 200 * 200 * sizeof(int), (*paintDataPtr)->data(), GL_DYNAMIC_COPY);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, floor->ssbo);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 
 	floor->GetPhysicsObject()->SetInverseMass(0);
@@ -530,5 +540,7 @@ void TutorialGame::MoveSelectedObject() {
 		}
 	}
 }
+
+
 
 

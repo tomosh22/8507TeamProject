@@ -7,6 +7,8 @@
 
 #include "StateGameObject.h"
 
+#include <array>
+
 namespace NCL {
 	namespace CSC8503 {
 		class TutorialGame		{
@@ -85,6 +87,10 @@ namespace NCL {
 			}
 
 			GameObject* objClosest = nullptr;
+
+			
+			
+			
 		};
 	}
 }

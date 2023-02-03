@@ -335,6 +335,15 @@ void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int
 	computeShader->Execute(rightS-leftS, bottomT-topT, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
+
+void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
+	OGLTexture* tex = new OGLTexture();
+	glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)tex)->GetObjectID());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, object->GetTransform().GetScale().x * TEXTURE_DENSITY, object->GetTransform().GetScale().z * TEXTURE_DENSITY, 0, GL_RED, GL_BYTE, nullptr);
+	object->SetRenderObject(new RenderObject(&object->GetTransform(), cubeMesh, tex, basicShader));
+}
 /*
 
 A single function to add a large immoveable cube to the bottom of our world
@@ -356,12 +365,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	srand(time(0));
 	int test;
 
-	floorTex = new OGLTexture();
-	glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)floorTex)->GetObjectID());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, floorSize.x * 2 * TEXTURE_DENSITY, floorSize.z*2 * TEXTURE_DENSITY, 0, GL_RED, GL_BYTE, nullptr);
-	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), cubeMesh, floorTex, basicShader));
+	InitPaintableTextureOnObject(floor);
 
 	int radius = 10;
 	int startIndex, numInts, leftS,rightS,topT,bottomT;

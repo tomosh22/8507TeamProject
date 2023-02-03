@@ -97,6 +97,7 @@ namespace NCL {
 			OGLTexture* quadTex = nullptr;
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
+			void InitPaintableTextureOnObject(GameObject* object);
 
 		};
 	}

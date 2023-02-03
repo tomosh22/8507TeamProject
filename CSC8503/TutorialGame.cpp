@@ -28,8 +28,30 @@ TutorialGame::TutorialGame()	{
 	inSelectionMode = false;
 
 	InitialiseAssets();
+	InitQuadTexture();
 }
 
+void TutorialGame::InitQuadTexture() {
+	std::array<float, 1280 * 720 * 3>* data = new std::array<float, 1280 * 720 * 3>();//todo dont hardcode
+	/*for (int i = 0; i < 1; i++)
+	{ 
+		for (int j = 0; j < 2; j++)
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				data->at(i) = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			}
+		}
+		
+	}*/
+	/*quadTex = new OGLTexture();
+	glGenTextures(1, &(quadTex->texID));
+	glBindTexture(GL_TEXTURE_2D, quadTex->texID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 1280, 720, 0, GL_RGBA, GL_FLOAT, data->data());*/
+
+}
 /*
 
 Each of the little demo scenarios used in the game uses the same 2 meshes, 
@@ -50,6 +72,10 @@ void TutorialGame::InitialiseAssets() {
 
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
+	quadShader = new OGLShader("quad.vert", "quad.frag");
+	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(),quadTex,quadShader);
+	
+
 
 	InitCamera();
 	InitWorld();
@@ -177,15 +203,19 @@ void TutorialGame::UpdateKeys() {
 		DebugObjectMovement();
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
-		Vector3 halfDims = worldFloor->GetTransform().GetScale()/2;
-		float randX = (rand() % 200) - 100;
-		float randY = (rand() % 200) - 100;
-		Vector3 randVec(randX,2, randY);
-		Vector2 center;
-		int radius = 10;
-		int startIndex, numInts, leftS,rightS,topT,bottomT;
-		worldFloor->ApplyPaintAtPosition(randVec, halfDims, radius,startIndex,numInts, leftS, rightS, topT, bottomT, center);
-		RunComputeShader(worldFloor, leftS, rightS, topT, bottomT, radius, center);
+		for (int i = 0; i < 1; i++)
+		{
+			Vector3 halfDims = worldFloor->GetTransform().GetScale() / 2;
+			float randX = (rand() % 200) - 100;
+			float randY = (rand() % 200) - 100;
+			Vector3 randVec(randX, 2, randY);
+			Vector2 center;
+			int radius = 10;
+			int startIndex, numInts, leftS, rightS, topT, bottomT;
+			worldFloor->ApplyPaintAtPosition(randVec, halfDims, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
+			RunComputeShader(worldFloor, leftS, rightS, topT, bottomT, radius, center);
+		}
+		
 	}
 }
 
@@ -302,7 +332,7 @@ void TutorialGame::RunComputeShader(GameObject* floor, int leftS, int rightS, in
 	int centerLocation = glGetUniformLocation(computeShader->GetProgramID(), "center");
 	glUniform2i(centerLocation, center.x,center.y);
 
-	computeShader->Execute(1, 1, 1);
+	computeShader->Execute(rightS-leftS, bottomT-topT, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 /*

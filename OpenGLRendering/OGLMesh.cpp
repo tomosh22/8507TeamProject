@@ -174,3 +174,44 @@ void OGLMesh::RecalculateNormals() {
 
 	}
 }
+
+
+OGLMesh* OGLMesh::GenerateQuadWithIndices() {
+	OGLMesh* m = new OGLMesh();
+	std::vector<Vector3> vertices;
+	vertices.push_back({ -1,1,0 });
+	vertices.push_back({ -1,-1,0 });
+	vertices.push_back({ 1,1,0 });
+	vertices.push_back({ 1,-1,0 });
+	m->SetVertexPositions(vertices);
+
+	std::vector<Vector2> texCoords;
+	texCoords.push_back({ 0,0 });
+	texCoords.push_back({ 1,0 });
+	texCoords.push_back({ 0,1 });
+	texCoords.push_back({ 1,1 });
+	m->SetVertexTextureCoords(texCoords);
+
+	std::vector<unsigned int> indices;
+	indices.push_back(0);
+	indices.push_back(2);
+	indices.push_back(1);
+	indices.push_back(2);
+	indices.push_back(3);
+	indices.push_back(1);
+	m->SetVertexIndices(indices);
+
+	std::vector<Vector4> colours;
+	for (int i = 0; i < 4; i++)
+	{
+		colours.push_back(Vector4(1, 0, 0, 1));
+	}
+	m->SetVertexColours(colours);
+
+	m->SetDebugName("verycoolquad");
+	m->SetPrimitiveType(GeometryPrimitive::Triangles);
+
+	
+	m->UploadToGPU();
+	return m;
+}

@@ -307,6 +307,10 @@ void GameTechRenderer::RenderCamera() {
 			DrawBoundMesh(i);
 		}
 	}
+
+	//this was me
+	//BindShader(quad->GetShader());
+	//BindTextureToShader((OGLTexture*)quad->GetDefaultTexture(), "tex", 0);
 }
 
 MeshGeometry* GameTechRenderer::LoadMesh(const string& name) {

@@ -68,7 +68,7 @@ void GameObject::ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int ra
 	startIndex = topT * (int)transform.GetScale().x * TEXTURE_DENSITY + leftS;
 	int endIndex = bottomT * (int)transform.GetScale().x * TEXTURE_DENSITY + rightS;
 	numInts = endIndex - startIndex;
-
+	return;
 	float seed = rand();
 	int freq = TEXTURE_DENSITY * 1.5;
 	int amp = TEXTURE_DENSITY * 3;

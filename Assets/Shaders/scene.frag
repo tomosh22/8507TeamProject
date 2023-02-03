@@ -101,12 +101,23 @@ void main(void)
 	fragColor.rbg += height + width;
 	fragColor = vec4(0);
 	fragColor.a = 1;
-	fragColor.rg = IN.texCoord;
+	//fragColor.rg = IN.texCoord;
 
 	
 
 	int dataIndex = int(floor(IN.texCoord.y * height)) * width + int(floor(IN.texCoord.x * width));
-	if(paintData[dataIndex] == 1 || isAdjacentToInk()){fragColor = vec4(0,0,1,1);}
+	if(paintData[dataIndex] == 1){fragColor = vec4(0,0,1,1);}
+	else{
+		if(isAdjacentToInk()){fragColor = vec4(0.5,0.5,1,1);}
+		else{
+			//fragColor = vec4((IN.texCoord.x * width) - floor(IN.texCoord.x * width),(IN.texCoord.y * height) - floor(IN.texCoord.y * height),0,1);
+			fragColor = vec4((IN.texCoord.x),(IN.texCoord.y),0,1);
+		}
+	}
+
+	fragColor = vec4(0,0,0,1);
+	if(texture(mainTex,IN.texCoord).r > 0.01){fragColor.rgb = vec3(1);}
+	fragColor.a = 1;
 
 //fragColor.rgb = IN.normal;
 
@@ -117,4 +128,3 @@ void main(void)
 	//fragColor = IN.colour;
 }
 
-// needs to go back to line 84

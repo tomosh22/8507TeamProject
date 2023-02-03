@@ -3,7 +3,8 @@
 #include "PhysicsObject.h"
 #include "RenderObject.h"
 #include "NetworkObject.h"
-
+#define DB_PERLIN_IMPL
+#include "PerlinNoise.hpp"
 using namespace NCL::CSC8503;
 
 GameObject::GameObject(string objectName)	{
@@ -50,20 +51,36 @@ void GameObject::UpdateBroadphaseAABB() {
 	}
 }
 
-void GameObject::ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, std::array<int, 200 * 200>** paintDataPtr) {
-	Vector2 texCoords = (Vector2(localPos.x, localPos.z) + Vector2(halfDims.x, halfDims.z)) / (Vector2(halfDims.x, halfDims.z)*2) * Vector2(halfDims.x,halfDims.z) * 2;
+void GameObject::ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts) {
+	Vector3 newLocalPos = localPos * TEXTURE_DENSITY;
+	Vector3 newHalfDims = halfDims * TEXTURE_DENSITY;
+	int newRadius = radius * TEXTURE_DENSITY;
+	Vector2 texCoords = (Vector2(newLocalPos.x, newLocalPos.z) + Vector2(newHalfDims.x, newHalfDims.z)) / (Vector2(newHalfDims.x, newHalfDims.z)*2) * Vector2(newHalfDims.x, newHalfDims.z) * 2;
 	texCoords.x = round(texCoords.x);
 	texCoords.y = round(texCoords.y);
-	int leftS = GetLeftS(texCoords.x, radius);
-	int rightS = GetRightS(texCoords.x, radius);
-	int topT = GetTopT(texCoords.y, texCoords.x, radius);
-	int bottomT = GetBottomT(texCoords.y, texCoords.x, radius);
+	int leftS = GetLeftS(texCoords.x, newRadius);
+	int rightS = GetRightS(texCoords.x, newRadius);
+	int topT = GetTopT(texCoords.y, texCoords.x, newRadius);
+	int bottomT = GetBottomT(texCoords.y, texCoords.x, newRadius);
+
+	startIndex = topT * (int)transform.GetScale().x * TEXTURE_DENSITY + leftS;
+	int endIndex = bottomT * (int)transform.GetScale().x * TEXTURE_DENSITY + rightS;
+	numInts = endIndex - startIndex;
+
+	float seed = rand();
+	int freq = TEXTURE_DENSITY * 1.5;
+	int amp = TEXTURE_DENSITY * 3;
+
 	for (int s = leftS; s < rightS; s++)
 	{
 		for (int t = topT; t < bottomT; t++)
 		{
-			if ((texCoords - Vector2(s, t)).Length() < radius) {
-				int index = t * (int)transform.GetScale().x + s;
+			float perlin = 0;
+			perlin += db::perlin((float)s / freq, (float)t / freq, seed)* amp;
+			perlin += db::perlin((float)s / (freq*2), (float)t / (freq*2), seed)* amp * 2;
+
+			if ((texCoords - Vector2(s, t)).Length() < newRadius + perlin) {
+				int index = t * (int)transform.GetScale().x * TEXTURE_DENSITY + s;
 				paintData->at(index) = 1;
 			}
 		}
@@ -75,13 +92,13 @@ int GameObject::GetLeftS(int centerS, int radius) {
 	return std::max(centerS - radius, 0);
 }
 int GameObject::GetRightS(int centerS, int radius) {
-	return std::min(centerS + radius, (int)transform.GetScale().x-1);
+	return std::min(centerS + radius, (int)transform.GetScale().x * TEXTURE_DENSITY-1);
 }
 int GameObject::GetTopT(int centerT, int centerS, int radius) {
 	return std::max(centerT - radius, 0);
 }
 int GameObject::GetBottomT(int centerT, int centerS, int radius) {
-	return std::min(centerT + radius,(int)transform.GetScale().z-1);
+	return std::min(centerT + radius,(int)transform.GetScale().z * TEXTURE_DENSITY -1);
 }
 
 

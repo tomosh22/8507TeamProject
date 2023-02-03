@@ -48,6 +48,9 @@ void TutorialGame::InitialiseAssets() {
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
 
+	//this was me
+	//computeShader = OGLComputeShader("compute.glsl");
+
 	InitCamera();
 	InitWorld();
 }
@@ -128,6 +131,8 @@ void TutorialGame::UpdateGame(float dt) {
 
 	renderer->Render();
 	Debug::UpdateRenderables(dt);
+	float testFloat = float(1000) / float(55);
+	if (1000 * dt > testFloat)std::cout << "fps drop\n";
 }
 
 void TutorialGame::UpdateKeys() {
@@ -167,6 +172,19 @@ void TutorialGame::UpdateKeys() {
 	}
 	else {
 		DebugObjectMovement();
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
+		Vector3 halfDims = worldFloor->GetTransform().GetScale()/2;
+		float randX = (rand() % 200) - 100;
+		float randY = (rand() % 200) - 100;
+		Vector3 randVec(randX,2, randY);
+		int startIndex, numInts;
+		worldFloor->ApplyPaintAtPosition(randVec, halfDims, 10,startIndex,numInts);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, worldFloor->ssbo);
+		//glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY * sizeof(int), worldFloor->paintData->data(), GL_DYNAMIC_COPY);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, startIndex * sizeof(int), numInts * sizeof(int), &(worldFloor->paintData->at(startIndex)));
+		//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, worldFloor->ssbo);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	}
 }
 
@@ -269,17 +287,36 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 
 	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), cubeMesh, basicTex, basicShader));
 	floor->isPaintable = true;
-	std::array<int, 200 * 200>** paintDataPtr = &(floor->paintData);
-	*paintDataPtr = new std::array<int, 200 * 200>();
-	floor->ApplyPaintAtPosition(Vector3(-75, 4, 0), floorSize, 5, paintDataPtr);
-	floor->ApplyPaintAtPosition(Vector3(-50, 4, 0), floorSize, 10, paintDataPtr);
-	floor->ApplyPaintAtPosition(Vector3(-25, 4, 0), floorSize, 20, paintDataPtr);
+	TEXTURE** paintDataPtr = &(floor->paintData);
+	*paintDataPtr = new TEXTURE();
+	srand(time(0));
+	int test;
+	floor->ApplyPaintAtPosition(Vector3(-50, 4, 0), floorSize, 10,test,test);
+	floor->ApplyPaintAtPosition(Vector3(50, 4, 0), floorSize, 10,test,test);
+	floor->ApplyPaintAtPosition(Vector3(0, 4, 50), floorSize, 10,test,test);
+	floor->ApplyPaintAtPosition(Vector3(0, 4, -50), floorSize, 10,test,test);
+	for (int x = 0; x < 10000; x++)
+	{
+		(*paintDataPtr)->at(x) = 1;
+	}
+	//(*paintDataPtr)->fill(1);
+	glGenTextures(1, &floor->texture);
+	glBindTexture(GL_TEXTURE_2D, floor->texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, NUM_WORLD_UNITS * TEXTURE_DENSITY, NUM_WORLD_UNITS * TEXTURE_DENSITY, 0, GL_RED, GL_BYTE, (*paintDataPtr)->data());
+	//int test;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &test);
+	std::cout << "max texture size " << test << "\n";
+	std::cout << "trying to use " << NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY << " ints\n";
 
-	glGenBuffers(1, &(floor->ssbo));
+	floor->GetRenderObject()->texID = floor->texture;
+
+	/*glGenBuffers(1, &(floor->ssbo));
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, floor->ssbo);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 200 * 200 * sizeof(int), (*paintDataPtr)->data(), GL_DYNAMIC_COPY);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY * sizeof(int), (*paintDataPtr)->data(), GL_DYNAMIC_COPY);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, floor->ssbo);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
 
 	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 
@@ -287,7 +324,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	floor->GetPhysicsObject()->InitCubeInertia();
 
 	world->AddGameObject(floor);
-
+	worldFloor = floor;
 	return floor;
 }
 

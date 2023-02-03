@@ -15,6 +15,7 @@ namespace NCL {
 	class OGLComputeShader	{
 	public:
 		OGLComputeShader(const std::string& s);
+		OGLComputeShader() {};
 		~OGLComputeShader();
 
 		int GetProgramID() const {

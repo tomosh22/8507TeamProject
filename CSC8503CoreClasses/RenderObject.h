@@ -45,7 +45,8 @@ namespace NCL {
 				return colour;
 			}
 
-	
+			//this was me
+			unsigned int texID;
 
 		protected:
 			MeshGeometry*	mesh;

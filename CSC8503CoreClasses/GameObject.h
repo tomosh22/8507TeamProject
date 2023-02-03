@@ -2,6 +2,13 @@
 #include "Transform.h"
 #include "CollisionVolume.h"
 
+#define NUM_WORLD_UNITS 200
+#define NUM_WORLD_UNITS_SQUARED 200 * 200
+#define TEXTURE_DENSITY 6
+typedef std::array<char, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY> TEXTURE;
+//typedef std::array<int, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY> TEXTURE;
+
+
 using std::vector;
 
 namespace NCL::CSC8503 {
@@ -75,10 +82,11 @@ namespace NCL::CSC8503 {
 		}
 
 		unsigned int ssbo;
+		unsigned int texture;
 		bool isPaintable;
-		std::array<int, 200 * 200>* paintData; //dimensions of floor, shouldnt be hardcoded
+		TEXTURE* paintData;
 		
-		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, std::array<int, 200 * 200>** paintDataPtr);
+		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts);
 		int GetLeftS(int centerS, int radius);
 		int GetRightS(int centerS, int radius);
 		int GetTopT(int centerT, int centerS, int radius);

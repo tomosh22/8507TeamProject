@@ -226,6 +226,7 @@ void GameTechRenderer::RenderCamera() {
 	int hasTexLocation  = 0;
 	int shadowLocation  = 0;
 
+	//this was me
 	int widthLocation = 0;
 	int heightLocation = 0;
 
@@ -244,6 +245,9 @@ void GameTechRenderer::RenderCamera() {
 		BindShader(shader);
 
 		BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
+		
+		//this was me
+		glBindTexture(GL_TEXTURE_2D, i->texID);
 
 		if (activeShader != shader) {
 			projLocation	= glGetUniformLocation(shader->GetProgramID(), "projMatrix");
@@ -254,6 +258,7 @@ void GameTechRenderer::RenderCamera() {
 			hasVColLocation = glGetUniformLocation(shader->GetProgramID(), "hasVertexColours");
 			hasTexLocation  = glGetUniformLocation(shader->GetProgramID(), "hasTexture");
 
+			//this was me
 			widthLocation = glGetUniformLocation(shader->GetProgramID(), "width");
 			heightLocation = glGetUniformLocation(shader->GetProgramID(), "height");
 
@@ -292,8 +297,9 @@ void GameTechRenderer::RenderCamera() {
 
 		glUniform1i(hasTexLocation, (OGLTexture*)(*i).GetDefaultTexture() ? 1:0);
 
-		glUniform1i(widthLocation, (*i).GetTransform()->GetScale().x);
-		glUniform1i(heightLocation, (*i).GetTransform()->GetScale().z);
+		//this was me
+		glUniform1i(widthLocation, (*i).GetTransform()->GetScale().x * TEXTURE_DENSITY);
+		glUniform1i(heightLocation, (*i).GetTransform()->GetScale().z * TEXTURE_DENSITY);
 
 		BindMesh((*i).GetMesh());
 		int layerCount = (*i).GetMesh()->GetSubMeshCount();

@@ -3,6 +3,7 @@
 #include "OGLShader.h"
 #include "OGLTexture.h"
 #include "OGLMesh.h"
+#include "OGLComputeShader.h"
 
 #include "GameWorld.h"
 

@@ -94,10 +94,12 @@ namespace NCL {
 			OGLComputeShader* computeShader;
 			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center);
 			OGLShader* quadShader;
-			OGLTexture* quadTex = nullptr;
+			TextureBase* quadTex = nullptr;
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object);
+			void DispatchComputeShaderForEachPixel();
+			OGLComputeShader* rayMarchComputeShader;
 
 		};
 	}

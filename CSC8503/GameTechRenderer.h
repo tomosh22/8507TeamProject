@@ -25,7 +25,7 @@ namespace NCL {
 			//this was me
 			RenderObject* quad;
 
-			bool renderFullScreenQuad = false;
+			bool renderFullScreenQuad = true;
 
 		protected:
 			void NewRenderLines();

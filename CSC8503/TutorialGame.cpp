@@ -28,24 +28,43 @@ TutorialGame::TutorialGame()	{
 	inSelectionMode = false;
 
 	InitialiseAssets();
+
+	//remove this
+	DispatchComputeShaderForEachPixel();
 	
 }
 
 void TutorialGame::InitQuadTexture() {
-	std::array<float, 1280 * 720 * 3>* data = new std::array<float, 1280 * 720 * 3>();//todo dont hardcode
+	int width = (renderer->GetWindowWidth());
+	int height = (renderer->GetWindowHeight());
+	//std::array<float, 1280 * 720 * 4>* data = new std::array<float, 1280 * 720 * 4>();//todo dont hardcode
 	quadTex = new OGLTexture();
 	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), quadTex, quadShader);
-	for (int i = 0; i < 1280*720*3; i++)
-	{ 
-		data->at(i) = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-	}
+	//for (int i = 0; i < 1280*720*4; i++)
+	//{ 
+	//	data->at(i) = (float)rand() / (float)RAND_MAX;
+	//}
 	
-	glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)quadTex)->GetObjectID());
+	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 1280, 720, 0, GL_RGB, GL_FLOAT, data->data());
-	return;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+}
 
+void TutorialGame::DispatchComputeShaderForEachPixel() {
+	int width = renderer->GetWindowWidth();
+	int height = renderer->GetWindowHeight();
+	Vector2 bottomLeft = { 0.5f,0.5f };
+	Vector2 bottomRight = { width - 0.5f ,0 };
+	Vector2 topLeft = { 0.5f,height - 0.5f };
+	Vector2 topRight = { width - 0.5f,height - 0.5f };
+
+	rayMarchComputeShader->Bind();
+	glActiveTexture(GL_TEXTURE0);
+	glBindImageTexture(0, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16F);
+
+	rayMarchComputeShader->Execute(width, height, 1);
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 /*
 
@@ -68,6 +87,7 @@ void TutorialGame::InitialiseAssets() {
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
 	quadShader = new OGLShader("quad.vert", "quad.frag");
+	rayMarchComputeShader = new OGLComputeShader("rayMarchCompute.glsl");
 	
 	InitQuadTexture();
 	
@@ -96,6 +116,9 @@ TutorialGame::~TutorialGame()	{
 }
 
 void TutorialGame::UpdateGame(float dt) {
+	//TODO DELETE THIS !!!
+	DispatchComputeShaderForEachPixel();
+
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
 	}

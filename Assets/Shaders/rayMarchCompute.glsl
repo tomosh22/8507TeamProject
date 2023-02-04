@@ -15,14 +15,15 @@ uniform float debugThreshold;
 
 
 
-vec3 RayDir(vec2 px)//takes pixel in 0,1 range
+vec3 RayDir(vec2 pixel)//takes pixel in 0,1 range
 {
-	vec2 ndc = px * 2. - 1.;//move from 0,1 to -1,1
+	vec2 ndc = pixel * 2 - 1;//move from 0,1 to -1,1
+	ndc = vec2(ndc.y, -ndc.x);//thank you jason
 
-	vec4 clipSpace = vec4(ndc, -1.,1);
+	vec4 clipSpace = vec4(ndc, -1,1);
 
 	vec4 viewSpace = inverse(projMatrix) * clipSpace;
-	viewSpace.w = 0.;
+	viewSpace.w = 0;
 
 	vec3 worldSpace = (inverse(viewMatrix) * viewSpace).xyz;
 

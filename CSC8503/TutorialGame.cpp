@@ -68,7 +68,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	rayMarchComputeShader->Bind();
 
 	float screenAspect = (float)width / (float)height;
-	world->GetMainCamera()->SetFieldOfVision(90);
+	//world->GetMainCamera()->SetFieldOfVision(90);
 
 	Matrix4 viewMatrix = world->GetMainCamera()->BuildViewMatrix();
 	//std::cout << viewMatrix << '\n';

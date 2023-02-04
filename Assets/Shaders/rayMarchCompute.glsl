@@ -7,13 +7,28 @@ uniform mat4 viewMatrix;
 uniform mat4 projMatrix;
 uniform vec3 cameraPos;
 uniform int maxSteps;
-uniform int hitDistance;
-uniform int noHitDistance;
+uniform float hitDistance;
+uniform float noHitDistance;
 uniform int viewportWidth;
 uniform int viewportHeight;
 uniform float debugThreshold;
 
+uniform int numSpheres;
 
+struct Sphere {
+	float x, y, z;
+	float radius;
+	float r, g, b;
+};
+layout(std430, binding = 4) buffer SphereSSBO {
+	Sphere sphereData[];
+};
+
+struct HitInformation {
+	float closestDistance;
+	vec3 color;
+	vec3 normal;
+};
 
 vec3 RayDir(vec2 pixel)//takes pixel in 0,1 range
 {
@@ -30,10 +45,23 @@ vec3 RayDir(vec2 pixel)//takes pixel in 0,1 range
 	return normalize(worldSpace);
 }
 
-float SDF(vec3 from) {
-	vec3 sphereCenter = vec3(0, 0, 0);
-	int sphereRadius = 10;
-	return length(from - sphereCenter) - sphereRadius;
+HitInformation SDF(vec3 from) {
+	HitInformation hit;
+	hit.closestDistance = 1. / 0.;
+	for (int i = 0; i < numSpheres; i++)
+	{
+		Sphere sphere = sphereData[i];
+		vec3 sphereCenter = vec3(sphere.x,sphere.y,sphere.z);
+		float sphereRadius = sphere.radius;
+		float newDistance = length(from - sphereCenter) - (sphereRadius);
+		if (newDistance < hit.closestDistance) {
+			hit.closestDistance = newDistance;
+			vec3 color = vec3(sphere.r, sphere.g, sphere.b);
+			hit.color = color;
+			hit.normal = normalize(from - sphereCenter);
+		}
+	}
+	return hit;
 }
 
 vec4 RayMarch(vec3 rayDir) {
@@ -41,10 +69,12 @@ vec4 RayMarch(vec3 rayDir) {
 	for (int i = 0; i < maxSteps; i++)
 	{
 		vec3 nextPointOnLine = cameraPos + distanceFromOrigin * rayDir;
-		float closestDistance = SDF(nextPointOnLine);
-		distanceFromOrigin += closestDistance;
-		if (closestDistance < hitDistance) {
-			return vec4(0, 1, 0, 1);
+		HitInformation hit;
+		hit = SDF(nextPointOnLine);
+		distanceFromOrigin += hit.closestDistance;
+		if (hit.closestDistance < hitDistance) {
+			hit.normal = (hit.normal + 1) / 2;//for visualisation
+			return vec4(hit.normal, 1);
 		}
 		if (distanceFromOrigin > noHitDistance) {
 			return vec4(0, 0, 1, 1);

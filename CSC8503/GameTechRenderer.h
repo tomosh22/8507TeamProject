@@ -31,8 +31,8 @@ namespace NCL {
 			RenderObject* quad;
 			struct ImGUIPtrs {
 				int* rayMarchMaxSteps;
-				int* rayMarchHitDistance;
-				int* rayMarchNoHitDistance;
+				float* rayMarchHitDistance;
+				float* rayMarchNoHitDistance;
 				float* debugThreshold;
 			};
 			ImGUIPtrs imguiptrs;

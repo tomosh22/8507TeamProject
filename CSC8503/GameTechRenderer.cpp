@@ -134,7 +134,7 @@ void GameTechRenderer::RenderFrame() {
 	BuildObjectList();
 	SortObjectList();
 	RenderShadowMap();
-	//RenderSkybox();
+	RenderSkybox();
 	RenderCamera();
 	if(renderFullScreenQuad)RenderFullScreenQuad();
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
@@ -525,8 +525,8 @@ void GameTechRenderer::ImGui() {
 	ImGui::Text(camPosStr.c_str());
 	if (ImGui::TreeNode("Ray Marching")) {
 		ImGui::SliderInt("Max Steps", imguiptrs.rayMarchMaxSteps, 1, 1000);
-		ImGui::SliderInt("Hit Distance", imguiptrs.rayMarchHitDistance, 1, 1000);
-		ImGui::SliderInt("No Hit Distance", imguiptrs.rayMarchNoHitDistance, 1, 1000);
+		ImGui::SliderFloat("Hit Distance", imguiptrs.rayMarchHitDistance, 0, 10);
+		ImGui::SliderFloat("No Hit Distance", imguiptrs.rayMarchNoHitDistance, 0, 1000);
 		ImGui::SliderFloat("Debug Threshold", imguiptrs.debugThreshold, -500, 500);
 		ImGui::TreePop();
 	}

@@ -101,9 +101,19 @@ namespace NCL {
 			void DispatchComputeShaderForEachPixel();
 			OGLComputeShader* rayMarchComputeShader;
 			int maxSteps;
-			int hitDistance;
-			int noHitDistance;
+			float hitDistance;
+			float noHitDistance;
 			float debugThreshold;
+			struct RayMarchSphere {
+				Vector3 center;
+				float radius;
+				Vector3 color;
+			};
+			std::vector<GameObject*> spheres;
+			std::vector<RayMarchSphere> rayMarchSpheres;
+			GLuint rayMarchSphereSSBO;
+			int maxRayMarchSpheres;
+			float timePassed = 0;
 
 		};
 	}

@@ -27,10 +27,20 @@ TutorialGame::TutorialGame()	{
 	useGravity		= false;
 	inSelectionMode = false;
 
+	//this was me
+	maxRayMarchSpheres = 100;
+	glGenBuffers(1, &rayMarchSphereSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, maxRayMarchSpheres * sizeof(RayMarchSphere), NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, rayMarchSphereSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 	InitialiseAssets();
 
+	
 	//remove this
 	DispatchComputeShaderForEachPixel();
+	return;
 	
 }
 
@@ -52,7 +62,7 @@ void TutorialGame::InitQuadTexture() {
 
 	//todo maybe move this somewhere else? still somewhat related
 	maxSteps = 100;
-	hitDistance = 10;
+	hitDistance = 0.1;
 	noHitDistance = 1000;
 	debugThreshold = 10;
 	renderer->imguiptrs.rayMarchMaxSteps = &maxSteps;
@@ -88,16 +98,19 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	int viewportWidthLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportWidth");
 	int viewportHeightLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportHeight");
 	int debugThresholdLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "debugThreshold");
+	int numSpheresLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "numSpheres");
+
 
 	glUniformMatrix4fv(projLocation, 1, false, (float*)&projMatrix);
 	glUniformMatrix4fv(viewLocation, 1, false, (float*)&viewMatrix);
 	glUniform3fv(cameraPosLocation, 1, cameraPos.array);
 	glUniform1i(maxStepsLocation, maxSteps);
-	glUniform1i(hitDistanceLocation, hitDistance);
-	glUniform1i(noHitDistanceLocation, noHitDistance);
+	glUniform1f(hitDistanceLocation, hitDistance);
+	glUniform1f(noHitDistanceLocation, noHitDistance);
 	glUniform1i(viewportWidthLocation, width);
 	glUniform1i(viewportHeightLocation, height);
 	glUniform1f(debugThresholdLocation, debugThreshold);
+	glUniform1i(numSpheresLocation, rayMarchSpheres.size());
 
 
 	glActiveTexture(GL_TEXTURE0);
@@ -156,6 +169,7 @@ TutorialGame::~TutorialGame()	{
 }
 
 void TutorialGame::UpdateGame(float dt) {
+	timePassed += dt;
 	//TODO DELETE THIS !!!
 	DispatchComputeShaderForEachPixel();
 	if(worldFloor != nullptr)
@@ -222,6 +236,55 @@ void TutorialGame::UpdateGame(float dt) {
 	Debug::UpdateRenderables(dt);
 	float testFloat = float(1000) / float(55);
 	if (1000 * dt > testFloat)std::cout << "fps drop\n";
+
+	//just for testing, i know theres only two spheres
+	bool alternate = true;
+	for (GameObject* sphere : spheres)
+	{
+		if (alternate) {
+			sphere->GetTransform().SetPosition({ 10, std::sin(timePassed / 1) * 20, 0 });
+			Vector3 position = sphere->GetTransform().GetPosition();
+			Vector3 scale = sphere->GetTransform().GetScale();
+			float radius = scale.x;
+			int offset = 0 * sizeof(RayMarchSphere);
+			Vector3 color = { 1,1,0 };
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
+
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
+
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
+
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
+		else {
+			sphere->GetTransform().SetPosition({ -10, -std::sin(timePassed / 1) * 20, 0 });
+			Vector3 position = sphere->GetTransform().GetPosition();
+			Vector3 scale = sphere->GetTransform().GetScale();
+			float radius = scale.x;
+			int offset = 1 * sizeof(RayMarchSphere);
+			Vector3 color = { 0,1,1 };
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
+
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
+
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
+
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
+		alternate = !alternate;
+
+		
+	}
 }
 
 void TutorialGame::UpdateKeys() {
@@ -363,6 +426,8 @@ void TutorialGame::InitWorld() {
 	physics->Clear();
 
 	InitDefaultFloor();
+	AddSphereToWorld({ 0,0,0 }, 10);
+	AddSphereToWorld({ 0,10,0 }, 10);
 }
 
 void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius, Vector2 center) {
@@ -499,7 +564,15 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	sphere->GetPhysicsObject()->InitSphereInertia();
 
 	world->AddGameObject(sphere);
-
+	rayMarchSpheres.push_back({ position,radius });
+	spheres.push_back(sphere);
+	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2*sizeof(float), sizeof(float), &(position.z));
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3*sizeof(float), sizeof(float), &(radius));
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
 	return sphere;
 }
 

@@ -103,6 +103,7 @@ namespace NCL {
 			int maxSteps;
 			int hitDistance;
 			int noHitDistance;
+			float debugThreshold;
 
 		};
 	}

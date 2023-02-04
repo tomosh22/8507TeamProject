@@ -54,9 +54,11 @@ void TutorialGame::InitQuadTexture() {
 	maxSteps = 100;
 	hitDistance = 10;
 	noHitDistance = 1000;
+	debugThreshold = 10;
 	renderer->imguiptrs.rayMarchMaxSteps = &maxSteps;
 	renderer->imguiptrs.rayMarchHitDistance = &hitDistance;
 	renderer->imguiptrs.rayMarchNoHitDistance = &noHitDistance;
+	renderer->imguiptrs.debugThreshold = &debugThreshold;
 }
 
 void TutorialGame::DispatchComputeShaderForEachPixel() {
@@ -85,6 +87,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	int noHitDistanceLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "noHitDistance");
 	int viewportWidthLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportWidth");
 	int viewportHeightLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportHeight");
+	int debugThresholdLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "debugThreshold");
 
 	glUniformMatrix4fv(projLocation, 1, false, (float*)&projMatrix);
 	glUniformMatrix4fv(viewLocation, 1, false, (float*)&viewMatrix);
@@ -94,6 +97,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	glUniform1i(noHitDistanceLocation, noHitDistance);
 	glUniform1i(viewportWidthLocation, width);
 	glUniform1i(viewportHeightLocation, height);
+	glUniform1f(debugThresholdLocation, debugThreshold);
 
 
 	glActiveTexture(GL_TEXTURE0);

@@ -519,11 +519,15 @@ void GameTechRenderer::ImGui() {
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 	ImGui::Begin("NotSplatoon");
-	ImGui::Text("hi");
+	Vector3 camPos = gameWorld.GetMainCamera()->GetPosition();
+	std::string camPosStr = std::to_string(camPos.x) + " "
+		+ std::to_string(camPos.y) + " " + std::to_string(camPos.z);
+	ImGui::Text(camPosStr.c_str());
 	if (ImGui::TreeNode("Ray Marching")) {
 		ImGui::SliderInt("Max Steps", imguiptrs.rayMarchMaxSteps, 1, 1000);
 		ImGui::SliderInt("Hit Distance", imguiptrs.rayMarchHitDistance, 1, 1000);
 		ImGui::SliderInt("No Hit Distance", imguiptrs.rayMarchNoHitDistance, 1, 1000);
+		ImGui::SliderFloat("Debug Threshold", imguiptrs.debugThreshold, -500, 500);
 		ImGui::TreePop();
 	}
 	ImGui::End();

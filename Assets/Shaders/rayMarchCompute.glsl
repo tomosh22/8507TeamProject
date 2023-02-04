@@ -11,6 +11,7 @@ uniform int hitDistance;
 uniform int noHitDistance;
 uniform int viewportWidth;
 uniform int viewportHeight;
+uniform float debugThreshold;
 
 
 
@@ -30,40 +31,39 @@ vec3 RayDir(vec2 px)//takes pixel in 0,1 range
 
 float SDF(vec3 from) {
 	vec3 sphereCenter = vec3(0, 0, 0);
-	int sphereRadius = 100;
-	return length(sphereCenter) - sphereRadius;
+	int sphereRadius = 10;
+	return length(from - sphereCenter) - sphereRadius;
 }
 
-float RayMarch(vec3 rayDir) {
+vec4 RayMarch(vec3 rayDir) {
 	float distanceFromOrigin = 0;
 	for (int i = 0; i < maxSteps; i++)
 	{
 		vec3 nextPointOnLine = cameraPos + distanceFromOrigin * rayDir;
 		float closestDistance = SDF(nextPointOnLine);
 		distanceFromOrigin += closestDistance;
-		if (closestDistance < hitDistance || distanceFromOrigin > noHitDistance) {
-			break;
+		if (closestDistance < hitDistance) {
+			return vec4(0, 1, 0, 1);
+		}
+		if (distanceFromOrigin > noHitDistance) {
+			return vec4(0, 0, 1, 1);
 		}
 	}
-	return distanceFromOrigin;
+	return vec4(1, 0, 0, 1);
+	//return distanceFromOrigin;
 }
 
 
 void main() {
 	ivec2 IMAGE_COORD = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
-	if (maxSteps > 500) {
-		imageStore(tex, IMAGE_COORD, vec4(0,1,0,0.8));
-	}
-	else {
-		imageStore(tex, IMAGE_COORD, vec4(0, 0, 1, 0.8));
-	}
-	return;
 
 	vec3 rayDir = RayDir(vec2(IMAGE_COORD.x/float(viewportWidth),IMAGE_COORD.y/float(viewportHeight)));
-	//rayDir = (rayDir + 1) / 2; //bring from -1,1 to 0,1
-	float result = RayMarch(rayDir)/10;
-	imageStore(tex, IMAGE_COORD, vec4(vec3(result), 0.8));
+	//rayDir = (rayDir + 1) / 2; //bring from -1,1 to 0,1 for visualisation
+	//float result = RayMarch(rayDir);
+	vec4 result = RayMarch(rayDir);
+	imageStore(tex, IMAGE_COORD, result);
 	return;
+
 
 
 	

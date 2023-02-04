@@ -46,6 +46,7 @@ vec3 RayDir(vec2 pixel)//takes pixel in 0,1 range
 }
 
 HitInformation SDF(vec3 from) {
+	vec3 lightPos = vec3(0, 40, 0);//stop hardcoding
 	HitInformation hit;
 	hit.closestDistance = 1. / 0.;
 	for (int i = 0; i < numSpheres; i++)
@@ -59,6 +60,8 @@ HitInformation SDF(vec3 from) {
 			vec3 color = vec3(sphere.r, sphere.g, sphere.b);
 			hit.color = color;
 			hit.normal = normalize(from - sphereCenter);
+			vec3 lightDir = normalize(lightPos - from);
+			hit.color = hit.color * max(dot(lightDir, hit.normal),0.05);//want there to be at least a little bit of colour
 		}
 	}
 	return hit;
@@ -75,10 +78,15 @@ vec4 RayMarch(vec3 rayDir) {
 		if (hit.closestDistance < hitDistance) {
 			hit.normal = vec3(hit.normal.x, hit.normal.y,-hit.normal.z);//thank you jason
 			//hit.normal = (hit.normal + 1) / 2;//for visualisation
-			return vec4(hit.normal, 1);
+
+			
+			
+
+			return vec4(hit.color, 1);
 		}
 		if (distanceFromOrigin > noHitDistance) {
-			return vec4(0, 0, 1, 1);
+			//return vec4(0, 0, 1, 1);
+			return vec4(0);
 		}
 	}
 	return vec4(1, 0, 0, 1);
@@ -93,6 +101,9 @@ void main() {
 	//rayDir = (rayDir + 1) / 2; //bring from -1,1 to 0,1 for visualisation
 	//float result = RayMarch(rayDir);
 	vec4 result = RayMarch(rayDir);
+
+	
+
 	imageStore(tex, IMAGE_COORD, result);
 	return;
 

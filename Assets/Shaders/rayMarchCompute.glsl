@@ -73,7 +73,8 @@ vec4 RayMarch(vec3 rayDir) {
 		hit = SDF(nextPointOnLine);
 		distanceFromOrigin += hit.closestDistance;
 		if (hit.closestDistance < hitDistance) {
-			hit.normal = (hit.normal + 1) / 2;//for visualisation
+			hit.normal = vec3(hit.normal.x, hit.normal.y,-hit.normal.z);//thank you jason
+			//hit.normal = (hit.normal + 1) / 2;//for visualisation
 			return vec4(hit.normal, 1);
 		}
 		if (distanceFromOrigin > noHitDistance) {

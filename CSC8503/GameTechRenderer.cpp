@@ -110,11 +110,11 @@ void GameTechRenderer::LoadSkybox() {
 
 void GameTechRenderer::RenderFrame() {
 	glEnable(GL_CULL_FACE);
-	glClearColor(1, 1, 1, 1);
+	glClearColor(0.1, 0.1, 0.1, 1);
 	BuildObjectList();
 	SortObjectList();
 	RenderShadowMap();
-	RenderSkybox();
+	//RenderSkybox();
 	RenderCamera();
 	if(renderFullScreenQuad)RenderFullScreenQuad();
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
@@ -310,7 +310,9 @@ void GameTechRenderer::RenderCamera() {
 }
 
 void GameTechRenderer::RenderFullScreenQuad() {
-	//this was me
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE); //todo reverse winding order
 	BindShader(quad->GetShader());
 	BindTextureToShader((OGLTexture*)quad->GetDefaultTexture(), "mainTex", 0);

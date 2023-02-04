@@ -54,12 +54,37 @@ void TutorialGame::InitQuadTexture() {
 void TutorialGame::DispatchComputeShaderForEachPixel() {
 	int width = renderer->GetWindowWidth();
 	int height = renderer->GetWindowHeight();
-	Vector2 bottomLeft = { 0.5f,0.5f };
-	Vector2 bottomRight = { width - 0.5f ,0 };
-	Vector2 topLeft = { 0.5f,height - 0.5f };
-	Vector2 topRight = { width - 0.5f,height - 0.5f };
 
 	rayMarchComputeShader->Bind();
+
+	float screenAspect = (float)width / (float)height;
+	world->GetMainCamera()->SetFieldOfVision(90);
+
+	Matrix4 viewMatrix = world->GetMainCamera()->BuildViewMatrix();
+	//std::cout << viewMatrix << '\n';
+	Matrix4 projMatrix = world->GetMainCamera()->BuildProjectionMatrix(screenAspect);
+	Vector3 cameraPos = world->GetMainCamera()->GetPosition();
+	int maxSteps = 10, hitDistance = 10, noHitDistance = 100;
+
+	int projLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "projMatrix");
+	int viewLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewMatrix");
+	int cameraPosLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "cameraPos");
+	int maxStepsLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "maxSteps");
+	int hitDistanceLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "hitDistance");
+	int noHitDistanceLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "noHitDistance");
+	int viewportWidthLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportWidth");
+	int viewportHeightLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportHeight");
+
+	glUniformMatrix4fv(projLocation, 1, false, (float*)&projMatrix);
+	glUniformMatrix4fv(viewLocation, 1, false, (float*)&viewMatrix);
+	glUniform3fv(cameraPosLocation, 1, cameraPos.array);
+	glUniform1i(maxStepsLocation, maxSteps);
+	glUniform1i(hitDistanceLocation, hitDistance);
+	glUniform1i(noHitDistanceLocation, noHitDistance);
+	glUniform1i(viewportWidthLocation, width);
+	glUniform1i(viewportHeightLocation, height);
+
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindImageTexture(0, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16F);
 
@@ -118,7 +143,8 @@ TutorialGame::~TutorialGame()	{
 void TutorialGame::UpdateGame(float dt) {
 	//TODO DELETE THIS !!!
 	DispatchComputeShaderForEachPixel();
-
+	if(worldFloor != nullptr)
+	Debug::DrawAxisLines(worldFloor->GetTransform().GetMatrix());
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
 	}
@@ -168,7 +194,7 @@ void TutorialGame::UpdateGame(float dt) {
 		}
 	}
 
-	Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
+	//Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
 
 	SelectObject();
 	MoveSelectedObject();

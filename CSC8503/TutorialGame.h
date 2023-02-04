@@ -88,7 +88,7 @@ namespace NCL {
 
 			GameObject* objClosest = nullptr;
 
-			GameObject* worldFloor;
+			GameObject* worldFloor = nullptr;
 			
 			//this was me
 			OGLComputeShader* computeShader;

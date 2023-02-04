@@ -32,3 +32,16 @@
 *.app
 
 Build/
+
+/x64/Debug/OpenGLRendering.pdb
+/x64/Debug/NCLCoreClasses.pdb
+/x64/Debug/CSC8503CoreClasses.pdb
+/x64/Debug/CSC8503.pdb
+/x64/Debug
+/.vs/VSWorkspaceState.json
+/.vs/slnx.sqlite
+/.vs/ProjectSettings.json
+/.vs/8507TeamProject/v16/Browse.VC.db
+/.vs/8507TeamProject/v16/.suo
+/.vs/8507TeamProject/v16
+/.vs

@@ -100,6 +100,9 @@ namespace NCL {
 			void InitPaintableTextureOnObject(GameObject* object);
 			void DispatchComputeShaderForEachPixel();
 			OGLComputeShader* rayMarchComputeShader;
+			int maxSteps;
+			int hitDistance;
+			int noHitDistance;
 
 		};
 	}

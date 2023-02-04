@@ -3,6 +3,10 @@
 #include "RenderObject.h"
 #include "Camera.h"
 #include "TextureLoader.h"
+
+//this was me
+#include <Win32Window.h>
+
 using namespace NCL;
 using namespace Rendering;
 using namespace CSC8503;
@@ -61,6 +65,22 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 
 	SetDebugStringBufferSizes(10000);
 	SetDebugLineBufferSizes(1000);
+
+
+	//this was me
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui::StyleColorsDark();
+
+
+	Win32Code::Win32Window* realWindow = (Win32Code::Win32Window*)&hostWindow;
+
+	
+
+	ImGui_ImplWin32_Init(realWindow->GetHandle());
+	
+	ImGui_ImplOpenGL3_Init("#version 330");
 }
 
 GameTechRenderer::~GameTechRenderer()	{
@@ -126,6 +146,7 @@ void GameTechRenderer::RenderFrame() {
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	ImGui();
 }
 
 void GameTechRenderer::BuildObjectList() {
@@ -489,4 +510,24 @@ void GameTechRenderer::SetDebugLineBufferSizes(size_t newVertCount) {
 
 		glBindVertexArray(0);
 	}
+}
+
+
+//this was me
+void GameTechRenderer::ImGui() {
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+	ImGui::Begin("NotSplatoon");
+	ImGui::Text("hi");
+	if (ImGui::TreeNode("Ray Marching")) {
+		ImGui::SliderInt("Max Steps", imguiptrs.rayMarchMaxSteps, 1, 1000);
+		ImGui::SliderInt("Hit Distance", imguiptrs.rayMarchHitDistance, 1, 1000);
+		ImGui::SliderInt("No Hit Distance", imguiptrs.rayMarchNoHitDistance, 1, 1000);
+		ImGui::TreePop();
+	}
+	ImGui::End();
+	ImGui::EndFrame();
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

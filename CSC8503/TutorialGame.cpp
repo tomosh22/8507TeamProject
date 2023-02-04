@@ -49,6 +49,14 @@ void TutorialGame::InitQuadTexture() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+
+	//todo maybe move this somewhere else? still somewhat related
+	maxSteps = 100;
+	hitDistance = 10;
+	noHitDistance = 1000;
+	renderer->imguiptrs.rayMarchMaxSteps = &maxSteps;
+	renderer->imguiptrs.rayMarchHitDistance = &hitDistance;
+	renderer->imguiptrs.rayMarchNoHitDistance = &noHitDistance;
 }
 
 void TutorialGame::DispatchComputeShaderForEachPixel() {
@@ -64,7 +72,10 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	//std::cout << viewMatrix << '\n';
 	Matrix4 projMatrix = world->GetMainCamera()->BuildProjectionMatrix(screenAspect);
 	Vector3 cameraPos = world->GetMainCamera()->GetPosition();
-	int maxSteps = 10, hitDistance = 10, noHitDistance = 100;
+	
+
+	
+	
 
 	int projLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "projMatrix");
 	int viewLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewMatrix");

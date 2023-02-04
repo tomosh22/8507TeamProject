@@ -51,6 +51,13 @@ float RayMarch(vec3 rayDir) {
 
 void main() {
 	ivec2 IMAGE_COORD = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+	if (maxSteps > 500) {
+		imageStore(tex, IMAGE_COORD, vec4(0,1,0,0.8));
+	}
+	else {
+		imageStore(tex, IMAGE_COORD, vec4(0, 0, 1, 0.8));
+	}
+	return;
 
 	vec3 rayDir = RayDir(vec2(IMAGE_COORD.x/float(viewportWidth),IMAGE_COORD.y/float(viewportHeight)));
 	//rayDir = (rayDir + 1) / 2; //bring from -1,1 to 0,1

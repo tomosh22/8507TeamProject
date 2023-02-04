@@ -31,6 +31,8 @@ using namespace CSC8503;
 #include <thread>
 #include <sstream>
 
+
+
 void TestPathfinding() {
 }
 
@@ -51,7 +53,7 @@ hide or show the
 */
 int main() {
 	Window*w = Window::CreateGameWindow("CSC8503 Game technology!", 1280, 720);
-
+	
 	if (!w->HasInitialised()) {
 		return -1;
 	}	

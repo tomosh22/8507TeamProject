@@ -7,6 +7,11 @@
 
 #include "GameWorld.h"
 
+//this was me
+#include "imgui.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_win32.h"
+
 namespace NCL {
 	class Maths::Vector3;
 	class Maths::Vector4;
@@ -24,6 +29,12 @@ namespace NCL {
 
 			//this was me
 			RenderObject* quad;
+			struct ImGUIPtrs {
+				int* rayMarchMaxSteps;
+				int* rayMarchHitDistance;
+				int* rayMarchNoHitDistance;
+			};
+			ImGUIPtrs imguiptrs;
 
 			bool renderFullScreenQuad = true;
 
@@ -45,6 +56,7 @@ namespace NCL {
 
 			//this was me
 			void RenderFullScreenQuad();
+			void ImGui();
 
 			void LoadSkybox();
 

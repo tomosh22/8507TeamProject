@@ -73,6 +73,12 @@ namespace NCL {
 			return *this;
 		}
 
+		void SetTargetPosition(Vector3 target, Vector3 Offset = Vector3(0, 2, 10))
+		{
+			targetPosition = target;
+			lockOffset = Offset;
+		}
+
 		//Builds a view matrix for the current camera variables, suitable for sending straight
 		//to a vertex shader (i.e it's already an 'inverse camera matrix').
 		Matrix4 BuildViewMatrix() const;
@@ -110,5 +116,9 @@ namespace NCL {
 		float	yaw;
 		float	pitch;
 		Vector3 position;
+
+		Vector3 forward;	//Forward direction of camera
+		Vector3 targetPosition;   //The target camera look at 
+		Vector3 lockOffset;		 // offset between camera and target
 	};
 }

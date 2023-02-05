@@ -13,6 +13,8 @@ uniform int viewportWidth;
 uniform int viewportHeight;
 uniform float debugThreshold;
 
+uniform float depth;
+
 uniform int numSpheres;
 
 struct Sphere {
@@ -26,8 +28,8 @@ layout(std430, binding = 4) buffer SphereSSBO {
 
 struct HitInformation {
 	float closestDistance;
-	vec3 color;
-	vec3 normal;
+	int sphereID;
+	vec3 position;
 };
 
 vec3 RayDir(vec2 pixel)//takes pixel in 0,1 range
@@ -46,7 +48,7 @@ vec3 RayDir(vec2 pixel)//takes pixel in 0,1 range
 }
 
 HitInformation SDF(vec3 from) {
-	vec3 lightPos = vec3(0, 40, 0);//stop hardcoding
+	
 	HitInformation hit;
 	hit.closestDistance = 1. / 0.;
 	for (int i = 0; i < numSpheres; i++)
@@ -57,17 +59,15 @@ HitInformation SDF(vec3 from) {
 		float newDistance = length(from - sphereCenter) - (sphereRadius);
 		if (newDistance < hit.closestDistance) {
 			hit.closestDistance = newDistance;
-			vec3 color = vec3(sphere.r, sphere.g, sphere.b);
-			hit.color = color;
-			hit.normal = normalize(from - sphereCenter);
-			vec3 lightDir = normalize(lightPos - from);
-			hit.color = hit.color * max(dot(lightDir, hit.normal),0.05);//want there to be at least a little bit of colour
+			hit.sphereID = i;
+			hit.position = from;
 		}
 	}
 	return hit;
 }
 
 vec4 RayMarch(vec3 rayDir) {
+	vec3 lightPos = vec3(0, 40, 0);//stop hardcoding
 	float distanceFromOrigin = 0;
 	for (int i = 0; i < maxSteps; i++)
 	{
@@ -76,13 +76,14 @@ vec4 RayMarch(vec3 rayDir) {
 		hit = SDF(nextPointOnLine);
 		distanceFromOrigin += hit.closestDistance;
 		if (hit.closestDistance < hitDistance) {
-			hit.normal = vec3(hit.normal.x, hit.normal.y,-hit.normal.z);//thank you jason
-			//hit.normal = (hit.normal + 1) / 2;//for visualisation
-
+			Sphere sphere = sphereData[hit.sphereID];
+			vec3 sphereCenter = vec3(sphere.x, sphere.y, sphere.z);
+			vec3 color = vec3(sphere.r, sphere.g, sphere.b);
+			vec3 normal = normalize(hit.position - sphereCenter);
+			vec3 lightDir = normalize(lightPos - hit.position);
+			color = color * max(dot(lightDir, normal), 0.05);//want there to be at least a little bit of colour
 			
-			
-
-			return vec4(hit.color, 1);
+			return vec4(color, 1);
 		}
 		if (distanceFromOrigin > noHitDistance) {
 			//return vec4(0, 0, 1, 1);

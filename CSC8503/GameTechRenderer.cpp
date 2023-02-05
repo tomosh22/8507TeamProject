@@ -136,7 +136,9 @@ void GameTechRenderer::RenderFrame() {
 	RenderShadowMap();
 	RenderSkybox();
 	RenderCamera();
+	glDepthMask(false);
 	if(renderFullScreenQuad)RenderFullScreenQuad();
+	glDepthMask(true);
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);

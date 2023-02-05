@@ -114,7 +114,7 @@ namespace NCL {
 			GLuint rayMarchSphereSSBO;
 			int maxRayMarchSpheres;
 			float timePassed = 0;
-
+			GLuint depthBufferTex;//for depth testing after raymarch
 		};
 	}
 }

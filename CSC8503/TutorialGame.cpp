@@ -27,6 +27,12 @@ TutorialGame::TutorialGame()	{
 	useGravity		= false;
 	inSelectionMode = false;
 
+	
+
+	InitialiseAssets();
+
+	
+	
 	//this was me
 	maxRayMarchSpheres = 100;
 	glGenBuffers(1, &rayMarchSphereSSBO);
@@ -35,11 +41,24 @@ TutorialGame::TutorialGame()	{
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, rayMarchSphereSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-	InitialiseAssets();
+	glGenTextures(1, &depthBufferTex);
+	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexImage2D(GL_TEXTURE_2D, 0,
+		GL_DEPTH_COMPONENT,
+		renderer->GetWindowWidth(),
+		renderer->GetWindowHeight(),
+		0,
+		GL_DEPTH_COMPONENT,
+		GL_FLOAT,
+		0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	
-	//remove this
-	DispatchComputeShaderForEachPixel();
+
 	return;
 	
 }
@@ -85,8 +104,19 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	Matrix4 projMatrix = world->GetMainCamera()->BuildProjectionMatrix(screenAspect);
 	Vector3 cameraPos = world->GetMainCamera()->GetPosition();
 	
-
-	
+	std::vector<float> buffer;
+	buffer.resize(width * height);
+	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, buffer.data());
+	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
+	glTexImage2D(GL_TEXTURE_2D, 0,
+		GL_DEPTH_COMPONENT,
+		renderer->GetWindowWidth(),
+		renderer->GetWindowHeight(),
+		0,
+		GL_DEPTH_COMPONENT,
+		GL_FLOAT,
+		buffer.data());
+	glBindTexture(GL_TEXTURE_2D, 0);
 	
 
 	int projLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "projMatrix");
@@ -99,6 +129,9 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	int viewportHeightLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportHeight");
 	int debugThresholdLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "debugThreshold");
 	int numSpheresLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "numSpheres");
+	int depthTexLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "depthTex");
+	int nearPlaneLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "nearPlane");
+	int farPlaneLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "farPlane");
 
 
 	glUniformMatrix4fv(projLocation, 1, false, (float*)&projMatrix);
@@ -111,13 +144,27 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	glUniform1i(viewportHeightLocation, height);
 	glUniform1f(debugThresholdLocation, debugThreshold);
 	glUniform1i(numSpheresLocation, rayMarchSpheres.size());
+	glUniform1f(nearPlaneLocation, world->GetMainCamera()->GetNearPlane());
+	glUniform1f(farPlaneLocation, world->GetMainCamera()->GetFarPlane());
 
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindImageTexture(0, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16F);
 
+
+
+	glUniform1i(depthTexLocation, 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
+
 	rayMarchComputeShader->Execute(width, height, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
 }
 /*
 
@@ -563,7 +610,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	sphere->GetPhysicsObject()->SetInverseMass(inverseMass);
 	sphere->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(sphere);
+	//world->AddGameObject(sphere);
 	rayMarchSpheres.push_back({ position,radius });
 	spheres.push_back(sphere);
 	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);

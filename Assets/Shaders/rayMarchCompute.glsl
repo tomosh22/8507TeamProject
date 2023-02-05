@@ -1,6 +1,7 @@
 #version 430 core
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(r8, binding = 0) uniform image2D tex;
+uniform sampler2DShadow depthTex;
 
 
 uniform mat4 viewMatrix;
@@ -14,6 +15,9 @@ uniform int viewportHeight;
 uniform float debugThreshold;
 
 uniform float depth;
+
+uniform float nearPlane;
+uniform float farPlane;
 
 uniform int numSpheres;
 
@@ -83,11 +87,12 @@ vec4 RayMarch(vec3 rayDir) {
 			vec3 lightDir = normalize(lightPos - hit.position);
 			color = color * max(dot(lightDir, normal), 0.05);//want there to be at least a little bit of colour
 			
-			return vec4(color, 1);
+			float depth = (distanceFromOrigin - nearPlane) / (farPlane - nearPlane);
+			return vec4(color, depth);
 		}
 		if (distanceFromOrigin > noHitDistance) {
 			//return vec4(0, 0, 1, 1);
-			return vec4(0);
+			return vec4(0,0,0,0);
 		}
 	}
 	return vec4(1, 0, 0, 1);
@@ -97,15 +102,24 @@ vec4 RayMarch(vec3 rayDir) {
 
 void main() {
 	ivec2 IMAGE_COORD = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
-
+	vec2 texCoord = vec2(gl_GlobalInvocationID.x/float(viewportWidth), gl_GlobalInvocationID.y/float(viewportHeight));
+	texCoord.x = 1 - texCoord.x;
+	//texCoord.y = 1 - texCoord.y;
 	vec3 rayDir = RayDir(vec2(IMAGE_COORD.x/float(viewportWidth),IMAGE_COORD.y/float(viewportHeight)));
-	//rayDir = (rayDir + 1) / 2; //bring from -1,1 to 0,1 for visualisation
-	//float result = RayMarch(rayDir);
+	
 	vec4 result = RayMarch(rayDir);
+	float depthTest = texture(depthTex, vec3(texCoord.yx, result.a));
+	//imageStore(tex, IMAGE_COORD, vec4(vec3(depthTest), 1));
+	//return;
+	if (depthTest == 1. && result.a != 1 && result.a != 0) {
+		result.w = 1;
+		imageStore(tex, IMAGE_COORD, result);
+	}
+	else {
+		imageStore(tex, IMAGE_COORD, vec4(0));
+	}
 
 	
-
-	imageStore(tex, IMAGE_COORD, result);
 	return;
 
 

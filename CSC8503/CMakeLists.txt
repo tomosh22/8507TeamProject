@@ -9,6 +9,7 @@ set(Header_Files
     "NetworkPlayer.h"
     "StateGameObject.h"
     "TutorialGame.h"
+    "MyDelegate.h"
 )
 source_group("Header Files" FILES ${Header_Files})
 

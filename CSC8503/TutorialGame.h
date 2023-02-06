@@ -108,6 +108,7 @@ namespace NCL {
 				Vector3 center;
 				float radius;
 				Vector3 color;
+				float radiusExtension;
 			};
 			std::vector<GameObject*> spheres;
 			std::vector<RayMarchSphere> rayMarchSpheres;

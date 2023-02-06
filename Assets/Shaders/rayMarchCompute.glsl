@@ -23,6 +23,7 @@ struct Sphere {
 	float x, y, z;
 	float radius;
 	float r, g, b;
+	float radiusExtension;
 };
 layout(std430, binding = 4) buffer SphereSSBO {
 	Sphere sphereData[];
@@ -32,6 +33,7 @@ struct HitInformation {
 	float closestDistance;
 	int sphereID;
 	vec3 position;
+	vec3 color;
 };
 
 vec3 RayDir(vec2 pixel)//takes pixel in 0,1 range
@@ -49,23 +51,57 @@ vec3 RayDir(vec2 pixel)//takes pixel in 0,1 range
 	return normalize(worldSpace);
 }
 
+float smin(float a, float b, float k) {
+    float h = clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
+    return mix(a, b, h) - k*h*(1.0-h);
+}
+
+vec4 Blend( float a, float b, vec3 colA, vec3 colB, float k )
+{
+    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
+    float blendDst = mix( b, a, h ) - k*h*(1.0-h);
+    vec3 blendCol = mix(colB,colA,h);
+    return vec4(blendCol, blendDst);
+}
+
+
+
+
+
 HitInformation SDF(vec3 from) {
 	
 	HitInformation hit;
-	hit.closestDistance = 1. / 0.;
+	hit.closestDistance = 99999.;
+	hit.color = vec3(0);
 	for (int i = 0; i < numSpheres; i++)
 	{
 		Sphere sphere = sphereData[i];
 		vec3 sphereCenter = vec3(sphere.x,sphere.y,sphere.z);
 		float sphereRadius = sphere.radius;
-		float newDistance = length(from - sphereCenter) - (sphereRadius);
-		if (newDistance < hit.closestDistance) {
-			hit.closestDistance = newDistance;
-			hit.sphereID = i;
-			hit.position = from;
-		}
+		vec3 nextCol = vec3(sphere.r,sphere.g,sphere.b);
+		float newDistance = length(from - sphereCenter) - (sphereRadius + sphere.radiusExtension);
+		vec4 result = Blend(hit.closestDistance,newDistance,hit.color,nextCol,10);
+		hit.closestDistance = result.w;
+		hit.color =  result.rgb;
+		//if (newDistance < hit.closestDistance) {
+			//hit.closestDistance = newDistance;
+			//hit.sphereID = i;
+			//hit.position = from;
+		//}
 	}
 	return hit;
+}
+
+vec3 GetNormal(vec3 p) {
+	float d = SDF(p).closestDistance;
+    vec2 e = vec2(.01, 0);
+    
+    vec3 n = d - vec3(
+        SDF(p-e.xyy).closestDistance,
+        SDF(p-e.yxy).closestDistance,
+        SDF(p-e.yyx).closestDistance);
+    
+    return normalize(n);
 }
 
 vec4 RayMarch(vec3 rayDir) {
@@ -78,12 +114,13 @@ vec4 RayMarch(vec3 rayDir) {
 		hit = SDF(nextPointOnLine);
 		distanceFromOrigin += hit.closestDistance;
 		if (hit.closestDistance < hitDistance) {
-			Sphere sphere = sphereData[hit.sphereID];
-			vec3 sphereCenter = vec3(sphere.x, sphere.y, sphere.z);
-			vec3 color = vec3(sphere.r, sphere.g, sphere.b);
-			vec3 normal = normalize(hit.position - sphereCenter);
+			
+			vec3 color = hit.color;
+			//vec3 normal = normalize(hit.position - sphereCenter);
+			vec3 normal = GetNormal(hit.position);
+			//normal = (normal+1)/2;
 			vec3 lightDir = normalize(lightPos - hit.position);
-			color = color * max(dot(lightDir, normal), 0.05);//want there to be at least a little bit of colour
+			//color = color * max(dot(lightDir, normal), 0.05);//want there to be at least a little bit of colour
 			
 			return vec4(color, distanceFromOrigin);
 		}

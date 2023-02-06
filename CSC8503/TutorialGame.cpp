@@ -293,6 +293,7 @@ void TutorialGame::UpdateGame(float dt) {
 			float radius = scale.x;
 			int offset = 0 * sizeof(RayMarchSphere);
 			Vector3 color = { 1,1,0 };
+			float radiusExtension = radius / 2;
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
@@ -303,6 +304,7 @@ void TutorialGame::UpdateGame(float dt) {
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 7 * sizeof(float), sizeof(float), &(radiusExtension));
 
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
@@ -313,6 +315,7 @@ void TutorialGame::UpdateGame(float dt) {
 			float radius = scale.x;
 			int offset = 1 * sizeof(RayMarchSphere);
 			Vector3 color = { 0,1,1 };
+			float radiusExtension = radius / 2;
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
@@ -323,6 +326,7 @@ void TutorialGame::UpdateGame(float dt) {
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 7 * sizeof(float), sizeof(float), &(radiusExtension));
 
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
@@ -609,7 +613,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	sphere->GetPhysicsObject()->InitSphereInertia();
 
 	//world->AddGameObject(sphere);
-	rayMarchSpheres.push_back({ position,radius });
+	rayMarchSpheres.push_back({ position,radius,Vector3(0,0,0),radius/2 });
 	spheres.push_back(sphere);
 	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);

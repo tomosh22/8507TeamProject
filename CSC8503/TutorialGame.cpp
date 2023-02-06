@@ -127,7 +127,6 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	int noHitDistanceLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "noHitDistance");
 	int viewportWidthLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportWidth");
 	int viewportHeightLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportHeight");
-	int debugThresholdLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "debugThreshold");
 	int numSpheresLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "numSpheres");
 	int depthTexLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "depthTex");
 	int nearPlaneLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "nearPlane");
@@ -142,7 +141,6 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	glUniform1f(noHitDistanceLocation, noHitDistance);
 	glUniform1i(viewportWidthLocation, width);
 	glUniform1i(viewportHeightLocation, height);
-	glUniform1f(debugThresholdLocation, debugThreshold);
 	glUniform1i(numSpheresLocation, rayMarchSpheres.size());
 	glUniform1f(nearPlaneLocation, world->GetMainCamera()->GetNearPlane());
 	glUniform1f(farPlaneLocation, world->GetMainCamera()->GetFarPlane());

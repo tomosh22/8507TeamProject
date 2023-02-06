@@ -1,6 +1,7 @@
 #version 430 core
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(r8, binding = 0) uniform image2D tex;
+uniform sampler2D depthTex;
 
 
 uniform mat4 viewMatrix;
@@ -11,9 +12,10 @@ uniform float hitDistance;
 uniform float noHitDistance;
 uniform int viewportWidth;
 uniform int viewportHeight;
-uniform float debugThreshold;
 
-uniform float depth;
+
+uniform float nearPlane;
+uniform float farPlane;
 
 uniform int numSpheres;
 
@@ -83,33 +85,40 @@ vec4 RayMarch(vec3 rayDir) {
 			vec3 lightDir = normalize(lightPos - hit.position);
 			color = color * max(dot(lightDir, normal), 0.05);//want there to be at least a little bit of colour
 			
-			return vec4(color, 1);
+			return vec4(color, distanceFromOrigin);
 		}
 		if (distanceFromOrigin > noHitDistance) {
-			//return vec4(0, 0, 1, 1);
-			return vec4(0);
+			return vec4(0,0,0,-1);
 		}
 	}
-	return vec4(1, 0, 0, 1);
-	//return distanceFromOrigin;
+	return vec4(1, 0, 0, -1);//todo handle max steps reached
 }
 
 
 void main() {
 	ivec2 IMAGE_COORD = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
-
+	vec2 texCoord = vec2(gl_GlobalInvocationID.x/float(viewportWidth), gl_GlobalInvocationID.y/float(viewportHeight));
+	texCoord = vec2(texCoord.y, -texCoord.x);//thank you jason
 	vec3 rayDir = RayDir(vec2(IMAGE_COORD.x/float(viewportWidth),IMAGE_COORD.y/float(viewportHeight)));
-	//rayDir = (rayDir + 1) / 2; //bring from -1,1 to 0,1 for visualisation
-	//float result = RayMarch(rayDir);
-	vec4 result = RayMarch(rayDir);
-
 	
+	vec4 result = RayMarch(rayDir);//rgb = colour, a = distance from camera
 
-	imageStore(tex, IMAGE_COORD, result);
+	//get existing scene distance from depth texture and projMatrix
+	float depth = texture(depthTex, texCoord).r;
+	vec4 clipSpace = vec4(texCoord.x, texCoord.y, depth, 1) * 2 - 1;
+	vec4 viewSpace = inverse(projMatrix) * clipSpace;
+	float sceneDistanceFromCamera = -(viewSpace.z / viewSpace.w);
+
+	if (result.a < sceneDistanceFromCamera && result.a != -1) {
+		//sphere was hit and depth test passed
+		result.w = 1;//will need to rework if we want transparent spheres
+		imageStore(tex, IMAGE_COORD, result);
+	}
+	else {
+		//sphere wasn't hit or depth test failed, draw blank pixel
+		imageStore(tex, IMAGE_COORD, vec4(0));
+	}
 	return;
 
-
-
-	
 
 }

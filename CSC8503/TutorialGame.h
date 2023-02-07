@@ -103,7 +103,7 @@ namespace NCL {
 			int maxSteps;
 			float hitDistance;
 			float noHitDistance;
-			float debugThreshold;
+			float debugValue;
 			struct RayMarchSphere {
 				Vector3 center;
 				float radius;

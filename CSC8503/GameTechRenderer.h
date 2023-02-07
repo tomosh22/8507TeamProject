@@ -33,7 +33,7 @@ namespace NCL {
 				int* rayMarchMaxSteps;
 				float* rayMarchHitDistance;
 				float* rayMarchNoHitDistance;
-				float* debugThreshold;
+				float* debugValue;
 			};
 			ImGUIPtrs imguiptrs;
 

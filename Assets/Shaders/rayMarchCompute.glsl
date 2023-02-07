@@ -12,6 +12,7 @@ uniform float hitDistance;
 uniform float noHitDistance;
 uniform int viewportWidth;
 uniform int viewportHeight;
+uniform float debugValue;
 
 
 uniform float nearPlane;
@@ -51,11 +52,8 @@ vec3 RayDir(vec2 pixel)//takes pixel in 0,1 range
 	return normalize(worldSpace);
 }
 
-float smin(float a, float b, float k) {
-    float h = clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
-    return mix(a, b, h) - k*h*(1.0-h);
-}
 
+//credit - sebastian lague
 vec4 Blend( float a, float b, vec3 colA, vec3 colB, float k )
 {
     float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
@@ -83,6 +81,7 @@ HitInformation SDF(vec3 from) {
 		vec4 result = Blend(hit.closestDistance,newDistance,hit.color,nextCol,10);
 		hit.closestDistance = result.w;
 		hit.color =  result.rgb;
+		hit.position = from;
 		//if (newDistance < hit.closestDistance) {
 			//hit.closestDistance = newDistance;
 			//hit.sphereID = i;
@@ -92,6 +91,7 @@ HitInformation SDF(vec3 from) {
 	return hit;
 }
 
+//https://www.shadertoy.com/view/XlGBW3
 vec3 GetNormal(vec3 p) {
 	float d = SDF(p).closestDistance;
     vec2 e = vec2(.01, 0);
@@ -104,8 +104,9 @@ vec3 GetNormal(vec3 p) {
     return normalize(n);
 }
 
+
 vec4 RayMarch(vec3 rayDir) {
-	vec3 lightPos = vec3(0, 40, 0);//stop hardcoding
+	vec3 lightPos = vec3(0, 40, 20);//stop hardcoding
 	float distanceFromOrigin = 0;
 	for (int i = 0; i < maxSteps; i++)
 	{
@@ -120,7 +121,7 @@ vec4 RayMarch(vec3 rayDir) {
 			vec3 normal = GetNormal(hit.position);
 			//normal = (normal+1)/2;
 			vec3 lightDir = normalize(lightPos - hit.position);
-			//color = color * max(dot(lightDir, normal), 0.05);//want there to be at least a little bit of colour
+			color = color * max(dot(lightDir, normal), 0.05);//want there to be at least a little bit of colour
 			
 			return vec4(color, distanceFromOrigin);
 		}

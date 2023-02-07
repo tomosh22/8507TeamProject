@@ -529,7 +529,7 @@ void GameTechRenderer::ImGui() {
 		ImGui::SliderInt("Max Steps", imguiptrs.rayMarchMaxSteps, 1, 1000);
 		ImGui::SliderFloat("Hit Distance", imguiptrs.rayMarchHitDistance, 0, 10);
 		ImGui::SliderFloat("No Hit Distance", imguiptrs.rayMarchNoHitDistance, 0, 1000);
-		ImGui::SliderFloat("Debug Threshold", imguiptrs.debugThreshold, -500, 500);
+		ImGui::SliderFloat("Debug Value", imguiptrs.debugValue, -1, 10);
 		ImGui::TreePop();
 	}
 	ImGui::End();

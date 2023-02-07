@@ -261,6 +261,8 @@ void GameTechRenderer::RenderCamera() {
 	int cameraLocation = 0;
 
 	//TODO - PUT IN FUNCTION
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 3, "123");
+
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
 
@@ -268,7 +270,7 @@ void GameTechRenderer::RenderCamera() {
 		OGLShader* shader = (OGLShader*)(*i).GetShader();
 		BindShader(shader);
 
-		BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
+		
 
 		if (activeShader != shader) {
 			projLocation	= glGetUniformLocation(shader->GetProgramID(), "projMatrix");
@@ -322,12 +324,18 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(widthLocation, (*i).GetTransform()->GetScale().x * TEXTURE_DENSITY);
 		glUniform1i(heightLocation, (*i).GetTransform()->GetScale().z * TEXTURE_DENSITY);
 
+		glActiveTexture(GL_TEXTURE0);
+//		BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
+
+		glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+
 		BindMesh((*i).GetMesh());
 		int layerCount = (*i).GetMesh()->GetSubMeshCount();
 		for (int i = 0; i < layerCount; ++i) {
 			DrawBoundMesh(i);
 		}
 	}
+	glPopDebugGroup();
 
 	
 }
@@ -527,9 +535,10 @@ void GameTechRenderer::ImGui() {
 	ImGui::Text(camPosStr.c_str());
 	if (ImGui::TreeNode("Ray Marching")) {
 		ImGui::SliderInt("Max Steps", imguiptrs.rayMarchMaxSteps, 1, 1000);
-		ImGui::SliderFloat("Hit Distance", imguiptrs.rayMarchHitDistance, 0, 10);
+		ImGui::SliderFloat("Hit Distance", imguiptrs.rayMarchHitDistance, 0, 1);
 		ImGui::SliderFloat("No Hit Distance", imguiptrs.rayMarchNoHitDistance, 0, 1000);
 		ImGui::SliderFloat("Debug Value", imguiptrs.debugValue, -1, 10);
+		ImGui::Checkbox("Depth Test", imguiptrs.depthTest);
 		ImGui::TreePop();
 	}
 	ImGui::End();

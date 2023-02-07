@@ -92,7 +92,7 @@ namespace NCL {
 			
 			//this was me
 			OGLComputeShader* computeShader;
-			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center);
+			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center, int teamID);
 			OGLShader* quadShader;
 			TextureBase* quadTex = nullptr;
 			void InitQuadTexture();
@@ -108,7 +108,6 @@ namespace NCL {
 				Vector3 center;
 				float radius;
 				Vector3 color;
-				float radiusExtension;
 			};
 			std::vector<GameObject*> spheres;
 			std::vector<RayMarchSphere> rayMarchSpheres;
@@ -116,6 +115,10 @@ namespace NCL {
 			int maxRayMarchSpheres;
 			float timePassed = 0;
 			GLuint depthBufferTex;//for depth testing after raymarch
+			bool rayMarchDepthTest;
+
+
+
 		};
 	}
 }

@@ -13,6 +13,7 @@ namespace NCL
 			void Update(float dt);
 			void OnCollisionBegin(GameObject* object);
 			bool isRed();
+			void toggleRed();
 		private:
 			bool red;
 			GameObject* paintball; 

@@ -28,6 +28,13 @@ TutorialGame::TutorialGame()	{
 	inSelectionMode = false;
 
 	InitialiseAssets();
+
+	Vector3 triA(2, 2, 1);
+	Vector3 triB(7, 4, 1);
+	Vector3 triC(5, 9, 1);
+	Vector3 point(3, 3, 1);
+	Vector3 uvw = PhysicsObject::WorldSpaceToBarycentricCoords(point,triA,triB,triC);
+	std::cout << uvw;
 	
 }
 

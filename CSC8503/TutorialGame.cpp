@@ -191,6 +191,10 @@ void TutorialGame::UpdateKeys() {
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
 		world->ShuffleObjects(false);
 	}
+	if (Window::GetMouse()->ButtonPressed(MouseButtons::LEFT))
+	{
+		AddPaintBall(world->GetMainCamera()->GetPosition(), Vector3(10000, 0, 0));
+	}
 
 	if (lockedObject) {
 		LockedObjectMovement();
@@ -358,7 +362,9 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	floor->GetTransform()
 		.SetScale(floorSize * 2)
 		.SetPosition(position);
-
+	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
+	floor->GetPhysicsObject()->SetInverseMass(0);
+	floor->GetPhysicsObject()->InitCubeInertia();
 	
 	floor->isPaintable = true;
 	
@@ -526,6 +532,23 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 	world->AddGameObject(apple);
 
 	return apple;
+}
+
+GameObject* NCL::CSC8503::TutorialGame::AddPaintBall(const Vector3& position, Vector3 direction)
+{
+	GameObject* paintball = new GameObject();
+	SphereVolume* volume = new SphereVolume(1.0f);
+	paintball->SetBoundingVolume((CollisionVolume*)volume);
+	paintball->GetTransform().SetScale(Vector3(2, 2, 2)).SetPosition(position);
+
+	paintball->SetRenderObject(new RenderObject(&paintball->GetTransform(), sphereMesh, nullptr, basicShader));
+	paintball->SetPhysicsObject(new PhysicsObject(&paintball->GetTransform(), paintball->GetBoundingVolume()));
+	paintball->GetPhysicsObject()->AddForce(direction);
+
+	world->AddGameObject(paintball);
+
+	return paintball;
+	
 }
 
 void TutorialGame::InitDefaultFloor() {

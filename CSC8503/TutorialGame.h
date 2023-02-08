@@ -5,12 +5,12 @@
 #endif
 #include "PhysicsSystem.h"
 
-#include "StateGameObject.h"
-
 #include <array>
+
 
 namespace NCL {
 	namespace CSC8503 {
+		class Player;
 		class TutorialGame		{
 		public:
 			TutorialGame();
@@ -31,7 +31,6 @@ namespace NCL {
 			in the module. Feel free to mess around with them to see different objects being created in different
 			test scenarios (constraints, collision types, and so on). 
 			*/
-			void InitGameExamples();
 
 			void InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius);
 			void InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing);
@@ -48,7 +47,7 @@ namespace NCL {
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, float inverseMass = 10.0f);
 			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 
-			GameObject* AddPlayerToWorld(const Vector3& position);
+			void AddPlayerToWorld(const Vector3& position);
 			GameObject* AddEnemyToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);
 
@@ -81,10 +80,15 @@ namespace NCL {
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;
-			Vector3 lockedOffset		= Vector3(0, 14, 20);
+			Vector3 lockedOffset		= Vector3(0, 3, 8);
+
 			void LockCameraToObject(GameObject* o) {
 				lockedObject = o;
 			}
+
+			//this was you
+			Player* player;
+
 
 			GameObject* objClosest = nullptr;
 

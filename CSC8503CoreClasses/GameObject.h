@@ -20,6 +20,11 @@ namespace NCL::CSC8503 {
 		GameObject(std::string name = "");
 		~GameObject();
 
+		virtual void Update(float dt)
+		{
+
+		}
+
 		void SetBoundingVolume(CollisionVolume* vol) {
 			boundingVolume = vol;
 		}
@@ -68,7 +73,7 @@ namespace NCL::CSC8503 {
 			//std::cout << "OnCollisionEnd event occured!\n";
 		}
 
-		bool GetBroadphaseAABB(Vector3&outsize) const;
+		bool GetBroadphaseAABB(Vector3& outsize) const;
 
 		void UpdateBroadphaseAABB();
 
@@ -78,6 +83,11 @@ namespace NCL::CSC8503 {
 
 		int		GetWorldID() const {
 			return worldID;
+		}
+
+		void SetActive(bool active)
+		{
+			isActive = active;
 		}
 
 		//unsigned int ssbo;

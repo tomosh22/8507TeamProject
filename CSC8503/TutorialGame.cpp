@@ -6,9 +6,8 @@
 
 #include "PositionConstraint.h"
 #include "OrientationConstraint.h"
-#include "StateGameObject.h"
 #include <minmax.h>
-
+#include "Player.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -99,20 +98,17 @@ void TutorialGame::UpdateGame(float dt) {
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
 	}
-	if (lockedObject != nullptr) {
-		Vector3 objPos = lockedObject->GetTransform().GetPosition();
+	if (player != nullptr) {
+		Vector3 objPos = player->GetTransform().GetPosition();
 		Vector3 camPos = objPos + lockedOffset;
 
-		Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos, Vector3(0,1,0));
+		Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos, Vector3(0, 1, 0));
 
 		Matrix4 modelMat = temp.Inverse();
 
 		Quaternion q(modelMat);
 		Vector3 angles = q.ToEuler(); //nearly there now!
-
-		world->GetMainCamera()->SetPosition(camPos);
-		world->GetMainCamera()->SetPitch(angles.x);
-		world->GetMainCamera()->SetYaw(angles.y);
+		world->GetMainCamera()->SetTargetPosition(objPos);
 	}
 
 	UpdateKeys();
@@ -295,9 +291,12 @@ void TutorialGame::InitCamera() {
 }
 
 void TutorialGame::InitWorld() {
+
 	world->ClearAndErase();
 	physics->Clear();
 
+
+	AddPlayerToWorld(Vector3(0, 1, 0)); //Init Player
 	InitDefaultFloor();
 }
 
@@ -417,6 +416,8 @@ rigid body representation. This and the cube function will let you build a lot o
 physics worlds. You'll probably need another function for the creation of OBB cubes too.
 
 */
+
+#pragma region AddObject Template
 GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, float inverseMass) {
 	GameObject* sphere = new GameObject();
 
@@ -460,33 +461,33 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	return cube;
 }
 
-GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position) {
-	float meshSize		= 1.0f;
-	float inverseMass	= 0.5f;
+void TutorialGame::AddPlayerToWorld(const Vector3& position) {
+	float meshSize = 1.0f;
+	float inverseMass = 0.5f;
 
-	GameObject* character = new GameObject();
-	SphereVolume* volume  = new SphereVolume(1.0f);
+	this->player = new Player();
+	SphereVolume* volume = new SphereVolume(1.0f);
 
-	character->SetBoundingVolume((CollisionVolume*)volume);
+	this->player->SetBoundingVolume((CollisionVolume*)volume);
 
-	character->GetTransform()
+	this->player->GetTransform()
 		.SetScale(Vector3(meshSize, meshSize, meshSize))
 		.SetPosition(position);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
-	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
+	this->player->SetRenderObject(new RenderObject(&this->player->GetTransform(), charMesh, nullptr, basicShader));
+	this->player->SetPhysicsObject(new PhysicsObject(&this->player->GetTransform(), this->player->GetBoundingVolume()));
 
-	character->GetPhysicsObject()->SetInverseMass(inverseMass);
-	character->GetPhysicsObject()->InitSphereInertia();
+	this->player->GetPhysicsObject()->SetInverseMass(inverseMass);
+	this->player->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(character);
+	world->AddGameObject(this->player);
 
-	return character;
+
 }
 
 GameObject* TutorialGame::AddEnemyToWorld(const Vector3& position) {
-	float meshSize		= 3.0f;
-	float inverseMass	= 0.5f;
+	float meshSize = 3.0f;
+	float inverseMass = 0.5f;
 
 	GameObject* character = new GameObject();
 
@@ -527,16 +528,14 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 
 	return apple;
 }
+#pragma endregion
+
+
 
 void TutorialGame::InitDefaultFloor() {
 	AddFloorToWorld(Vector3(0, -20, 0));
 }
 
-void TutorialGame::InitGameExamples() {
-	AddPlayerToWorld(Vector3(0, 5, 0));
-	AddEnemyToWorld(Vector3(5, 5, 0));
-	AddBonusToWorld(Vector3(10, 5, 0));
-}
 
 void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius) {
 	for (int x = 0; x < numCols; ++x) {

@@ -190,7 +190,7 @@ void TutorialGame::UpdateKeys() {
 	}
 	if (Window::GetMouse()->ButtonPressed(MouseButtons::LEFT))
 	{
-		AddPaintBall(world->GetMainCamera()->GetPosition(), Vector3(10000, 0, 0));
+		AddPaintBall(player->GetTransform().GetPosition(), Vector3(10000, 0, 0));
 	}
 
 	if (lockedObject) {

@@ -16,7 +16,6 @@ namespace NCL
 			void toggleRed();
 		private:
 			bool red;
-			GameObject* paintball; 
 		};
 	}
 }

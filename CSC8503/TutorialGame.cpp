@@ -8,6 +8,7 @@
 #include "OrientationConstraint.h"
 #include <minmax.h>
 #include "Player.h"
+#include "Paintball.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -540,7 +541,7 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 
 GameObject* NCL::CSC8503::TutorialGame::AddPaintBall(const Vector3& position, Vector3 direction)
 {
-	GameObject* paintball = new GameObject();
+	Paintball* paintball = new Paintball();
 	SphereVolume* volume = new SphereVolume(1.0f);
 	paintball->SetBoundingVolume((CollisionVolume*)volume);
 	paintball->GetTransform().SetScale(Vector3(2, 2, 2)).SetPosition(position);

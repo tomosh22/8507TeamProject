@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <string>
+#include <array>
 
 using namespace NCL;
 using namespace Maths;
@@ -263,6 +264,20 @@ bool MeshGeometry::GetTriangle(unsigned int i, Vector3& va, Vector3& vb, Vector3
 	vb = positions[b];
 	vc = positions[c];
 	return true;
+}
+
+std::vector<std::array<Vector3, 3>> MeshGeometry::GetAllTriangles() {
+	if (indices.size() % 3 != 0) std::cout << "dodgy mesh, number of indices is not a multiple of 3\n";
+	std::vector<std::array<Vector3,3>> tris;
+	for (int i = 0; i < indices.size(); i+=3)
+	{
+		std::array<Vector3, 3> tri{};
+		tri[0] = positions[indices[i]];
+		tri[1] = positions[indices[i+1]];
+		tri[2] = positions[indices[i + 2]];
+		tris.push_back(tri);
+	}
+	return tris;
 }
 
 

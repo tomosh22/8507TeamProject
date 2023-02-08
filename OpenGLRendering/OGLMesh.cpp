@@ -175,6 +175,7 @@ void OGLMesh::RecalculateNormals() {
 	}
 }
 
+//this was me
 
 OGLMesh* OGLMesh::GenerateQuadWithIndices() {
 	OGLMesh* m = new OGLMesh();
@@ -215,3 +216,4 @@ OGLMesh* OGLMesh::GenerateQuadWithIndices() {
 	m->UploadToGPU();
 	return m;
 }
+

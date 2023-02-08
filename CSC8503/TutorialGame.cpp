@@ -28,6 +28,7 @@ TutorialGame::TutorialGame()	{
 	inSelectionMode = false;
 
 	InitialiseAssets();
+	SetUpTriangleSSBOAndDataTexture();
 
 	Vector3 triA(2, 2, 1);
 	Vector3 triB(7, 4, 1);
@@ -68,13 +69,14 @@ void TutorialGame::InitialiseAssets() {
 	enemyMesh	= renderer->LoadMesh("Keeper.msh");
 	bonusMesh	= renderer->LoadMesh("apple.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
-
+	std::vector<std::array<Vector3, 3>> tris = capsuleMesh->GetAllTriangles();
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
 
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
 	quadShader = new OGLShader("quad.vert", "quad.frag");
+	triComputeShader = new OGLComputeShader("tris.comp");
 	
 	InitQuadTexture();
 	
@@ -103,6 +105,9 @@ TutorialGame::~TutorialGame()	{
 }
 
 void TutorialGame::UpdateGame(float dt) {
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 3, "abc");
+	DispatchComputeShaderForEachTriangle(capsuleMesh);
+	glPopDebugGroup();
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
 	}
@@ -667,6 +672,63 @@ void TutorialGame::MoveSelectedObject() {
 	}
 }
 
+
+
+void TutorialGame::DispatchComputeShaderForEachTriangle(MeshGeometry* mesh) {
+	std::vector<std::array<Vector3, 3>> tris = mesh->GetAllTriangles();
+	triComputeShader->Bind();
+	
+	glActiveTexture(GL_TEXTURE0);
+	glBindImageTexture(0, ((OGLTexture*)triDataTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_R8);
+	
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
+	for (int i = 0; i < tris.size(); i++)
+	{
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * sizeof(Vector3) * 3,sizeof(Vector3)*3,tris[i].data());
+	}
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	Vector3 testPoint(3, 5, 7);
+	int pointLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "point");
+	glUniform3fv(pointLocation,1, testPoint.array);
+
+	triComputeShader->Execute(1000, 1, 1);//todo change number of thread groups
+	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	triComputeShader->Unbind();
+}
+
+void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
+{
+
+	//todo make this a #define
+	const unsigned int MAX_TRIS = 1000;
+	glGenBuffers(1, &triangleSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(Vector3) * 3, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5,triangleSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	//todo delete this, just for testing
+	std::array<char, MAX_TRIS> noise;
+	for (int i = 0; i < MAX_TRIS; i++)
+	{
+		noise[i] = (char)rand() / (char)RAND_MAX;
+	}
+	triDataTex = new OGLTexture();
+	glBindTexture(GL_TEXTURE_1D, ((OGLTexture*)triDataTex)->GetObjectID());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, MAX_TRIS, 0, GL_RED, GL_BYTE, nullptr);
+	glBindTexture(GL_TEXTURE_1D, 0);
+
+	glGenBuffers(1, &triangleBoolSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(bool), NULL, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, MAX_TRIS * sizeof(bool), nullptr);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, triangleBoolSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	
+}
 
 
 

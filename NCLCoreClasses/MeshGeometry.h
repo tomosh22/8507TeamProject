@@ -131,6 +131,9 @@ namespace NCL {
 
 
 		bool GetTriangle(unsigned int i, Vector3& a, Vector3& b, Vector3& c) const;
+		//this was me
+		std::vector<std::array<Vector3,3>> GetAllTriangles();
+
 		bool GetNormalForTri(unsigned int i, Vector3& n) const;
 		bool HasTriangle(unsigned int i) const;
 

@@ -98,7 +98,12 @@ namespace NCL {
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object);
-
+			void DispatchComputeShaderForEachTriangle(MeshGeometry* mesh);
+			GLuint triangleSSBO;
+			void SetUpTriangleSSBOAndDataTexture();
+			OGLComputeShader* triComputeShader;
+			OGLTexture* triDataTex;//1d texture
+			GLuint triangleBoolSSBO;
 		};
 	}
 }

@@ -1,11 +1,11 @@
 #version 430 core
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;//todo change work groups
-layout(r8, binding = 0) uniform image1D tex;
+layout(	rgba16f, binding = 0) uniform image1D tex;
 
 struct Triangle{
-	vec3 a;
-	vec3 b;
-	vec3 c;
+	float ax,ay,az;
+	float bx,by,bz;
+	float cx,cy,cz;
 };
 
 struct Edge{
@@ -22,61 +22,145 @@ layout(std430, binding = 6) buffer TriangleBoolSSBO{
 	bool triangleBools[];
 };
 
-bool TriangleIsHit(int index){
-	Triangle tri = triangles[index];
-	return tri.a.x > tri.a.y || point.x == -1;//just to test im passing data in properly
+//bool TriangleIsHit(int index){
+//	Triangle tri = triangles[index];
+//	return tri.ax > tri.ay || point.x == -1;//just to test im passing data in properly
+//}
+//
+//Edge GetClosestEdge(int index){
+//	Triangle tri = triangles[index];
+//	float furthestDistance = 0.;
+//	int furthestVert = -1;
+//	float newDistance;
+//	for(int i = 0;i < 3;i++){
+//		switch(i){
+//		case 0:
+//			newDistance = length(tri.a-point);
+//			if(newDistance > furthestDistance){
+//				furthestVert = i;
+//				furthestDistance = newDistance;
+//			}
+//			break;
+//		case 1:
+//			newDistance = length(tri.b-point);
+//			if(newDistance > furthestDistance){
+//				furthestVert = i;
+//				furthestDistance = newDistance;
+//			}
+//			break;
+//		case 2:
+//			newDistance = length(tri.c-point);
+//			if(newDistance > furthestDistance){
+//				furthestVert = i;
+//				furthestDistance = newDistance;
+//			}
+//			break;
+//		}
+//	}
+//	Edge edge;
+//	switch (furthestVert){
+//	case 0:
+//		edge.a = tri.b;
+//		edge.b = tri.c;
+//		break;
+//	case 1:
+//		edge.a = tri.c;
+//		edge.b = tri.a;
+//		break;
+//	case 2:
+//		edge.a = tri.a;
+//		edge.b = tri.b;
+//	}
+//	return edge;
+//
+//}
+
+float GetAreaFromTriangleVerts(vec3 a, vec3 b, vec3 c) {
+	return 0.5 * (a.x * b.y + b.x * c.y + c.x * a.y - a.x * c.y - c.x * b.y - b.x * a.y);
 }
 
-Edge GetClosestEdge(int index){
-	Triangle tri = triangles[index];
-	float furthestDistance = 0.;
-	int furthestVert = -1;
-	float newDistance;
-	for(int i = 0;i < 3;i++){
-		switch(i){
-		case 0:
-			newDistance = length(tri.a-point);
-			if(newDistance > furthestDistance){
-				furthestVert = i;
-				furthestDistance = newDistance;
-			}
-			break;
-		case 1:
-			newDistance = length(tri.b-point);
-			if(newDistance > furthestDistance){
-				furthestVert = i;
-				furthestDistance = newDistance;
-			}
-			break;
-		case 2:
-			newDistance = length(tri.c-point);
-			if(newDistance > furthestDistance){
-				furthestVert = i;
-				furthestDistance = newDistance;
-			}
-			break;
-		}
-	}
-	Edge edge;
-	switch (furthestVert){
-	case 0:
-		edge.a = tri.b;
-		edge.b = tri.c;
-		break;
-	case 1:
-		edge.a = tri.c;
-		edge.b = tri.a;
-		break;
-	case 2:
-		edge.a = tri.a;
-		edge.b = tri.b;
-	}
-	return edge;
+vec3 WorldSpaceToBarycentricCoords(vec3 point, vec3 vertA, vec3 vertB, vec3 vertC) {
+	vec3 barycentric;
+	double totalArea = GetAreaFromTriangleVerts(vertA, vertB, vertC);
+	barycentric.x = float(GetAreaFromTriangleVerts(point, vertB, vertC) / totalArea);
+	barycentric.y = float(GetAreaFromTriangleVerts(vertA, point, vertC) / totalArea);
+	barycentric.z = float(GetAreaFromTriangleVerts(vertA, vertB, point) / totalArea);
+	return barycentric;
+}
 
+
+bool sphereTriangleIntersection(vec3 sphereCenter, float sphereRadius,
+                                vec3 v0, vec3 v1, vec3 v2,
+                                out vec3 intersectionPoint)
+{
+    
+    vec3 triangleNormal = normalize(cross(v1 - v0, v2 - v0));
+
+    // Compute the distance of the sphere center to the triangle plane
+    float distance = dot(triangleNormal, sphereCenter - v0);
+
+    // Check if the sphere is behind or too far away from the triangle
+    if (distance > sphereRadius || distance < -sphereRadius)
+        return false;
+
+    // Compute the projection of the sphere center onto the triangle plane
+    vec3 projection = sphereCenter - distance * triangleNormal;
+
+    // Check if the projection is inside the triangle
+    vec3 edge0 = v1 - v0;
+    vec3 vp0 = projection - v0;
+    if (dot(triangleNormal, cross(edge0, vp0)) < 0)
+        return false;
+
+    vec3 edge1 = v2 - v1;
+    vec3 vp1 = projection - v1;
+    if (dot(triangleNormal, cross(edge1, vp1)) < 0)
+        return false;
+
+    vec3 edge2 = v0 - v2;
+    vec3 vp2 = projection - v2;
+    if (dot(triangleNormal, cross(edge2, vp2)) < 0)
+        return false;
+
+    // Compute the intersection point
+    float t = sphereRadius * sphereRadius - (length(sphereCenter - projection)) * 
+              (length(sphereCenter - projection));
+
+    if (t < 0)
+        return false;
+
+    intersectionPoint = projection - triangleNormal * sqrt(t);
+
+    return true;
 }
 
 void main() {
 	int id = int(gl_GlobalInvocationID.x);
-	triangleBools[id] = TriangleIsHit(id);
+
+//	Triangle tri;
+//	vec3 intersectionPoint = vec3(3,3,1);
+//	tri.a = vec3(2,2,1);
+//	tri.b = vec3(7,4,1);
+//	tri.c = vec3(5,9,1);
+//	vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,tri.a,tri.b,tri.c);
+//	imageStore(tex,id,vec4(barycentric,1));
+//	return;
+
+	vec3 sphereCenter = vec3(0);
+	float sphereRadius = 1;
+	Triangle tri = triangles[id];
+	vec3 intersectionPoint;
+
+    vec3 triA = vec3(tri.ax,tri.ay,tri.az);
+    vec3 triB = vec3(tri.bx,tri.by,tri.bz);
+    vec3 triC = vec3(tri.cx,tri.cy,tri.cz);
+
+	if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
+		vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,triA,triB,triC);
+		imageStore(tex,id,vec4(barycentric,1));
+	}
+	else{
+		imageStore(tex,id,vec4(0));
+	}
 	return;
 }

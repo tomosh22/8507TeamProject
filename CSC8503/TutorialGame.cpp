@@ -679,12 +679,28 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(MeshGeometry* mesh) {
 	triComputeShader->Bind();
 	
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, ((OGLTexture*)triDataTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_R8);
+	glBindImageTexture(0, ((OGLTexture*)triDataTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16F);
 	
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
 	for (int i = 0; i < tris.size(); i++)
 	{
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * sizeof(Vector3) * 3,sizeof(Vector3)*3,tris[i].data());
+		int offset = i * sizeof(float) * 3 * 3;
+		int numFloatsSent = 0;
+		std::array<Vector3, 3> tri = tris[i];
+		Vector3 vertA = tri[0];
+		Vector3 vertB = tri[1];
+		Vector3 vertC = tri[2];
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.y));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.z));
+
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.y));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.z));
+
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.y));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.z));
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
@@ -699,7 +715,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(MeshGeometry* mesh) {
 
 void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 {
-
+#pragma region ssbo
 	//todo make this a #define
 	const unsigned int MAX_TRIS = 1000;
 	glGenBuffers(1, &triangleSSBO);
@@ -707,7 +723,7 @@ void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(Vector3) * 3, NULL, GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5,triangleSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
+#pragma endregion
 	//todo delete this, just for testing
 	std::array<char, MAX_TRIS> noise;
 	for (int i = 0; i < MAX_TRIS; i++)
@@ -716,9 +732,9 @@ void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 	}
 	triDataTex = new OGLTexture();
 	glBindTexture(GL_TEXTURE_1D, ((OGLTexture*)triDataTex)->GetObjectID());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, MAX_TRIS, 0, GL_RED, GL_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, MAX_TRIS, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glBindTexture(GL_TEXTURE_1D, 0);
 
 	glGenBuffers(1, &triangleBoolSSBO);

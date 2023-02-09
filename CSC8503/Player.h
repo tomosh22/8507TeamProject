@@ -16,6 +16,7 @@ namespace NCL
             float DrightDamp;
             float upDampVelocity = 0;
             float rightDampVelocity = 0;
+
         public:
             Player();
             ~Player();

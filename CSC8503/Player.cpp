@@ -6,6 +6,7 @@
 
 NCL::CSC8503::Player::Player()
 {
+
 }
 
 NCL::CSC8503::Player::~Player()
@@ -16,6 +17,9 @@ void NCL::CSC8503::Player::Update(float dt)
 {
 	Input(dt);
     Rotate();
+
+    std::cout << GameWorld::GetInstance().GetMainCamera()->GetForward() << std::endl;
+    
 }
 
 void NCL::CSC8503::Player::Move()
@@ -23,11 +27,15 @@ void NCL::CSC8503::Player::Move()
 	
 }
 
+
+
 void NCL::CSC8503::Player::Rotate()
 {
     //Base on the Dup and Dright
+    //Need forward direction of camera
+   // std::cout << "Self Rotation" << this->transform.GetForward() << std::endl;
 
-    std::cout << "Self Rotation" << this->transform.GetForward() << std::endl;
+
 }
 
 void NCL::CSC8503::Player::Input(float dt)

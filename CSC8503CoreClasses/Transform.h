@@ -36,6 +36,13 @@ namespace NCL {
 			{
 				return orientation.ToEuler();
 			}
+
+			void Rotate(Vector3 angle)
+			{
+				Vector3 selfAngle = GetOrientation().ToEuler();
+				SetOrientation(Quaternion::EulerAnglesToQuaternion(selfAngle.x + angle.x, selfAngle.y + angle.y, selfAngle.z + angle.z));
+			}
+
 			void UpdateMatrix();
 		protected:
 			Matrix4		matrix;

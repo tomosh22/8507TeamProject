@@ -59,7 +59,7 @@ namespace NCL {
 			GameTechRenderer* renderer;
 #endif
 			PhysicsSystem*		physics;
-			GameWorld*			world;
+			//GameWorld*			world;
 
 			bool useGravity;
 			bool inSelectionMode;

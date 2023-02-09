@@ -65,6 +65,10 @@ namespace NCL {
 				return inverseInteriaTensor;
 			}
 
+			//this was me
+			static Vector3 WorldSpaceToBarycentricCoords(Vector3 point, Vector3 vertA, Vector3 vertB, Vector3 vertC);
+			static float GetAreaFromTriangleVerts(Vector3 a, Vector3 b, Vector3 c);
+
 		protected:
 			const CollisionVolume* volume;
 			Transform*		transform;

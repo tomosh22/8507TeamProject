@@ -31,6 +31,16 @@ TutorialGame::TutorialGame()	{
 
 	InitialiseAssets();
 
+	SetUpTriangleSSBOAndDataTexture();
+
+	Vector3 triA(2, 2, 1);
+	Vector3 triB(7, 4, 1);
+	Vector3 triC(5, 9, 1);
+	Vector3 point(3, 3, 1);
+	Vector3 uvw = PhysicsObject::WorldSpaceToBarycentricCoords(point,triA,triB,triC);
+	std::cout << uvw;
+
+
 	
 	
 	//this was me
@@ -60,6 +70,7 @@ TutorialGame::TutorialGame()	{
 	
 
 	return;
+
 	
 }
 
@@ -185,13 +196,40 @@ void TutorialGame::InitialiseAssets() {
 	bonusMesh	= renderer->LoadMesh("apple.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
 
+	std::vector<std::array<Vector3, 3>> tris = capsuleMesh->GetAllTriangles();
+	std::vector<std::array<float, 4>> results{};
+	for (int i = 0; i < tris.size(); i++)
+	{
+		std::array<Vector3, 3> tri = tris[i];
+		std::array<float, 4> result;
+		Vector3 intersectionPoint;
+		if (SphereTriangleIntersection(Vector3(), 1, tri[0], tri[1], tri[2], intersectionPoint)) {
+			Vector3 barycentric = PhysicsObject::WorldSpaceToBarycentricCoords(intersectionPoint, tri[0], tri[1], tri[2]);
+			result[0] = barycentric.x;
+			result[1] = barycentric.y;
+			result[2] = barycentric.z;
+			result[3] = 1;
+		}
+		else {
+			result[0] = 0;
+			result[1] = 0;
+			result[2] = 0;
+			result[3] = 0;
+		}
+		results.push_back(result);
+	}
+
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
 
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
 	quadShader = new OGLShader("quad.vert", "quad.frag");
+
+	triComputeShader = new OGLComputeShader("tris.comp");
+
 	rayMarchComputeShader = new OGLComputeShader("rayMarchCompute.glsl");
+
 	
 	InitQuadTexture();
 	
@@ -220,11 +258,17 @@ TutorialGame::~TutorialGame()	{
 }
 
 void TutorialGame::UpdateGame(float dt) {
+
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 3, "abc");
+	DispatchComputeShaderForEachTriangle(capsuleMesh);
+	glPopDebugGroup();
+
 	timePassed += dt;
 	//TODO DELETE THIS !!!
 	DispatchComputeShaderForEachPixel();
 	if(worldFloor != nullptr)
 	Debug::DrawAxisLines(worldFloor->GetTransform().GetMatrix());
+
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
 	}
@@ -909,4 +953,118 @@ void TutorialGame::MoveSelectedObject() {
 
 
 
+void TutorialGame::DispatchComputeShaderForEachTriangle(MeshGeometry* mesh) {
+	std::vector<std::array<Vector3, 3>> tris = mesh->GetAllTriangles();
+	triComputeShader->Bind();
+	
+	glActiveTexture(GL_TEXTURE0);
+	glBindImageTexture(0, ((OGLTexture*)triDataTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16F);
+	
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
+	for (int i = 0; i < tris.size(); i++)
+	{
+		int offset = i * sizeof(float) * 3 * 3;
+		int numFloatsSent = 0;
+		std::array<Vector3, 3> tri = tris[i];
+		Vector3 vertA = tri[0];
+		Vector3 vertB = tri[1];
+		Vector3 vertC = tri[2];
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.y));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.z));
 
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.y));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.z));
+
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.y));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.z));
+	}
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	Vector3 testPoint(3, 5, 7);
+	int pointLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "point");
+	glUniform3fv(pointLocation,1, testPoint.array);
+
+	triComputeShader->Execute(1000, 1, 1);//todo change number of thread groups
+	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	triComputeShader->Unbind();
+}
+
+void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
+{
+#pragma region ssbo
+	//todo make this a #define
+	const unsigned int MAX_TRIS = 1000;
+	glGenBuffers(1, &triangleSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(Vector3) * 3, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5,triangleSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+#pragma endregion
+	//todo delete this, just for testing
+	std::array<char, MAX_TRIS> noise;
+	for (int i = 0; i < MAX_TRIS; i++)
+	{
+		noise[i] = (char)rand() / (char)RAND_MAX;
+	}
+	triDataTex = new OGLTexture();
+	glBindTexture(GL_TEXTURE_1D, ((OGLTexture*)triDataTex)->GetObjectID());
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, MAX_TRIS, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glBindTexture(GL_TEXTURE_1D, 0);
+
+	glGenBuffers(1, &triangleBoolSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(bool), NULL, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, MAX_TRIS * sizeof(bool), nullptr);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, triangleBoolSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	
+}
+
+
+
+bool TutorialGame::SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint) {
+	Vector3 triangleNormal = (Vector3::Cross(v1-v0,v2-v0)).Normalised();
+
+	// Compute the distance of the sphere center to the triangle plane
+	float distance = Vector3::Dot(triangleNormal, sphereCenter - v0);
+
+	// Check if the sphere is behind or too far away from the triangle
+	if (distance > sphereRadius || distance < -sphereRadius)
+		return false;
+
+	// Compute the projection of the sphere center onto the triangle plane
+	Vector3 projection = sphereCenter - triangleNormal * distance;
+
+	// Check if the projection is inside the triangle
+	Vector3 edge0 = v1 - v0;
+	Vector3 vp0 = projection - v0;
+	if (Vector3::Dot(triangleNormal, Vector3::Cross(edge0,vp0)) < 0)
+		return false;
+
+	Vector3 edge1 = v2 - v1;
+	Vector3 vp1 = projection - v1;
+	if (Vector3::Dot(triangleNormal, Vector3::Cross(edge1, vp1)) < 0)
+		return false;
+
+	Vector3 edge2 = v0 - v2;
+	Vector3 vp2 = projection - v2;
+	if (Vector3::Dot(triangleNormal, Vector3::Cross(edge2, vp2)) < 0)
+		return false;
+
+	// Compute the intersection point
+	float t = sphereRadius * sphereRadius - ((sphereCenter - projection).Length()) *
+		((sphereCenter - projection).Length());
+
+	if (t < 0)
+		return false;
+
+	//intersectionPoint = projection - triangleNormal * sqrt(t);
+	intersectionPoint = projection;
+	
+	return true;
+}

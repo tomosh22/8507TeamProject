@@ -33,6 +33,7 @@
 
 Build/
 
+
 /x64/Debug/OpenGLRendering.pdb
 /x64/Debug/NCLCoreClasses.pdb
 /x64/Debug/CSC8503CoreClasses.pdb
@@ -45,3 +46,4 @@ Build/
 /.vs/8507TeamProject/v16/.suo
 /.vs/8507TeamProject/v16
 /.vs
+

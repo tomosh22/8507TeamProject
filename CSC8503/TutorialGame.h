@@ -98,6 +98,15 @@ namespace NCL {
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object);
+
+			void DispatchComputeShaderForEachTriangle(MeshGeometry* mesh);
+			GLuint triangleSSBO;
+			void SetUpTriangleSSBOAndDataTexture();
+			OGLComputeShader* triComputeShader;
+			OGLTexture* triDataTex;//1d texture
+			GLuint triangleBoolSSBO;
+			bool SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint);
+
 			void DispatchComputeShaderForEachPixel();
 			OGLComputeShader* rayMarchComputeShader;
 			int maxSteps;
@@ -116,6 +125,7 @@ namespace NCL {
 			float timePassed = 0;
 			GLuint depthBufferTex;//for depth testing after raymarch
 			bool rayMarchDepthTest;
+
 
 
 

@@ -72,3 +72,20 @@ void PhysicsObject::UpdateInertiaTensor() {
 
 	inverseInteriaTensor = orientation * Matrix3::Scale(inverseInertia) *invOrientation;
 }
+
+
+//this was me
+float PhysicsObject::GetAreaFromTriangleVerts(Vector3 a, Vector3 b, Vector3 c) {
+	return 0.5 * (a.x * b.y + b.x * c.y + c.x * a.y - a.x * c.y - c.x * b.y - b.x * a.y);
+}
+
+
+
+Vector3 PhysicsObject::WorldSpaceToBarycentricCoords(Vector3 point, Vector3 vertA, Vector3 vertB, Vector3 vertC) {
+	Vector3 barycentric;
+	double totalArea = GetAreaFromTriangleVerts(vertA, vertB, vertC);
+	barycentric.x = GetAreaFromTriangleVerts(point, vertB, vertC) / totalArea;
+	barycentric.y = GetAreaFromTriangleVerts(vertA, point, vertC) / totalArea;
+	barycentric.z = GetAreaFromTriangleVerts(vertA, vertB, point) / totalArea;
+	return barycentric;
+}

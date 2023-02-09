@@ -129,7 +129,8 @@ bool sphereTriangleIntersection(vec3 sphereCenter, float sphereRadius,
     if (t < 0)
         return false;
 
-    intersectionPoint = projection - triangleNormal * sqrt(t);
+    //intersectionPoint = projection - triangleNormal * sqrt(t);
+    intersectionPoint = projection;
 
     return true;
 }
@@ -137,30 +138,45 @@ bool sphereTriangleIntersection(vec3 sphereCenter, float sphereRadius,
 void main() {
 	int id = int(gl_GlobalInvocationID.x);
 
-//	Triangle tri;
-//	vec3 intersectionPoint = vec3(3,3,1);
-//	tri.a = vec3(2,2,1);
-//	tri.b = vec3(7,4,1);
-//	tri.c = vec3(5,9,1);
-//	vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,tri.a,tri.b,tri.c);
-//	imageStore(tex,id,vec4(barycentric,1));
-//	return;
 
-	vec3 sphereCenter = vec3(0);
-	float sphereRadius = 1;
-	Triangle tri = triangles[id];
-	vec3 intersectionPoint;
+	//Triangle tri;
+	//vec3 intersectionPoint = vec3(3,3,1);
+    //
+    //tri.ax = 2;
+    //tri.ay = 2;
+    //tri.az = 1;
+    //
+    //tri.bx = 7;
+    //tri.by = 4;
+    //tri.bz = 1;
+    //
+    //tri.cx = 5;
+    //tri.cy = 9;
+    //tri.cz = 1;
+    //
+    //vec3 vertA = vec3(tri.ax,tri.ay,tri.az);
+    //vec3 vertB = vec3(tri.bx,tri.by,tri.bz);
+    //vec3 vertC = vec3(tri.cx,tri.cy,tri.cz);
+    //
+	//vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,vertA,vertB,vertC);
+	//imageStore(tex,id,vec4(barycentric,1));
+	//return;
+
+    vec3 sphereCenter = vec3(0);
+    float sphereRadius = 1;
+    Triangle tri = triangles[id];
+    vec3 intersectionPoint;
 
     vec3 triA = vec3(tri.ax,tri.ay,tri.az);
     vec3 triB = vec3(tri.bx,tri.by,tri.bz);
     vec3 triC = vec3(tri.cx,tri.cy,tri.cz);
 
-	if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
-		vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,triA,triB,triC);
-		imageStore(tex,id,vec4(barycentric,1));
-	}
-	else{
-		imageStore(tex,id,vec4(0));
-	}
-	return;
+    if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
+    	vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,triA,triB,triC);
+    	imageStore(tex,id,vec4(barycentric,1));
+    }
+    else{
+    	imageStore(tex,id,vec4(0));
+    }
+    return;
 }

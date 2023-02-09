@@ -69,7 +69,30 @@ void TutorialGame::InitialiseAssets() {
 	enemyMesh	= renderer->LoadMesh("Keeper.msh");
 	bonusMesh	= renderer->LoadMesh("apple.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
+
 	std::vector<std::array<Vector3, 3>> tris = capsuleMesh->GetAllTriangles();
+	std::vector<std::array<float, 4>> results{};
+	for (int i = 0; i < tris.size(); i++)
+	{
+		std::array<Vector3, 3> tri = tris[i];
+		std::array<float, 4> result;
+		Vector3 intersectionPoint;
+		if (SphereTriangleIntersection(Vector3(), 1, tri[0], tri[1], tri[2], intersectionPoint)) {
+			Vector3 barycentric = PhysicsObject::WorldSpaceToBarycentricCoords(intersectionPoint, tri[0], tri[1], tri[2]);
+			result[0] = barycentric.x;
+			result[1] = barycentric.y;
+			result[2] = barycentric.z;
+			result[3] = 1;
+		}
+		else {
+			result[0] = 0;
+			result[1] = 0;
+			result[2] = 0;
+			result[3] = 0;
+		}
+		results.push_back(result);
+	}
+
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
 
@@ -748,3 +771,44 @@ void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 
 
 
+bool TutorialGame::SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint) {
+	Vector3 triangleNormal = (Vector3::Cross(v1-v0,v2-v0)).Normalised();
+
+	// Compute the distance of the sphere center to the triangle plane
+	float distance = Vector3::Dot(triangleNormal, sphereCenter - v0);
+
+	// Check if the sphere is behind or too far away from the triangle
+	if (distance > sphereRadius || distance < -sphereRadius)
+		return false;
+
+	// Compute the projection of the sphere center onto the triangle plane
+	Vector3 projection = sphereCenter - triangleNormal * distance;
+
+	// Check if the projection is inside the triangle
+	Vector3 edge0 = v1 - v0;
+	Vector3 vp0 = projection - v0;
+	if (Vector3::Dot(triangleNormal, Vector3::Cross(edge0,vp0)) < 0)
+		return false;
+
+	Vector3 edge1 = v2 - v1;
+	Vector3 vp1 = projection - v1;
+	if (Vector3::Dot(triangleNormal, Vector3::Cross(edge1, vp1)) < 0)
+		return false;
+
+	Vector3 edge2 = v0 - v2;
+	Vector3 vp2 = projection - v2;
+	if (Vector3::Dot(triangleNormal, Vector3::Cross(edge2, vp2)) < 0)
+		return false;
+
+	// Compute the intersection point
+	float t = sphereRadius * sphereRadius - ((sphereCenter - projection).Length()) *
+		((sphereCenter - projection).Length());
+
+	if (t < 0)
+		return false;
+
+	//intersectionPoint = projection - triangleNormal * sqrt(t);
+	intersectionPoint = projection;
+	
+	return true;
+}

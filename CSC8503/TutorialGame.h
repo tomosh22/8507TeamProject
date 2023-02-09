@@ -104,6 +104,7 @@ namespace NCL {
 			OGLComputeShader* triComputeShader;
 			OGLTexture* triDataTex;//1d texture
 			GLuint triangleBoolSSBO;
+			bool SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint);
 		};
 	}
 }

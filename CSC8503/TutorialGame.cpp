@@ -14,14 +14,13 @@ using namespace NCL;
 using namespace CSC8503;
 
 TutorialGame::TutorialGame()	{
-	world		= new GameWorld();
 #ifdef USEVULKAN
-	renderer	= new GameTechVulkanRenderer(*world);
+	renderer	= new GameTechVulkanRenderer(GameWorld::GetInstance());
 #else 
-	renderer = new GameTechRenderer(*world);
+	renderer = new GameTechRenderer(GameWorld::GetInstance());
 #endif
 
-	physics		= new PhysicsSystem(*world);
+	physics		= new PhysicsSystem(GameWorld::GetInstance());
 
 	forceMagnitude	= 10.0f;
 	useGravity		= false;
@@ -88,7 +87,6 @@ TutorialGame::~TutorialGame()	{
 
 	delete physics;
 	delete renderer;
-	delete world;
 
 	//todo delete texture array
 	//todo delete compute shader
@@ -96,7 +94,7 @@ TutorialGame::~TutorialGame()	{
 
 void TutorialGame::UpdateGame(float dt) {
 	if (!inSelectionMode) {
-		world->GetMainCamera()->UpdateCamera(dt);
+	   GameWorld::GetInstance().GetMainCamera()->UpdateCamera(dt);
 	}
 	if (player != nullptr) {
 		Vector3 objPos = player->GetTransform().GetPosition();
@@ -108,7 +106,8 @@ void TutorialGame::UpdateGame(float dt) {
 
 		Quaternion q(modelMat);
 		Vector3 angles = q.ToEuler(); //nearly there now!
-		world->GetMainCamera()->SetTargetPosition(objPos);
+
+		GameWorld::GetInstance().GetMainCamera()->SetTargetPosition(objPos);
 	}
 
 	UpdateKeys();
@@ -131,7 +130,7 @@ void TutorialGame::UpdateGame(float dt) {
 
 		Ray r = Ray(rayPos, rayDir);
 
-		if (world->Raycast(r, closestCollision, true, selectionObject)) {
+		if (GameWorld::GetInstance().Raycast(r, closestCollision, true, selectionObject)) {
 			if (objClosest) {
 				objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
 			}
@@ -146,7 +145,7 @@ void TutorialGame::UpdateGame(float dt) {
 	SelectObject();
 	MoveSelectedObject();
 
-	world->UpdateWorld(dt);
+	GameWorld::GetInstance().UpdateWorld(dt);
 	renderer->Update(dt);
 	physics->Update(dt);
 
@@ -175,17 +174,17 @@ void TutorialGame::UpdateKeys() {
 	//allowing the other one to stretch too much etc. Shuffling the order so that it
 	//is random every frame can help reduce such bias.
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F9)) {
-		world->ShuffleConstraints(true);
+		GameWorld::GetInstance().ShuffleConstraints(true);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) {
-		world->ShuffleConstraints(false);
+		GameWorld::GetInstance().ShuffleConstraints(false);
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
-		world->ShuffleObjects(true);
+		GameWorld::GetInstance().ShuffleObjects(true);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
-		world->ShuffleObjects(false);
+		GameWorld::GetInstance().ShuffleObjects(false);
 	}
 	if (Window::GetMouse()->ButtonPressed(MouseButtons::LEFT))
 	{
@@ -220,7 +219,7 @@ void TutorialGame::UpdateKeys() {
 }
 
 void TutorialGame::LockedObjectMovement() {
-	Matrix4 view		= world->GetMainCamera()->BuildViewMatrix();
+	Matrix4 view		= GameWorld::GetInstance().GetMainCamera()->BuildViewMatrix();
 	Matrix4 camWorld	= view.Inverse();
 
 	Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
@@ -286,21 +285,22 @@ void TutorialGame::DebugObjectMovement() {
 }
 
 void TutorialGame::InitCamera() {
-	world->GetMainCamera()->SetNearPlane(0.1f);
-	world->GetMainCamera()->SetFarPlane(500.0f);
-	world->GetMainCamera()->SetPitch(-15.0f);
-	world->GetMainCamera()->SetYaw(315.0f);
-	world->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
+	GameWorld::GetInstance().GetMainCamera()->SetNearPlane(0.1f);
+	GameWorld::GetInstance().GetMainCamera()->SetFarPlane(500.0f);
+	GameWorld::GetInstance().GetMainCamera()->SetPitch(-15.0f);
+	GameWorld::GetInstance().GetMainCamera()->SetYaw(315.0f);
+	GameWorld::GetInstance().GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
 	lockedObject = nullptr;
 }
 
 void TutorialGame::InitWorld() {
 
-	world->ClearAndErase();
+	GameWorld::GetInstance().ClearAndErase();
 	physics->Clear();
 
 
 	AddPlayerToWorld(Vector3(0, 1, 0)); //Init Player
+
 	InitDefaultFloor();
 }
 
@@ -409,7 +409,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
 
-	world->AddGameObject(floor);
+	GameWorld::GetInstance().AddGameObject(floor);
 	worldFloor = floor;
 	return floor;
 }
@@ -440,7 +440,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	sphere->GetPhysicsObject()->SetInverseMass(inverseMass);
 	sphere->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(sphere);
+	GameWorld::GetInstance().AddGameObject(sphere);
 
 	return sphere;
 }
@@ -461,7 +461,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	cube->GetPhysicsObject()->SetInverseMass(inverseMass);
 	cube->GetPhysicsObject()->InitCubeInertia();
 
-	world->AddGameObject(cube);
+	GameWorld::GetInstance().AddGameObject(cube);
 
 	return cube;
 }
@@ -485,8 +485,7 @@ void TutorialGame::AddPlayerToWorld(const Vector3& position) {
 	this->player->GetPhysicsObject()->SetInverseMass(inverseMass);
 	this->player->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(this->player);
-
+	GameWorld::GetInstance().AddGameObject(this->player);
 
 }
 
@@ -509,7 +508,7 @@ GameObject* TutorialGame::AddEnemyToWorld(const Vector3& position) {
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(character);
+	GameWorld::GetInstance().AddGameObject(character);
 
 	return character;
 }
@@ -529,7 +528,7 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 	apple->GetPhysicsObject()->SetInverseMass(1.0f);
 	apple->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(apple);
+	GameWorld::GetInstance().AddGameObject(apple);
 
 	return apple;
 }
@@ -549,7 +548,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddPaintBall(const Vector3& position, Ve
 	paintball->SetPhysicsObject(new PhysicsObject(&paintball->GetTransform(), paintball->GetBoundingVolume()));
 	paintball->GetPhysicsObject()->AddForce(direction);
 
-	world->AddGameObject(paintball);
+	GameWorld::GetInstance().AddGameObject(paintball);
 
 	return paintball;
 	
@@ -625,10 +624,10 @@ bool TutorialGame::SelectObject() {
 				selectionObject = nullptr;
 			}
 
-			Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
+			Ray ray = CollisionDetection::BuildRayFromMouse(*GameWorld::GetInstance().GetMainCamera());
 
 			RayCollision closestCollision;
-			if (world->Raycast(ray, closestCollision, true)) {
+			if (GameWorld::GetInstance().Raycast(ray, closestCollision, true)) {
 				selectionObject = (GameObject*)closestCollision.node;
 
 				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
@@ -671,10 +670,10 @@ void TutorialGame::MoveSelectedObject() {
 	}
 	//Push the selected object!
 	if (Window::GetMouse()->ButtonPressed(NCL::MouseButtons::RIGHT)) {
-		Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
+		Ray ray = CollisionDetection::BuildRayFromMouse(*GameWorld::GetInstance().GetMainCamera());
 
 		RayCollision closestCollision;
-		if (world->Raycast(ray, closestCollision, true)) {
+		if (GameWorld::GetInstance().Raycast(ray, closestCollision, true)) {
 			if (closestCollision.node == selectionObject) {
 				selectionObject->GetPhysicsObject()->AddForceAtPosition(ray.GetDirection() * forceMagnitude, closestCollision.collidedAt);
 			}

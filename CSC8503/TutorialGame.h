@@ -88,16 +88,17 @@ namespace NCL {
 
 			GameObject* objClosest = nullptr;
 
-			GameObject* worldFloor;
+			GameObject* worldFloor = nullptr;
 			
 			//this was me
 			OGLComputeShader* computeShader;
-			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center);
+			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center, int teamID);
 			OGLShader* quadShader;
-			OGLTexture* quadTex = nullptr;
+			TextureBase* quadTex = nullptr;
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object);
+
 			void DispatchComputeShaderForEachTriangle(MeshGeometry* mesh);
 			GLuint triangleSSBO;
 			void SetUpTriangleSSBOAndDataTexture();
@@ -105,6 +106,29 @@ namespace NCL {
 			OGLTexture* triDataTex;//1d texture
 			GLuint triangleBoolSSBO;
 			bool SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint);
+
+			void DispatchComputeShaderForEachPixel();
+			OGLComputeShader* rayMarchComputeShader;
+			int maxSteps;
+			float hitDistance;
+			float noHitDistance;
+			float debugValue;
+			struct RayMarchSphere {
+				Vector3 center;
+				float radius;
+				Vector3 color;
+			};
+			std::vector<GameObject*> spheres;
+			std::vector<RayMarchSphere> rayMarchSpheres;
+			GLuint rayMarchSphereSSBO;
+			int maxRayMarchSpheres;
+			float timePassed = 0;
+			GLuint depthBufferTex;//for depth testing after raymarch
+			bool rayMarchDepthTest;
+
+
+
+
 		};
 	}
 }

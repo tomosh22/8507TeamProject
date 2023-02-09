@@ -32,6 +32,12 @@ namespace NCL {
 			nearPlane	= 1.0f;
 			farPlane	= 100.0f;
 
+
+			forward.x = cos(yaw) * cos(pitch);
+			forward.y = sin(pitch);
+			forward.z = sin(yaw) * cos(pitch);
+			forward = forward.Normalised();
+
 			camType		= CameraType::Perspective;
 		};
 
@@ -99,6 +105,8 @@ namespace NCL {
 		float	GetPitch() const { return pitch; }
 		//Sets pitch, in degrees
 		Camera& SetPitch(float p) { pitch = p; return *this; }
+
+		Vector3 GetForward() const { return forward; }
 
 		static Camera BuildPerspectiveCamera(const Vector3& pos, float pitch, float yaw, float fov, float near, float far);
 		static Camera BuildOrthoCamera(const Vector3& pos, float pitch, float yaw, float left, float right, float top, float bottom, float near, float far);

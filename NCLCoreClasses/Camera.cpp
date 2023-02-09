@@ -27,6 +27,7 @@ void Camera::UpdateCamera(float dt) {
 	}
 
 	double pi = 3.14159265359;
+
 	forward.z = -cos(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
 	forward.y = sin(Maths::DegreesToRadians(pitch));
 	forward.x = -sin(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));

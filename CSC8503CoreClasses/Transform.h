@@ -31,6 +31,11 @@ namespace NCL {
 			Matrix4 GetMatrix() const {
 				return matrix;
 			}
+
+			Vector3 GetForward()
+			{
+				return orientation.ToEuler();
+			}
 			void UpdateMatrix();
 		protected:
 			Matrix4		matrix;

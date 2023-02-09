@@ -52,6 +52,9 @@ namespace NCL {
 			GameObject* AddEnemyToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);
 
+			//this was me
+			GameObject* AddDebugTriangleToWorld(const Vector3& position);
+
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
 #else
@@ -70,6 +73,9 @@ namespace NCL {
 			MeshGeometry*	capsuleMesh = nullptr;
 			MeshGeometry*	cubeMesh	= nullptr;
 			MeshGeometry*	sphereMesh	= nullptr;
+
+			//this was me
+			MeshGeometry* triangleMesh = nullptr;
 
 			TextureBase*	basicTex	= nullptr;
 			ShaderBase*		basicShader = nullptr;
@@ -99,7 +105,7 @@ namespace NCL {
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object);
 
-			void DispatchComputeShaderForEachTriangle(MeshGeometry* mesh);
+			void DispatchComputeShaderForEachTriangle(MeshGeometry* mesh, Matrix4 modelMatrix);
 			GLuint triangleSSBO;
 			void SetUpTriangleSSBOAndDataTexture();
 			OGLComputeShader* triComputeShader;
@@ -125,8 +131,13 @@ namespace NCL {
 			float timePassed = 0;
 			GLuint depthBufferTex;//for depth testing after raymarch
 			bool rayMarchDepthTest;
-
-
+			OGLTexture* testCollisionTex;
+			void InitTestCollisionTexture();
+			GameObject* testCube;
+			Vector3 testSphereCenter;
+			float testSphereRadius;
+			std::array<char, 1000 * 1000> zeros;
+			GameObject* testTriangle;
 
 
 		};

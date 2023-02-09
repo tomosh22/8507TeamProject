@@ -35,6 +35,8 @@ namespace NCL {
 				float* rayMarchNoHitDistance;
 				float* debugValue;
 				bool* depthTest;
+				Vector3* testSphereCenter;
+				float* testSphereRadius;
 			};
 			ImGUIPtrs imguiptrs;
 

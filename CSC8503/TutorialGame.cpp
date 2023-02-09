@@ -68,11 +68,21 @@ TutorialGame::TutorialGame()	{
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	
+	testSphereCenter = Vector3();
+	testSphereRadius = 1;
+	renderer->imguiptrs.testSphereCenter = &testSphereCenter;
+	renderer->imguiptrs.testSphereRadius = &testSphereRadius;
+	for (int i = 0; i < 1000 * 1000; i++)
+	{
+		zeros[i] = 0;
+	}
 
 	return;
 
 	
 }
+
+
 
 void TutorialGame::InitQuadTexture() {
 	int width = (renderer->GetWindowWidth());
@@ -181,6 +191,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 }
+
 /*
 
 Each of the little demo scenarios used in the game uses the same 2 meshes, 
@@ -195,8 +206,11 @@ void TutorialGame::InitialiseAssets() {
 	enemyMesh	= renderer->LoadMesh("Keeper.msh");
 	bonusMesh	= renderer->LoadMesh("apple.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
+	//this was me
+	triangleMesh = OGLMesh::GenerateTriangleWithIndices();
 
-	std::vector<std::array<Vector3, 3>> tris = capsuleMesh->GetAllTriangles();
+#pragma region debuggingSphereTriangleCollisions
+	/*MESH_TRIANGLES_AND_UVS tris = capsuleMesh->GetAllTrianglesAndUVs();
 	std::vector<std::array<float, 4>> results{};
 	for (int i = 0; i < tris.size(); i++)
 	{
@@ -217,7 +231,8 @@ void TutorialGame::InitialiseAssets() {
 			result[3] = 0;
 		}
 		results.push_back(result);
-	}
+	}*/
+#pragma endregion
 
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
@@ -233,6 +248,8 @@ void TutorialGame::InitialiseAssets() {
 	
 	InitQuadTexture();
 	
+	
+
 
 
 	InitCamera();
@@ -260,7 +277,7 @@ TutorialGame::~TutorialGame()	{
 void TutorialGame::UpdateGame(float dt) {
 
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 3, "abc");
-	DispatchComputeShaderForEachTriangle(capsuleMesh);
+	DispatchComputeShaderForEachTriangle(testTriangle->GetRenderObject()->GetMesh(),testTriangle->GetTransform().GetMatrix());
 	glPopDebugGroup();
 
 	timePassed += dt;
@@ -567,12 +584,28 @@ void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
 
-	InitDefaultFloor();
+	//InitDefaultFloor();
 
 	//position is irrelevant at this point in testing as im overriding position later
 	AddSphereToWorld({ 0,0,0 }, 10);
 	AddSphereToWorld({ 0,0,0 }, 10);
 	AddSphereToWorld({ 0,0,0 }, 10);
+
+	
+
+	//testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
+	int width = 1000;
+	int height = 1000;
+	testCollisionTex = new OGLTexture();
+	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)testCollisionTex)->GetObjectID()));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
+	//testCube->SetRenderObject(new RenderObject(&testCube->GetTransform(), cubeMesh, testCollisionTex, basicShader));
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	testTriangle = AddDebugTriangleToWorld({ 0,200,0 });
+	return;
 	//AddSphereToWorld({ 0,0,0 }, 10);
 }
 
@@ -819,6 +852,17 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 	return apple;
 }
 
+GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
+	GameObject* triangle = new GameObject();
+
+	triangle->GetTransform().SetScale(Vector3(100, 100, 1));
+	triangle->GetTransform().SetPosition(position);
+	
+	triangle->SetRenderObject(new RenderObject(&triangle->GetTransform(), triangleMesh, testCollisionTex, basicShader));
+	world->AddGameObject(triangle);
+	return triangle;
+}
+
 void TutorialGame::InitDefaultFloor() {
 	AddFloorToWorld(Vector3(0, -20, 0));
 }
@@ -953,40 +997,67 @@ void TutorialGame::MoveSelectedObject() {
 
 
 
-void TutorialGame::DispatchComputeShaderForEachTriangle(MeshGeometry* mesh) {
-	std::vector<std::array<Vector3, 3>> tris = mesh->GetAllTriangles();
+void TutorialGame::DispatchComputeShaderForEachTriangle(MeshGeometry* mesh, Matrix4 modelMatrix) {
+	
+	MESH_TRIANGLES_AND_UVS tris = mesh->GetAllTrianglesAndUVs();
 	triComputeShader->Bind();
+
+	
+	
+	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)testCollisionTex)->GetObjectID()));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, 1000, 1000, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
+	glBindTexture(GL_TEXTURE_2D, 0);
 	
 	glActiveTexture(GL_TEXTURE0);
 	glBindImageTexture(0, ((OGLTexture*)triDataTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16F);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindImageTexture(1, ((OGLTexture*)testTriangle->GetRenderObject()->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_R8UI);
+
+	int radiusLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereRadius");
+	int centerLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereCenter");
+	glUniform1f(radiusLocation, testSphereRadius);
+	glUniform3fv(centerLocation,1, testSphereCenter.array);
 	
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
 	for (int i = 0; i < tris.size(); i++)
 	{
-		int offset = i * sizeof(float) * 3 * 3;
+		int offset = i * sizeof(float) * 3 * 5;
 		int numFloatsSent = 0;
-		std::array<Vector3, 3> tri = tris[i];
-		Vector3 vertA = tri[0];
-		Vector3 vertB = tri[1];
-		Vector3 vertC = tri[2];
+		std::tuple<std::array<Vector3, 3>, std::array<Vector2, 3>> tri = tris[i];
+		Vector3 vertA = modelMatrix * std::get<0>(tri)[0];
+		Vector3 vertB = modelMatrix * std::get<0>(tri)[1];
+		Vector3 vertC = modelMatrix * std::get<0>(tri)[2];
+
+		Vector2 uvA = std::get<1>(tri)[0];
+		Vector2 uvB = std::get<1>(tri)[1];
+		Vector2 uvC = std::get<1>(tri)[2];
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.x));
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.y));
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.z));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(uvA.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(uvA.y));
 
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.x));
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.y));
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.z));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvB.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvB.y));
 
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.x));
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.y));
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.z));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvC.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvC.y));
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-	Vector3 testPoint(3, 5, 7);
+	
+	/*Vector3 testPoint(3, 5, 7);
 	int pointLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "point");
-	glUniform3fv(pointLocation,1, testPoint.array);
-
+	glUniform3fv(pointLocation,1, testPoint.array);*/
+	
 	triComputeShader->Execute(1000, 1, 1);//todo change number of thread groups
 	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	triComputeShader->Unbind();

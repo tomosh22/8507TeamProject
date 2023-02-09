@@ -217,3 +217,29 @@ OGLMesh* OGLMesh::GenerateQuadWithIndices() {
 	return m;
 }
 
+OGLMesh* OGLMesh::GenerateTriangleWithIndices() {
+	OGLMesh* m = new OGLMesh();
+
+	std::vector<Vector3> vertices;
+	vertices.push_back({ 0.0f, .5f, 0.0f });
+	vertices.push_back({ 0.5f, -.5f, 0.0f });
+	vertices.push_back({ -.5f, -.5f, 0.0f });
+	m->SetVertexPositions(vertices);
+	
+	std::vector<Vector2> texCoords;
+	texCoords.push_back({ 0.5,0 });
+	texCoords.push_back({ 1,1 });
+	texCoords.push_back({ 0,1 });
+	m->SetVertexTextureCoords(texCoords);
+
+	std::vector<unsigned int> indices;
+	indices.push_back(0);
+	indices.push_back(1);
+	indices.push_back(2);
+	m->SetVertexIndices(indices);
+
+
+	m->UploadToGPU();
+	return m;
+}
+

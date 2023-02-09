@@ -266,15 +266,22 @@ bool MeshGeometry::GetTriangle(unsigned int i, Vector3& va, Vector3& vb, Vector3
 	return true;
 }
 
-std::vector<std::array<Vector3, 3>> MeshGeometry::GetAllTriangles() {
+
+//typedef std::vector<std::tuple<std::array<Vector3, 3>, std::array<Vector2, 3>>> MESH_TRIANGLES_AND_UVS;
+
+MESH_TRIANGLES_AND_UVS MeshGeometry::GetAllTrianglesAndUVs() {
 	if (indices.size() % 3 != 0) std::cout << "dodgy mesh, number of indices is not a multiple of 3\n";
-	std::vector<std::array<Vector3,3>> tris;
+	MESH_TRIANGLES_AND_UVS tris;
 	for (int i = 0; i < indices.size(); i+=3)
 	{
-		std::array<Vector3, 3> tri{};
-		tri[0] = positions[indices[i]];
-		tri[1] = positions[indices[i+1]];
-		tri[2] = positions[indices[i + 2]];
+		std::tuple<std::array<Vector3, 3>, std::array<Vector2, 3>> tri{};
+		std::get<0>(tri)[0] = positions[indices[i]];
+		std::get<0>(tri)[1] = positions[indices[i+1]];
+		std::get<0>(tri)[2] = positions[indices[i + 2]];
+
+		std::get<1>(tri)[0] = texCoords[indices[i]];
+		std::get<1>(tri)[1] = texCoords[indices[i+1]];
+		std::get<1>(tri)[2] = texCoords[indices[i+2]];
 		tris.push_back(tri);
 	}
 	return tris;

@@ -69,6 +69,9 @@ namespace NCL {
 		int count;
 	};
 
+	//this was me
+	typedef std::vector<std::tuple<std::array<Vector3, 3>, std::array<Vector2, 3>>> MESH_TRIANGLES_AND_UVS;
+
 	class MeshGeometry	{
 	public:		
 		virtual ~MeshGeometry();
@@ -131,8 +134,9 @@ namespace NCL {
 
 
 		bool GetTriangle(unsigned int i, Vector3& a, Vector3& b, Vector3& c) const;
+
 		//this was me
-		std::vector<std::array<Vector3,3>> GetAllTriangles();
+		MESH_TRIANGLES_AND_UVS GetAllTrianglesAndUVs();
 
 		bool GetNormalForTri(unsigned int i, Vector3& n) const;
 		bool HasTriangle(unsigned int i) const;

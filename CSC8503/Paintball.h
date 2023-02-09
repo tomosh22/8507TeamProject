@@ -5,6 +5,7 @@ namespace NCL
 {
 	namespace CSC8503
 	{
+		class TutorialGame;
 		class Paintball : public GameObject
 		{
 		public:

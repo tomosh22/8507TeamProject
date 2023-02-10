@@ -27,7 +27,6 @@ TutorialGame::TutorialGame()	{
 	inSelectionMode = false;
 
 	InitialiseAssets();
-	
 }
 
 void TutorialGame::InitQuadTexture() {
@@ -311,7 +310,6 @@ void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int
 	glBindImageTexture(0, ((OGLTexture*)floor->GetRenderObject()->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_R8);
 
 
-
 	int widthLocation = glGetUniformLocation(computeShader->GetProgramID(), "width");
 	glUniform1i(widthLocation, width * TEXTURE_DENSITY);
 
@@ -362,10 +360,10 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	floor->GetTransform()
 		.SetScale(floorSize * 2)
 		.SetPosition(position);
-	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
-	floor->GetPhysicsObject()->SetInverseMass(0);
-	floor->GetPhysicsObject()->InitCubeInertia();
 	
+	
+	floor->SetName("Floor");
+
 	floor->isPaintable = true;
 	
 	srand(time(0));
@@ -544,6 +542,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddPaintBall(const Vector3& position, Ve
 	SphereVolume* volume = new SphereVolume(1.0f);
 	paintball->SetBoundingVolume((CollisionVolume*)volume);
 	paintball->GetTransform().SetScale(Vector3(2, 2, 2)).SetPosition(position);
+	paintball->SetName("Paintball");
 
 	paintball->SetRenderObject(new RenderObject(&paintball->GetTransform(), sphereMesh, nullptr, basicShader));
 	paintball->SetPhysicsObject(new PhysicsObject(&paintball->GetTransform(), paintball->GetBoundingVolume()));

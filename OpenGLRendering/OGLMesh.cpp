@@ -238,6 +238,10 @@ OGLMesh* OGLMesh::GenerateTriangleWithIndices() {
 	indices.push_back(2);
 	m->SetVertexIndices(indices);
 
+	SubMesh s;
+	s.start = 0;
+	s.count = 3;
+	m->AddSubMesh(0,3,0);
 
 	m->UploadToGPU();
 	return m;

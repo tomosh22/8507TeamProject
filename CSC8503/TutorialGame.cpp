@@ -784,6 +784,17 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	return cube;
 }
 
+GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
+	GameObject* triangle = new GameObject();
+
+	triangle->GetTransform().SetScale(Vector3(100, 100, 1));
+	triangle->GetTransform().SetPosition(position);
+
+	triangle->SetRenderObject(new RenderObject(&triangle->GetTransform(), triangleMesh, testCollisionTex, basicShader));
+	world->AddGameObject(triangle);
+	return triangle;
+}
+
 GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position) {
 	float meshSize		= 1.0f;
 	float inverseMass	= 0.5f;
@@ -852,16 +863,7 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 	return apple;
 }
 
-GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
-	GameObject* triangle = new GameObject();
 
-	triangle->GetTransform().SetScale(Vector3(100, 100, 1));
-	triangle->GetTransform().SetPosition(position);
-	
-	triangle->SetRenderObject(new RenderObject(&triangle->GetTransform(), triangleMesh, testCollisionTex, basicShader));
-	world->AddGameObject(triangle);
-	return triangle;
-}
 
 void TutorialGame::InitDefaultFloor() {
 	AddFloorToWorld(Vector3(0, -20, 0));

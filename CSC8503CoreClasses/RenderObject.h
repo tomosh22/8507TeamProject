@@ -48,6 +48,8 @@ namespace NCL {
 			//this was me
 			//unsigned int texID;
 
+			TextureBase* triDataTex;
+
 		protected:
 			MeshGeometry*	mesh;
 			TextureBase*	texture;

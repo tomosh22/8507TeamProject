@@ -368,7 +368,7 @@ static void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum
 	case GL_DEBUG_SEVERITY_MEDIUM: severityName = "Priority(Medium)"; break;
 	case GL_DEBUG_SEVERITY_LOW: severityName = "Priority(Low)"; break;
 	}
-
+	if (type == GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR)return;
 	std::cout << "OpenGL Debug Output: " + sourceName + ", " + typeName + ", " + severityName + ", " + string(message) << std::endl;
 }
 #endif

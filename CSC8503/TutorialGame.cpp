@@ -55,8 +55,8 @@ TutorialGame::TutorialGame()	{
 	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 	glTexImage2D(GL_TEXTURE_2D, 0,
 		GL_DEPTH_COMPONENT,
 		renderer->GetWindowWidth(),
@@ -208,7 +208,7 @@ void TutorialGame::InitialiseAssets() {
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
 	//this was me
 	triangleMesh = OGLMesh::GenerateTriangleWithIndices();
-
+	monkeyMesh = renderer->LoadMesh("monkey.msh");
 #pragma region debuggingSphereTriangleCollisions
 	/*MESH_TRIANGLES_AND_UVS tris = capsuleMesh->GetAllTrianglesAndUVs();
 	std::vector<std::array<float, 4>> results{};
@@ -276,8 +276,11 @@ TutorialGame::~TutorialGame()	{
 
 void TutorialGame::UpdateGame(float dt) {
 
-	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 3, "abc");
-	DispatchComputeShaderForEachTriangle(testTriangle->GetRenderObject()->GetMesh(),testTriangle->GetTransform().GetMatrix());
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "cube");
+	DispatchComputeShaderForEachTriangle(testCube);
+	glPopDebugGroup();
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
+	DispatchComputeShaderForEachTriangle(monkey);
 	glPopDebugGroup();
 
 	timePassed += dt;
@@ -593,7 +596,7 @@ void TutorialGame::InitWorld() {
 
 	
 
-	//testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
+	testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
 	int width = 1000;
 	int height = 1000;
 	testCollisionTex = new OGLTexture();
@@ -601,10 +604,14 @@ void TutorialGame::InitWorld() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
-	//testCube->SetRenderObject(new RenderObject(&testCube->GetTransform(), cubeMesh, testCollisionTex, basicShader));
+	testCube->SetRenderObject(new RenderObject(&testCube->GetTransform(), cubeMesh, testCollisionTex, basicShader));
+	AddDebugTriangleInfoToObject(testCube);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	testTriangle = AddDebugTriangleToWorld({ 0,200,0 });
+	//testTriangle = AddDebugTriangleToWorld({ 0,200,0 });
+
+	monkey = AddMonkeyToWorld({ 0,0,0 }, { 20,20,20 });
+	AddDebugTriangleInfoToObject(monkey);
 	return;
 	//AddSphereToWorld({ 0,0,0 }, 10);
 }
@@ -659,7 +666,7 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
-	object->SetRenderObject(new RenderObject(&object->GetTransform(), cubeMesh, tex, basicShader));
+	object->GetRenderObject()->SetDefaultTexture(tex);
 }
 /*
 
@@ -782,6 +789,29 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	world->AddGameObject(cube);
 
 	return cube;
+}
+
+GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+	GameObject* monkey = new GameObject();
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+	monkey->SetBoundingVolume((CollisionVolume*)volume);
+
+	monkey->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2);
+
+	monkey->SetRenderObject(new RenderObject(&monkey->GetTransform(), monkeyMesh, testCollisionTex, basicShader));
+	monkey->SetPhysicsObject(new PhysicsObject(&monkey->GetTransform(), monkey->GetBoundingVolume()));
+
+	monkey->GetPhysicsObject()->SetInverseMass(inverseMass);
+	monkey->GetPhysicsObject()->InitCubeInertia();
+
+	InitPaintableTextureOnObject(monkey);
+
+	world->AddGameObject(monkey);
+
+	return monkey;
 }
 
 GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
@@ -999,24 +1029,24 @@ void TutorialGame::MoveSelectedObject() {
 
 
 
-void TutorialGame::DispatchComputeShaderForEachTriangle(MeshGeometry* mesh, Matrix4 modelMatrix) {
-	
-	MESH_TRIANGLES_AND_UVS tris = mesh->GetAllTrianglesAndUVs();
+void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
+	Matrix4 modelMatrix = object->GetTransform().GetMatrix();
+	MESH_TRIANGLES_AND_UVS tris = object->GetRenderObject()->GetMesh()->GetAllTrianglesAndUVs();
 	triComputeShader->Bind();
 
 	
 	
-	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)testCollisionTex)->GetObjectID()));
+	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->GetDefaultTexture())->GetObjectID()));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, 1000, 1000, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, ((OGLTexture*)triDataTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16F);
+	glBindImageTexture(0, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16F);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindImageTexture(1, ((OGLTexture*)testTriangle->GetRenderObject()->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_R8UI);
+	glBindImageTexture(1, ((OGLTexture*)object->GetRenderObject()->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_R8UI);
 
 	int radiusLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereRadius");
 	int centerLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereCenter");
@@ -1067,38 +1097,46 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(MeshGeometry* mesh, Matr
 
 void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 {
-#pragma region ssbo
 	//todo make this a #define
-	const unsigned int MAX_TRIS = 1000;
-	glGenBuffers(1, &triangleSSBO);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(Vector3) * 3, NULL, GL_DYNAMIC_DRAW);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5,triangleSSBO);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-#pragma endregion
+	const unsigned int MAX_TRIS = 10000;
+
+	
+	
+
 	//todo delete this, just for testing
 	std::array<char, MAX_TRIS> noise;
 	for (int i = 0; i < MAX_TRIS; i++)
 	{
 		noise[i] = (char)rand() / (char)RAND_MAX;
 	}
-	triDataTex = new OGLTexture();
-	glBindTexture(GL_TEXTURE_1D, ((OGLTexture*)triDataTex)->GetObjectID());
+	
+	glGenBuffers(1, &(triangleSSBO));
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(Vector3) * 3, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, triangleSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	/*glGenBuffers(1, &triangleBoolSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(bool), NULL, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, MAX_TRIS * sizeof(bool), nullptr);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, triangleBoolSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
+	
+}
+
+void TutorialGame::AddDebugTriangleInfoToObject(GameObject* object) {
+	//todo make this a #define
+	const unsigned int MAX_TRIS = 10000;
+	object->GetRenderObject()->triDataTex = new OGLTexture();
+	glBindTexture(GL_TEXTURE_1D, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID());
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, MAX_TRIS, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glBindTexture(GL_TEXTURE_1D, 0);
 
-	glGenBuffers(1, &triangleBoolSSBO);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(bool), NULL, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, MAX_TRIS * sizeof(bool), nullptr);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, triangleBoolSSBO);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	
 }
-
-
 
 bool TutorialGame::SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint) {
 	Vector3 triangleNormal = (Vector3::Cross(v1-v0,v2-v0)).Normalised();

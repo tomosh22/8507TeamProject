@@ -1,7 +1,7 @@
 #version 430 core
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;//todo change work groups
-layout(	rgba16f, binding = 0) uniform image1D tex;
-layout(	r8, binding = 1) uniform image2D cubeTex;
+layout(	rgba16f, binding = 0) uniform image1D triDataTex;
+layout(	r8, binding = 1) uniform image2D outputTex;
 
 uniform vec3 sphereCenter;
 uniform float sphereRadius;
@@ -115,16 +115,17 @@ void main() {
     	vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,triA,triB,triC);
         vec2 uv = BarycentricToUV(barycentric, uvA, uvB, uvC);
         ivec2 IMAGE_COORDS = ivec2(uv.x * 1000,uv.y * 1000);
-    	imageStore(tex,id,vec4(uv,0,1));
+    	imageStore(triDataTex,id,vec4(uv,0,1));
+        //imageStore(triDataTex,id,vec4(0,0,1,1));//debugging
         for(int x = -20; x < 21;x++){
             for(int y = -20; y < 21; y++){
-                imageStore(cubeTex,IMAGE_COORDS + ivec2(x,y),vec4(1));
+                imageStore(outputTex,IMAGE_COORDS + ivec2(x,y),vec4(1));
             }
         }
         
     }
     else{
-    	imageStore(tex,id,vec4(0));
+    	imageStore(triDataTex,id,vec4(1,0,0,1));
     }
    
     

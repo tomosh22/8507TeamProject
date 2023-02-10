@@ -286,6 +286,8 @@ void main(void)
 		
 	fragColor.rgb = color;
 	fragColor.a = 1;
+
+	
 #else
 
 #endif

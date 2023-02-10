@@ -47,6 +47,7 @@ namespace NCL {
 			GameObject* AddFloorToWorld(const Vector3& position);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, float inverseMass = 10.0f);
 			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 
 			GameObject* AddPlayerToWorld(const Vector3& position);
 			GameObject* AddEnemyToWorld(const Vector3& position);
@@ -76,6 +77,7 @@ namespace NCL {
 
 			//this was me
 			MeshGeometry* triangleMesh = nullptr;
+			MeshGeometry* monkeyMesh = nullptr;
 
 			TextureBase*	basicTex	= nullptr;
 			ShaderBase*		basicShader = nullptr;
@@ -105,12 +107,12 @@ namespace NCL {
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object);
 
-			void DispatchComputeShaderForEachTriangle(MeshGeometry* mesh, Matrix4 modelMatrix);
+			void DispatchComputeShaderForEachTriangle(GameObject* object);
 			GLuint triangleSSBO;
 			void SetUpTriangleSSBOAndDataTexture();
 			OGLComputeShader* triComputeShader;
-			OGLTexture* triDataTex;//1d texture
-			GLuint triangleBoolSSBO;
+			//OGLTexture* triDataTex;//1d texture
+			//GLuint triangleBoolSSBO;
 			bool SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint);
 
 			void DispatchComputeShaderForEachPixel();
@@ -138,6 +140,8 @@ namespace NCL {
 			float testSphereRadius;
 			std::array<char, 1000 * 1000> zeros;
 			GameObject* testTriangle;
+			GameObject* monkey;
+			void AddDebugTriangleInfoToObject(GameObject* object);
 
 
 		};

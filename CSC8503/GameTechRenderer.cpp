@@ -542,8 +542,8 @@ void GameTechRenderer::ImGui() {
 		ImGui::TreePop();
 	}
 	if (ImGui::TreeNode("World to UV Space Testing")) {
-		ImGui::SliderFloat3("Position", imguiptrs.testSphereCenter->array, -200, 200);
-		ImGui::SliderFloat("Sphere Radius", imguiptrs.testSphereRadius, 0, 200);
+		ImGui::SliderFloat3("Position", imguiptrs.testSphereCenter->array, -200, 500);
+		ImGui::SliderFloat("Sphere Radius", imguiptrs.testSphereRadius, 0, 2000);
 
 		ImGui::TreePop();
 	}

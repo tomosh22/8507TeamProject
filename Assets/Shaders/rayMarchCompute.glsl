@@ -1,4 +1,4 @@
-#version 430 core
+#version 450 core
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 layout(r8, binding = 0) uniform image2D tex;
 uniform sampler2D depthTex;

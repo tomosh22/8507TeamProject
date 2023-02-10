@@ -6,7 +6,7 @@
 #include "PhysicsSystem.h"
 
 #include <array>
-
+#include"MyDelegate.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -17,7 +17,8 @@ namespace NCL {
 			~TutorialGame();
 
 			virtual void UpdateGame(float dt);
-
+		
+			
 		protected:
 			void InitialiseAssets();
 

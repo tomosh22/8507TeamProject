@@ -17,21 +17,26 @@ void NCL::CSC8503::Player::Update(float dt)
 {
 	Input(dt);
     Rotate();  
+    Fire();
 }
 
-void NCL::CSC8503::Player::Move()
+void NCL::CSC8503::Player::Move(float dt)
 {
-	//Base on the value of Dup and Dright
+	
+}
 
+void NCL::CSC8503::Player::Fire()
+{
+    if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT))
+    {
+        std::cout << "Fire" << std::endl;
+    }
 }
 
 
 
 void NCL::CSC8503::Player::Rotate()
 {
-    if (Window::GetKeyboard()->KeyHeld(KeyboardKeys::A)|| Window::GetKeyboard()->KeyHeld(KeyboardKeys::D)
-        || Window::GetKeyboard()->KeyHeld(KeyboardKeys::W)|| Window::GetKeyboard()->KeyHeld(KeyboardKeys::S))
-    {
         Matrix4 view = GameWorld::GetInstance().GetMainCamera()->BuildViewMatrix();
         Matrix4 camWorld = view.Inverse();
 
@@ -41,7 +46,6 @@ void NCL::CSC8503::Player::Rotate()
 
         fwdAxis.y = 0.0f;
         fwdAxis.Normalise();
-
         /*std::cout << "Self Direction" << this->transform.GetForward() << std::endl;
         std::cout << "Camera Direction" << fwdAxis << std::endl;*/
 
@@ -60,9 +64,13 @@ void NCL::CSC8503::Player::Rotate()
             {
                 degree = 360 - degree;
             }
-            GetTransform().Rotate(Vector3(0, -degree, 0));
+            
+            if (degree != 0 || degree != 360)
+            {
+                GetTransform().Rotate(Vector3(0, -degree, 0));
+            }
         }
-    }
+    
 }
 
 void NCL::CSC8503::Player::Input(float dt)

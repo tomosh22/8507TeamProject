@@ -1,13 +1,12 @@
 #pragma once
 
-#include <typeinfo.h>
 #include <list>
 #include <vector>
 
 namespace Delegate
 {
 
-	// IDelegate   提供接口的基类
+	// IDelegate   
 
 	template<typename ReturnType, typename ...ParamType>
 	class IDelegate
@@ -21,7 +20,7 @@ namespace Delegate
 	};
 
 	
-	//StaticDelegate 普通函数的委托
+	//StaticDelegate 
 
 	template<typename ReturnType, typename ...ParamType>
 	class CStaticDelegate :
@@ -50,14 +49,14 @@ namespace Delegate
 	};
 
 
-	//普通函数的委托特化版本
+	
 	template<typename ReturnType, typename ...ParamType>
 	class CStaticDelegate<ReturnType(*)(ParamType ...)> :
 		public IDelegate<ReturnType, ParamType ...>
 	{
 	public:
 
-		//定义 Func 为 void (void) 函数类型指针。
+	
 		typedef  ReturnType(*Func)(ParamType...);
 
 		CStaticDelegate(Func _func) : mFunc(_func) { }
@@ -78,7 +77,6 @@ namespace Delegate
 		Func mFunc;
 	};
 
-	//成员函数委托
 	template<typename T, typename ReturnType, typename ...ParamType>
 	class CMethodDelegate :
 		public IDelegate<ReturnType, ParamType...>
@@ -109,7 +107,6 @@ namespace Delegate
 		Method mMethod;
 	};
 
-	//成员函数委托特化
 	template<typename T, typename ReturnType, typename ...ParamType>
 	class CMethodDelegate<T,ReturnType (T:: *)(ParamType...)> :
 		public IDelegate<ReturnType, ParamType...>
@@ -143,7 +140,6 @@ namespace Delegate
 	
 
 
-	//多播委托
 	template<typename ReturnType, typename ...ParamType>
 	class CMultiDelegate
 	{
@@ -199,7 +195,7 @@ namespace Delegate
 			{
 				if ((*iter) && (*iter)->compare(_delegate))
 				{
-					if ((*iter) != _delegate) delete (*iter);       //避免同一个地址被delete两次
+					if ((*iter) != _delegate) delete (*iter);       //锟斤拷锟斤拷同一锟斤拷锟斤拷址锟斤拷delete锟斤拷锟斤拷
 					(*iter) = 0;
 					break;
 				}
@@ -288,7 +284,7 @@ namespace Delegate
 			{
 				if ((*iter) && (*iter)->compare(_delegate))
 				{
-					if ((*iter) != _delegate) delete (*iter);       //避免同一个地址被delete两次
+					if ((*iter) != _delegate) delete (*iter);       //锟斤拷锟斤拷同一锟斤拷锟斤拷址锟斤拷delete锟斤拷锟斤拷
 					(*iter) = 0;
 					break;
 				}

@@ -40,19 +40,19 @@ void Camera::UpdateCamera(float dt) {
 
 	float frameSpeed = 100 * dt;
 
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
-		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
-	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
-		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
-	}
+	//if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
+	//	position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
+	//}
+	//if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
+	//	position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
+	//}
 
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
-		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
-	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
-		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
-	}
+	//if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
+	//	position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
+	//}
+	//if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
+	//	position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
+	//}
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT)) {
 		position.y += frameSpeed;

@@ -9,7 +9,7 @@ https://research.ncl.ac.uk/game/
 #pragma once
 #include "Matrix4.h"
 #include "Vector3.h"
-
+#include "Maths.h"
 namespace NCL {
 	using namespace NCL::Maths;
 	enum class CameraType {
@@ -32,11 +32,12 @@ namespace NCL {
 			nearPlane	= 1.0f;
 			farPlane	= 100.0f;
 
-
-			forward.x = cos(yaw) * cos(pitch);
-			forward.y = sin(pitch);
-			forward.z = sin(yaw) * cos(pitch);
+			forward.z = -cos(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
+			forward.y = sin(Maths::DegreesToRadians(pitch));
+			forward.x = -sin(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
 			forward = forward.Normalised();
+			
+
 
 			camType		= CameraType::Perspective;
 		};
@@ -108,6 +109,14 @@ namespace NCL {
 
 		Vector3 GetForward() const { return forward; }
 
+		inline Vector3 GetRight()
+		{
+			rightDir.x = cos(yaw);
+			rightDir.y = 0;
+			rightDir.z = -sin(yaw);
+			return rightDir;
+		}
+
 		static Camera BuildPerspectiveCamera(const Vector3& pos, float pitch, float yaw, float fov, float near, float far);
 		static Camera BuildOrthoCamera(const Vector3& pos, float pitch, float yaw, float left, float right, float top, float bottom, float near, float far);
 	protected:
@@ -126,6 +135,7 @@ namespace NCL {
 		Vector3 position;
 
 		Vector3 forward;	//Forward direction of camera
+		Vector3 rightDir;		//Right direciton of camera
 		Vector3 targetPosition;   //The target camera look at 
 		Vector3 lockOffset;		 // offset between camera and target
 	};

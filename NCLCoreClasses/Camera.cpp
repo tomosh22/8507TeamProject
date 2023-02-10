@@ -1,7 +1,6 @@
 #include "Camera.h"
 #include "Window.h"
 #include <algorithm>
-#include "Maths.h"
 
 using namespace NCL;
 

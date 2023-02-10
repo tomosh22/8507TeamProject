@@ -16,26 +16,53 @@ NCL::CSC8503::Player::~Player()
 void NCL::CSC8503::Player::Update(float dt)
 {
 	Input(dt);
-    Rotate();
-
-    std::cout << GameWorld::GetInstance().GetMainCamera()->GetForward() << std::endl;
-    
+    Rotate();  
 }
 
 void NCL::CSC8503::Player::Move()
 {
-	
+	//Base on the value of Dup and Dright
+
 }
 
 
 
 void NCL::CSC8503::Player::Rotate()
 {
-    //Base on the Dup and Dright
-    //Need forward direction of camera
-   // std::cout << "Self Rotation" << this->transform.GetForward() << std::endl;
+    if (Window::GetKeyboard()->KeyHeld(KeyboardKeys::A)|| Window::GetKeyboard()->KeyHeld(KeyboardKeys::D)
+        || Window::GetKeyboard()->KeyHeld(KeyboardKeys::W)|| Window::GetKeyboard()->KeyHeld(KeyboardKeys::S))
+    {
+        Matrix4 view = GameWorld::GetInstance().GetMainCamera()->BuildViewMatrix();
+        Matrix4 camWorld = view.Inverse();
 
+        Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
 
+        Vector3 fwdAxis = Vector3::Cross(Vector3(0, 1, 0), rightAxis);
+
+        fwdAxis.y = 0.0f;
+        fwdAxis.Normalise();
+
+        /*std::cout << "Self Direction" << this->transform.GetForward() << std::endl;
+        std::cout << "Camera Direction" << fwdAxis << std::endl;*/
+
+        
+        if (DupDamp != 0 || DrightDamp != 0)
+        {
+            Vector3 targetForward = fwdAxis * DupDamp - rightAxis * DrightDamp;
+
+            float temp = Vector3::Dot(transform.GetForward(), targetForward) / (transform.GetForward().Length() * targetForward.Length());
+            temp = temp > 1 ? 1 : temp;
+            temp = temp < -1 ? -1 : temp;
+
+            float degree = (acos((temp))) / 3.1415926 * 180;
+
+            if (Vector3::Cross(transform.GetForward(), targetForward).y > 0)
+            {
+                degree = 360 - degree;
+            }
+            GetTransform().Rotate(Vector3(0, -degree, 0));
+        }
+    }
 }
 
 void NCL::CSC8503::Player::Input(float dt)

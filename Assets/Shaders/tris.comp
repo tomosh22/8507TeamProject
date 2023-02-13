@@ -93,7 +93,63 @@ bool sphereTriangleIntersection(vec3 sphereCenter, float sphereRadius,
     return true;
 }
 
+bool EdgeIntersection(vec3 sphereCenter, float sphereRadius,
+                                vec3 v0, vec3 v1, vec3 v2,
+                                out vec3 intersectionPoint){
+	float furthestDistance = 0.;
+	int furthestVert = -1;
+	float newDistance;
+	for(int i = 0;i < 3;i++){
+		switch(i){
+		case 0:
+			newDistance = length(v0-point);
+			if(newDistance > furthestDistance){
+				furthestVert = i;
+				furthestDistance = newDistance;
+			}
+			break;
+		case 1:
+			newDistance = length(v1-point);
+			if(newDistance > furthestDistance){
+				furthestVert = i;
+				furthestDistance = newDistance;
+			}
+			break;
+		case 2:
+			newDistance = length(v2-point);
+			if(newDistance > furthestDistance){
+				furthestVert = i;
+				furthestDistance = newDistance;
+			}
+			break;
+		}
+	}
+	Edge edge;
+	switch (furthestVert){
+	case 0:
+		edge.a = v1;
+		edge.b = v2;
+		break;
+	case 1:
+		edge.a = v2;
+		edge.b = v0;
+		break;
+	case 2:
+		edge.a = v0;
+		edge.b = v1;
+	}
+    if(length(edge.a - sphereCenter)<sphereRadius){
+        intersectionPoint = edge.a;
+        return true;
+    }
+    if(length(edge.b - sphereCenter)<sphereRadius){
+        intersectionPoint = edge.b;
+        return true;
+    }
+    return false;
+	
 
+}
 
 void main() {
 	int id = int(gl_GlobalInvocationID.x);
@@ -111,7 +167,7 @@ void main() {
     vec2 uvC = vec2(tri.cu,tri.cv);
     
 
-    if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
+    if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint) || EdgeIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
     	vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,triA,triB,triC);
         vec2 uv = BarycentricToUV(barycentric, uvA, uvB, uvC);
         ivec2 IMAGE_COORDS = ivec2(uv.x * 1000,uv.y * 1000);

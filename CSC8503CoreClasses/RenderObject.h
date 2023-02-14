@@ -2,6 +2,7 @@
 #include "TextureBase.h"
 #include "ShaderBase.h"
 #include <array>
+#define MAX_TRIS 10000
 
 namespace NCL {
 	using namespace NCL::Rendering;

@@ -138,6 +138,23 @@ bool EdgeIntersection(vec3 sphereCenter, float sphereRadius,
 		edge.a = v0;
 		edge.b = v1;
 	}
+
+    vec3 vertToSphereCenter = sphereCenter - edge.a;
+    vec3 edgeDir = normalize(edge.b - edge.a);
+    float sphereProj = dot(vertToSphereCenter, edgeDir);
+    if(sphereProj < 0) return false;
+
+    vec3 point = edge.a + edgeDir * sphereProj;
+
+    float sphereDist = length(point - sphereCenter);
+    if(sphereDist > sphereRadius)return false;
+    intersectionPoint = point;
+    return true;
+    float offset = sqrt(sphereRadius * sphereRadius - sphereDist * sphereDist);
+    intersectionPoint = edge.a + edgeDir * (sphereProj - offset);
+    return true;
+
+    
     if(length(edge.a - sphereCenter)<sphereRadius){
         intersectionPoint = edge.a;
         return true;

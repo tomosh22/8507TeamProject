@@ -68,8 +68,8 @@ TutorialGame::TutorialGame()	{
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	
-	testSphereCenter = Vector3();
-	testSphereRadius = 1;
+	testSphereCenter = Vector3(320,190,230);
+	testSphereRadius = 10;
 	renderer->imguiptrs.testSphereCenter = &testSphereCenter;
 	renderer->imguiptrs.testSphereRadius = &testSphereRadius;
 	for (int i = 0; i < 1000 * 1000; i++)
@@ -1054,6 +1054,9 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 	glUniform3fv(centerLocation,1, testSphereCenter.array);
 	
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
+	std::array<float, MAX_TRIS * 15> emptyArray{};
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(float) * MAX_TRIS * 15, emptyArray.data());
+
 	for (int i = 0; i < tris.size(); i++)
 	{
 		int offset = i * sizeof(float) * 3 * 5;
@@ -1097,8 +1100,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 
 void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 {
-	//todo make this a #define
-	const unsigned int MAX_TRIS = 10000;
+	
 
 	
 	
@@ -1112,7 +1114,7 @@ void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 	
 	glGenBuffers(1, &(triangleSSBO));
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(Vector3) * 3, NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(float) * 15, NULL, GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, triangleSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
@@ -1126,8 +1128,6 @@ void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 }
 
 void TutorialGame::AddDebugTriangleInfoToObject(GameObject* object) {
-	//todo make this a #define
-	const unsigned int MAX_TRIS = 10000;
 	object->GetRenderObject()->triDataTex = new OGLTexture();
 	glBindTexture(GL_TEXTURE_1D, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID());
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);

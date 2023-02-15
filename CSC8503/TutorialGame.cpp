@@ -1030,10 +1030,10 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 	triComputeShader->Bind();
 
 	
-	int w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
-	int h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
 	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()));
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, 1000, 1000, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
 	glActiveTexture(GL_TEXTURE0);

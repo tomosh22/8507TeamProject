@@ -324,10 +324,12 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(widthLocation, (*i).GetTransform()->GetScale().x * TEXTURE_DENSITY);
 		glUniform1i(heightLocation, (*i).GetTransform()->GetScale().z * TEXTURE_DENSITY);
 
-		glActiveTexture(GL_TEXTURE0);
-//		BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
+		//glActiveTexture(GL_TEXTURE0);
+		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
 		if (i->isPaintable) {
 			glBindImageTexture(0, ((OGLTexture*)i->maskTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+			glActiveTexture(GL_TEXTURE1);
+			BindTextureToShader((OGLTexture*)(*i).baseTex, "baseTex", 1);
 		}
 		else {
 			glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);

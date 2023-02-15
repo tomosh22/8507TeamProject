@@ -236,6 +236,7 @@ void TutorialGame::InitialiseAssets() {
 
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
+	metalTex = renderer->LoadTexture("metal.png");
 
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
@@ -660,6 +661,7 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	object->GetRenderObject()->baseTex = metalTex;
 }
 /*
 

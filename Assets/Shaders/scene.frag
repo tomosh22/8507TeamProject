@@ -3,6 +3,7 @@
 
 uniform vec4 		objectColour;
 layout(r8ui, binding = 0) uniform uimage2D 	mainTex;
+layout(binding = 1) uniform sampler2D baseTex;
 uniform sampler2DShadow shadowTex;
 
 uniform vec3	lightPos;
@@ -173,92 +174,19 @@ vec2 starNoise(in vec2 st) {
 
 void main(void)
 {
-	float shadow = 1.0; // New !
-	
-	if( IN . shadowProj . w > 0.0) { // New !
-		shadow = textureProj ( shadowTex , IN . shadowProj ) * 0.5f;
-	}
-
-	vec3  incident = normalize ( lightPos - IN.worldPos );
-	float lambert  = max (0.0 , dot ( incident , IN.normal )) * 0.9; 
-	
-	vec3 viewDir = normalize ( cameraPos - IN . worldPos );
-	vec3 halfDir = normalize ( incident + viewDir );
-
-	float rFactor = max (0.0 , dot ( halfDir , IN.normal ));
-	float sFactor = pow ( rFactor , 80.0 );
-	
-	vec4 albedo = IN.colour;
-	
-	/*if(hasTexture) {
-	 albedo *= texture(mainTex, IN.texCoord);
-	}*/
-	
-	albedo.rgb = pow(albedo.rgb, vec3(2.2));
-	
-	fragColor.rgb = albedo.rgb * 0.05f; //ambient
-	
-	fragColor.rgb += albedo.rgb * lightColour.rgb * lambert * shadow; //diffuse light
-	
-	fragColor.rgb += lightColour.rgb * sFactor * shadow; //specular light
-	
-	fragColor.rgb = pow(fragColor.rgb, vec3(1.0 / 2.2f));
-	
-	fragColor.a = albedo.a;
-
-	fragColor.rbg += height + width;
-	fragColor = vec4(0);
-	fragColor.a = 1;
-	//fragColor.rg = IN.texCoord;
-
-	
-
 	int dataIndex = int(floor(IN.texCoord.y * height)) * width + int(floor(IN.texCoord.x * width));
-	/*if(paintData[dataIndex] == 1){fragColor = vec4(0,0,1,1);}
-	else{
-		if(isAdjacentToInk()){fragColor = vec4(0.5,0.5,1,1);}
-		else{
-			//fragColor = vec4((IN.texCoord.x * width) - floor(IN.texCoord.x * width),(IN.texCoord.y * height) - floor(IN.texCoord.y * height),0,1);
-			fragColor = vec4((IN.texCoord.x),(IN.texCoord.y),0,1);
-		}
-	}*/
+	
 	
 	fragColor = vec4(0,0,0,1);
-
-	//
 	const float noiseScale = 10.0;
 
-	/*vec2 offset = vec2(fbm(IN.texCoord * noiseScale), 0);
-	offset.y = fbm((IN.texCoord + 0.5 * vec2(offset.x))  * noiseScale);
-	offset = 2.0 * offset + 1.0;
-	offset *= 0.1;
+	
 
-	//fragColor.rgb = vec3(offset, 0);
+	
 
-	ivec2 sampleCoords = ivec2(imageSize(mainTex) * (IN.texCoord + offset));
-	if(imageLoad(mainTex,sampleCoords).r != 0){fragColor.rgb = vec3(1);}
-	fragColor.a = 1;*/
 
-#if 0
-	uint centerValue = imageLoad(mainTex,ivec2(imageSize(mainTex) * IN.texCoord) + ivec2(0, 0)).r;
-	uint leftValue =   imageLoad(mainTex,ivec2(imageSize(mainTex) * IN.texCoord) + ivec2(-1, 0)).r;
-	uint rightValue =  imageLoad(mainTex,ivec2(imageSize(mainTex) * IN.texCoord) + ivec2(1, 0)).r;
-	uint topValue =    imageLoad(mainTex,ivec2(imageSize(mainTex) * IN.texCoord) + ivec2(0, 1)).r;
-	uint bottomValue = imageLoad(mainTex,ivec2(imageSize(mainTex) * IN.texCoord) + ivec2(0, -1)).r;
+	
 
-	float coverage = 1.0;
-	if (centerValue == 0) {
-		coverage = 0.0;
-
-		if (leftValue != 0 && centerValue != leftValue) coverage += 0.25;
-		if (rightValue != 0 && centerValue != rightValue) coverage += 0.25;
-		if (topValue != 0 && centerValue != topValue) coverage += 0.25;
-		if (bottomValue != 0 && centerValue != bottomValue) coverage += 0.25;
-	}
-
-	fragColor.rgb = vec3(coverage);
-	fragColor.a = 1;
-#elif 1
 	vec2 offset = vec2(fbm(IN.texCoord * noiseScale), 0);
 		offset.y = fbm((1.0 - IN.texCoord)  * noiseScale);
 	offset = 2.0 * offset + 1.0;
@@ -287,17 +215,39 @@ void main(void)
 	fragColor.rgb = color;
 	fragColor.a = 1;
 
-	
-#else
+	if(fragColor != vec4(0,0,0,1))return;
 
-#endif
-
-//fragColor.rgb = IN.normal;
-
-	//fragColor = IN.colour;
+	float shadow = 1.0; // New !
 	
-	//fragColor.xy = IN.texCoord.xy;
+	if( IN . shadowProj . w > 0.0) { // New !
+		shadow = textureProj ( shadowTex , IN . shadowProj ) * 0.5f;
+	}
+
+	vec3  incident = normalize ( lightPos - IN.worldPos );
+	float lambert  = max (0.0 , dot ( incident , IN.normal )) * 0.9; 
 	
-	//fragColor = IN.colour;
+	vec3 viewDir = normalize ( cameraPos - IN . worldPos );
+	vec3 halfDir = normalize ( incident + viewDir );
+
+	float rFactor = max (0.0 , dot ( halfDir , IN.normal ));
+	float sFactor = pow ( rFactor , 80.0 );
+	
+	vec4 albedo = IN.colour;
+	
+	if(hasTexture) {
+	 albedo *= texture(baseTex, IN.texCoord);
+	}
+	
+	albedo.rgb = pow(albedo.rgb, vec3(2.2));
+	
+	fragColor.rgb = albedo.rgb * 0.05f; //ambient
+	
+	fragColor.rgb += albedo.rgb * lightColour.rgb * lambert * shadow; //diffuse light
+	
+	fragColor.rgb += lightColour.rgb * sFactor * shadow; //specular light
+	
+	fragColor.rgb = pow(fragColor.rgb, vec3(1.0 / 2.2f));
+	
+	fragColor.a = albedo.a;
 }
 

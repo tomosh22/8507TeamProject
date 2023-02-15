@@ -50,6 +50,9 @@ namespace NCL {
 			//unsigned int texID;
 
 			TextureBase* triDataTex;
+			TextureBase* maskTex;
+			TextureBase* baseTex;
+			bool isPaintable = false;
 
 		protected:
 			MeshGeometry*	mesh;

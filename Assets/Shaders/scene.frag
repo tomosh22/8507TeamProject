@@ -2,7 +2,7 @@
 #extension GL_ARB_shader_storage_buffer_object :     enable
 
 uniform vec4 		objectColour;
-layout(r8ui) uniform uimage2D 	mainTex;
+layout(r8ui, binding = 0) uniform uimage2D 	mainTex;
 uniform sampler2DShadow shadowTex;
 
 uniform vec3	lightPos;

@@ -597,14 +597,6 @@ void TutorialGame::InitWorld() {
 	
 
 	testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
-	int width = 1000;
-	int height = 1000;
-	testCollisionTex = new OGLTexture();
-	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)testCollisionTex)->GetObjectID()));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
-	testCube->SetRenderObject(new RenderObject(&testCube->GetTransform(), cubeMesh, testCollisionTex, basicShader));
 	AddDebugTriangleInfoToObject(testCube);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -661,12 +653,13 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
 	int w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
 	int h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
 
-	OGLTexture* tex = new OGLTexture();
-	glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)tex)->GetObjectID());
+	object->GetRenderObject()->isPaintable = true;
+	object->GetRenderObject()->maskTex = new OGLTexture();
+	glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
-	object->GetRenderObject()->SetDefaultTexture(tex);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 /*
 
@@ -780,11 +773,13 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 		.SetPosition(position)
 		.SetScale(dimensions * 2);
 
-	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, basicTex, basicShader));
+	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, nullptr, basicShader));
 	cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));
 
 	cube->GetPhysicsObject()->SetInverseMass(inverseMass);
 	cube->GetPhysicsObject()->InitCubeInertia();
+
+	InitPaintableTextureOnObject(cube);
 
 	world->AddGameObject(cube);
 
@@ -801,7 +796,7 @@ GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dime
 		.SetPosition(position)
 		.SetScale(dimensions * 2);
 
-	monkey->SetRenderObject(new RenderObject(&monkey->GetTransform(), monkeyMesh, testCollisionTex, basicShader));
+	monkey->SetRenderObject(new RenderObject(&monkey->GetTransform(), monkeyMesh, nullptr, basicShader));
 	monkey->SetPhysicsObject(new PhysicsObject(&monkey->GetTransform(), monkey->GetBoundingVolume()));
 
 	monkey->GetPhysicsObject()->SetInverseMass(inverseMass);
@@ -1035,18 +1030,17 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 	triComputeShader->Bind();
 
 	
-	
-	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->GetDefaultTexture())->GetObjectID()));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, 1000, 1000, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
+	int w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
+	int h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()));
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
 	glActiveTexture(GL_TEXTURE0);
 	glBindImageTexture(0, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16F);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindImageTexture(1, ((OGLTexture*)object->GetRenderObject()->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_R8UI);
+	glBindImageTexture(1, ((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_R8UI);
 
 	int radiusLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereRadius");
 	int centerLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereCenter");

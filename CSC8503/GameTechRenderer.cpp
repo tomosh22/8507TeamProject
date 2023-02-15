@@ -326,8 +326,13 @@ void GameTechRenderer::RenderCamera() {
 
 		glActiveTexture(GL_TEXTURE0);
 //		BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
-
-		glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+		if (i->isPaintable) {
+			glBindImageTexture(0, ((OGLTexture*)i->maskTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+		}
+		else {
+			glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+		}
+		
 		glDisable(GL_CULL_FACE);//todo turn back on
 		BindMesh((*i).GetMesh());
 		int layerCount = (*i).GetMesh()->GetSubMeshCount();

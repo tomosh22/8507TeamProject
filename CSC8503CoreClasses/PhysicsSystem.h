@@ -21,7 +21,11 @@ namespace NCL {
 			}
 
 			void SetGravity(const Vector3& g);
+
+
 		protected:
+
+
 			void BasicCollisionDetection();
 			void BroadPhase();
 			void NarrowPhase();
@@ -37,6 +41,8 @@ namespace NCL {
 			void UpdateObjectAABBs();
 
 			void ImpulseResolveCollision(GameObject& a , GameObject&b, CollisionDetection::ContactPoint& p) const;
+			void ImpulseResolveStop(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const;
+			void ImpulseResolveContinuedResponse(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const;
 
 			GameWorld& gameWorld;
 
@@ -44,6 +50,7 @@ namespace NCL {
 			Vector3 gravity;
 			float	dTOffset;
 			float	globalDamping;
+			
 
 			std::set<CollisionDetection::CollisionInfo> allCollisions;
 			std::set<CollisionDetection::CollisionInfo> broadphaseCollisions;
@@ -53,4 +60,3 @@ namespace NCL {
 		};
 	}
 }
-

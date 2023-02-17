@@ -10,6 +10,7 @@
 #include "Window.h"
 #include <functional>
 #include <cmath>
+#include<algorithm>
 using namespace NCL;
 using namespace CSC8503;
 
@@ -551,27 +552,38 @@ void PhysicsSystem::ImpulseResolveContinuedResponse(GameObject& a, GameObject& b
 	float FIF = 0.0f;
 	float& FIFR = FIF;
 	//put in friction
-	if (transformB.GetGoatID() == 7 && transformA.GetPosition() != Vector3{0,-20,0}) {
+	if (transformB.GetGoatID() == 7 ) {
 		Vector3 floorColisionNormal = {0,-1,0};
-		Vector3 distanceFromCollision = (transformB.GetPosition() - transformA.GetPosition());
+		//Vector3 distanceFromCollision = (transformB.GetPosition() - transformA.GetPosition());
+		Vector3 distanceFromCollision = {5.5,5.5,5.5};
+		//Vector3 distanceFromCollision = { 0,0,0 };
 		float coefficeintOfRestitution = 0.2f;
-		float coefficientOfFriction = 0.5f;
+		float coefficientOfFriction = 0.0f;
 		float inversePlayerMass = physB->GetInverseMass();
 		Vector3 distNormDist = Vector3::Cross(distanceFromCollision, Vector3::Cross(distanceFromCollision, floorColisionNormal));
-		Vector3 frictionTanjent = physB->GetLinearVelocity() - (floorColisionNormal * (Vector3::Dot(physB->GetLinearVelocity(), floorColisionNormal)));
-		float topOfImpulse = -(Vector3::Dot(physB->GetLinearVelocity() * coefficientOfFriction, frictionTanjent));
+		Vector3 frictionTangent = physB->GetLinearVelocity() - (floorColisionNormal * (Vector3::Dot(physB->GetLinearVelocity(), floorColisionNormal)));
+		float topOfImpulse = -(Vector3::Dot(physB->GetLinearVelocity() * coefficientOfFriction, frictionTangent));
 		float tenserByVectorNormal = Vector3::Dot((physB->GetInertiaTensor()) * distNormDist, floorColisionNormal);
 		float bottomOfImpulse = inversePlayerMass + tenserByVectorNormal;
 		float impulseForce = topOfImpulse / bottomOfImpulse;
-		FIFR = impulseForce;
-		/*std::cout << tenserByVectorNormal << std::endl;
-		std::cout << topOfImpulse << std::endl;*/
+		//FIFR = std::min( impulseForce, (physB->GetLinearVelocity().Length()) );
+		FIFR = std::min(impulseForce, (physB->GetForce().Length()));
+		 (physB->GetTorque());
+		if (std::min(impulseForce, ((physB->GetLinearVelocity()).Length())) == impulseForce) {
+			std::cout << "impulse force "<< FIFR << std::endl;
+		}
+		else
+		{
+			std::cout << "general force"<< FIFR << std::endl;
+		}
+		//std::cout << tenserByVectorNormal << std::endl;
+		std::cout << topOfImpulse << std::endl;
 		//Debug::DrawLine(transformB.GetPosition(),transformA.GetPosition());
-		/*Vector3 collisionVector = ((transformB.GetPosition() - transformA.GetPosition()));
+	/*	Vector3 collisionVector = ((transformB.GetPosition() - transformA.GetPosition()));
 		if (transformA.GetPosition() != Vector3{0,-20,0}) {
 			std::cout << collisionVector << std::endl;
-		}
-		*/
+		}*/
+		
 	}
 	// put in friction
 	//Get absorbtion amount
@@ -580,7 +592,7 @@ void PhysicsSystem::ImpulseResolveContinuedResponse(GameObject& a, GameObject& b
 	//get absorbtion amount
 	//+ (p.normal * transformA.getFrictionImpulse())
 	Vector3 fullImpulse = p.normal * j;
-	Vector3 frictionVector = Vector3{0,-1,0} *FIF;
+	Vector3 frictionVector = ((physB->GetLinearVelocity()).Normalised()) * - FIF;
 	FIFR = 0;
 	//std::cout << fullImpulse <<" "<< frictionVector << std::endl;
 
@@ -591,9 +603,7 @@ void PhysicsSystem::ImpulseResolveContinuedResponse(GameObject& a, GameObject& b
 	physB->ApplyLinearImpulse((fullImpulse)*bForceScaler);
 	physB->ApplyLinearImpulse(frictionVector);
 
-	std::cout << frictionVector << std::endl;
-	std::cout <<"physA  " << physA->GetLinearVelocity() << std::endl;
-	std::cout << "physB  " << physB->GetLinearVelocity() << std::endl;
+
 
 	physA->ApplyAngularImpulse(Vector3::Cross(relativeA, -fullImpulse));
 	physB->ApplyAngularImpulse(Vector3::Cross(relativeB, -fullImpulse));

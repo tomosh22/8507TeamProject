@@ -266,6 +266,8 @@ void GameTechRenderer::RenderCamera() {
 	glActiveTexture(GL_TEXTURE0 + 2);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
 
+	
+
 	for (const auto&i : activeObjects) {
 		OGLShader* shader = (OGLShader*)(*i).GetShader();
 		BindShader(shader);
@@ -332,6 +334,7 @@ void GameTechRenderer::RenderCamera() {
 			glUniform1i(glGetUniformLocation(shader->GetProgramID(), "maskTex"),0);
 			glActiveTexture(GL_TEXTURE1);
 			BindTextureToShader((OGLTexture*)(*i).baseTex, "baseTex", 1);
+			BindTextureToShader((OGLTexture*)(*i).bumpTex, "bumpTex", 3);
 		}
 		else {
 			glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);

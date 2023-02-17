@@ -52,6 +52,7 @@ namespace NCL {
 			TextureBase* triDataTex;
 			TextureBase* maskTex;
 			TextureBase* baseTex;
+			TextureBase* bumpTex;
 			bool isPaintable = false;
 
 		protected:

@@ -237,6 +237,7 @@ void TutorialGame::InitialiseAssets() {
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
 	metalTex = renderer->LoadTexture("metal.png");
+	testBumpTex = renderer->LoadTexture("testBump.jpg");
 
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
@@ -662,6 +663,7 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	object->GetRenderObject()->baseTex = metalTex;
+	object->GetRenderObject()->bumpTex = testBumpTex;
 }
 /*
 
@@ -1089,7 +1091,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 	int pointLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "point");
 	glUniform3fv(pointLocation,1, testPoint.array);*/
 	
-	triComputeShader->Execute(1000, 1, 1);//todo change number of thread groups
+	triComputeShader->Execute(object->GetRenderObject()->GetMesh()->GetIndexCount()/64+1, 1, 1);//todo change number of thread groups
 	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	triComputeShader->Unbind();
 }

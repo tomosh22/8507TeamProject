@@ -1,5 +1,5 @@
 #version 430 core
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;//todo change work groups
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;//todo change work groups
 layout(	rgba16f, binding = 0) uniform image1D triDataTex;
 layout(	r8, binding = 1) uniform image2D outputTex;
 
@@ -182,6 +182,7 @@ void main() {
     vec2 uvA = vec2(tri.au,tri.av);
     vec2 uvB = vec2(tri.bu,tri.bv);
     vec2 uvC = vec2(tri.cu,tri.cv);
+    if(triA == triB && triA == triC && triB == triC){return;}
     
 
     if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint) || EdgeIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){

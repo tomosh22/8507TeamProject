@@ -143,6 +143,7 @@ namespace NCL {
 			GameObject* monkey;
 			void AddDebugTriangleInfoToObject(GameObject* object);
 			TextureBase* metalTex;
+			TextureBase* testBumpTex;
 
 
 		};

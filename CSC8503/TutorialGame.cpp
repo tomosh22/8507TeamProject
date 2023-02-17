@@ -595,6 +595,7 @@ void TutorialGame::InitWorld() {
 	AddSphereToWorld({ 0,0,0 }, 10);
 	AddSphereToWorld({ 0,0,0 }, 10);
 
+	
 
 	testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
 	AddDebugTriangleInfoToObject(testCube);

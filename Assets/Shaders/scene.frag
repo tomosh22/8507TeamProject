@@ -2,9 +2,9 @@
 #extension GL_ARB_shader_storage_buffer_object :     enable
 
 uniform vec4 		objectColour;
-layout(r8ui, binding = 0) uniform uimage2D 	mainTex;
-layout(binding = 1) uniform sampler2D baseTex;
-uniform sampler2DShadow shadowTex;
+layout(r8ui, binding = 0) uniform uimage2D maskTex;
+layout (binding = 1) uniform sampler2D baseTex;
+layout (binding = 2) uniform sampler2DShadow shadowTex;
 
 uniform vec3	lightPos;
 uniform float	lightRadius;
@@ -192,14 +192,14 @@ void main(void)
 	offset = 2.0 * offset + 1.0;
 	offset *= 0.04;
 
-	vec2 realCoords = imageSize(mainTex) * (IN.texCoord + offset);
+	vec2 realCoords = imageSize(maskTex) * (IN.texCoord + offset);
 	vec2 iCoords = floor(realCoords);
 	vec2 fCoords = fract(realCoords);
 	
-	uint value00 = imageLoad(mainTex, ivec2(iCoords) + ivec2(0, 0)).r;
-	uint value10 = imageLoad(mainTex, ivec2(iCoords) + ivec2(1, 0)).r;
-	uint value01 = imageLoad(mainTex, ivec2(iCoords) + ivec2(0, 1)).r;
-	uint value11 = imageLoad(mainTex, ivec2(iCoords) + ivec2(1, 1)).r;
+	uint value00 = imageLoad(maskTex, ivec2(iCoords) + ivec2(0, 0)).r;
+	uint value10 = imageLoad(maskTex, ivec2(iCoords) + ivec2(1, 0)).r;
+	uint value01 = imageLoad(maskTex, ivec2(iCoords) + ivec2(0, 1)).r;
+	uint value11 = imageLoad(maskTex, ivec2(iCoords) + ivec2(1, 1)).r;
 
 	vec3 a = teamColor(value00);
     vec3 b = teamColor(value10);

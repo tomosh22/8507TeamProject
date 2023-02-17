@@ -44,7 +44,7 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	//Set up the light properties
 	lightColour = Vector4(0.8f, 0.8f, 0.5f, 1.0f);
 	lightRadius = 1000.0f;
-	lightPosition = Vector3(-200.0f, 60.0f, -200.0f);
+	lightPosition = Vector3(-200.0f, 200.0f, -200.0f);
 
 	//Skybox!
 	skyboxShader = new OGLShader("skybox.vert", "skybox.frag");
@@ -263,7 +263,7 @@ void GameTechRenderer::RenderCamera() {
 	//TODO - PUT IN FUNCTION
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 3, "123");
 
-	glActiveTexture(GL_TEXTURE0 + 1);
+	glActiveTexture(GL_TEXTURE0 + 2);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
 
 	for (const auto&i : activeObjects) {
@@ -302,7 +302,7 @@ void GameTechRenderer::RenderCamera() {
 			glUniform1f(lightRadiusLocation , lightRadius);
 
 			int shadowTexLocation = glGetUniformLocation(shader->GetProgramID(), "shadowTex");
-			glUniform1i(shadowTexLocation, 1);
+			glUniform1i(shadowTexLocation, 2);
 
 			activeShader = shader;
 		}
@@ -327,7 +327,9 @@ void GameTechRenderer::RenderCamera() {
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
 		if (i->isPaintable) {
+			glActiveTexture(GL_TEXTURE0);
 			glBindImageTexture(0, ((OGLTexture*)i->maskTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+			glUniform1i(glGetUniformLocation(shader->GetProgramID(), "maskTex"),0);
 			glActiveTexture(GL_TEXTURE1);
 			BindTextureToShader((OGLTexture*)(*i).baseTex, "baseTex", 1);
 		}

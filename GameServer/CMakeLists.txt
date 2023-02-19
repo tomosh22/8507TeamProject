@@ -1,39 +1,23 @@
-set(PROJECT_NAME Server)
+set(PROJECT_NAME GameServer)
 
 ################################################################################
 # Source groups
 ################################################################################
-set(Network
-    "ServerConnect.h"
-    "ServerConnect.cpp"
-)
 
-source_group("Network" FILES ${Network})
-
-set(Datebase
+set(Header_Files
     "MyDB.h"
-    "MyDB.cpp"
 )
-
-source_group("Datebase" FILES ${Datebase})
-
-set(Player
-    "playerInfo.h"
-    "playerInfo.cpp"
-)
-
-source_group("Player" FILES ${Player})
+source_group("Header Files" FILES ${Header_Files})
 
 set(Source_Files
-    main.cpp
+    "MyDB.cpp"
+    "Main.cpp"
 )
 
 source_group("Source Files" FILES ${Source_Files})
 
 set(ALL_FILES
-    ${Network}
-    ${Datebase}
-    ${Player}
+    ${Header_Files}
     ${Source_Files}
 )
 
@@ -41,6 +25,7 @@ set(ALL_FILES
 # Target
 ################################################################################
 add_executable(${PROJECT_NAME}  ${ALL_FILES})
+
 use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
 set_target_properties(${PROJECT_NAME} PROPERTIES
     VS_GLOBAL_KEYWORD "Win32Proj"
@@ -48,4 +33,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 set_target_properties(${PROJECT_NAME} PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION_RELEASE "TRUE"
 )
+# Dependencies
+################################################################################
+include_directories("../CSC8503CoreClasses/")
 
+target_link_libraries(${PROJECT_NAME} LINK_PUBLIC CSC8503CoreClasses)

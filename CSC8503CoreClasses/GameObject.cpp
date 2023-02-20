@@ -51,41 +51,41 @@ void GameObject::UpdateBroadphaseAABB() {
 	}
 }
 
-void GameObject::ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
-										int& topT, int& bottomT, Vector2& texCoords) {
-	Vector3 newLocalPos = localPos * TEXTURE_DENSITY;
-	Vector3 newHalfDims = halfDims * TEXTURE_DENSITY;
-	int newRadius = radius * TEXTURE_DENSITY;
-	texCoords = (Vector2(newLocalPos.x, newLocalPos.z) + Vector2(newHalfDims.x, newHalfDims.z)) / (Vector2(newHalfDims.x, newHalfDims.z)*2) * Vector2(newHalfDims.x, newHalfDims.z) * 2;
-	texCoords.x = round(texCoords.x);
-	texCoords.y = round(texCoords.y);
-	
-	leftS = GetLeftS(texCoords.x, newRadius);
-	rightS = GetRightS(texCoords.x, newRadius);
-	topT = GetTopT(texCoords.y, texCoords.x, newRadius);
-	bottomT = GetBottomT(texCoords.y, texCoords.x, newRadius);
-
-	startIndex = topT * (int)transform.GetScale().x * TEXTURE_DENSITY + leftS;
-	int endIndex = bottomT * (int)transform.GetScale().x * TEXTURE_DENSITY + rightS;
-	numInts = endIndex - startIndex;
-	return;
-	
-
-}
-
-int GameObject::GetLeftS(int centerS, int radius) {
-	return std::max(centerS - radius, 0);
-}
-int GameObject::GetRightS(int centerS, int radius) {
-	return std::min(centerS + radius, (int)transform.GetScale().x * TEXTURE_DENSITY-1);
-}
-int GameObject::GetTopT(int centerT, int centerS, int radius) {
-	return std::max(centerT - radius, 0);
-}
-int GameObject::GetBottomT(int centerT, int centerS, int radius) {
-	return std::min(centerT + radius,(int)transform.GetScale().z * TEXTURE_DENSITY -1);
-}
-
+//void GameObject::ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
+//										int& topT, int& bottomT, Vector2& texCoords) {
+//	Vector3 newLocalPos = localPos * TEXTURE_DENSITY;
+//	Vector3 newHalfDims = halfDims * TEXTURE_DENSITY;
+//	int newRadius = radius * TEXTURE_DENSITY;
+//	texCoords = (Vector2(newLocalPos.x, newLocalPos.z) + Vector2(newHalfDims.x, newHalfDims.z)) / (Vector2(newHalfDims.x, newHalfDims.z)*2) * Vector2(newHalfDims.x, newHalfDims.z) * 2;
+//	texCoords.x = round(texCoords.x);
+//	texCoords.y = round(texCoords.y);
+//	
+//	leftS = GetLeftS(texCoords.x, newRadius);
+//	rightS = GetRightS(texCoords.x, newRadius);
+//	topT = GetTopT(texCoords.y, texCoords.x, newRadius);
+//	bottomT = GetBottomT(texCoords.y, texCoords.x, newRadius);
+//
+//	startIndex = topT * (int)transform.GetScale().x * TEXTURE_DENSITY + leftS;
+//	int endIndex = bottomT * (int)transform.GetScale().x * TEXTURE_DENSITY + rightS;
+//	numInts = endIndex - startIndex;
+//	return;
+//	
+//
+//}
+//
+//int GameObject::GetLeftS(int centerS, int radius) {
+//	return std::max(centerS - radius, 0);
+//}
+//int GameObject::GetRightS(int centerS, int radius) {
+//	return std::min(centerS + radius, (int)transform.GetScale().x * TEXTURE_DENSITY-1);
+//}
+//int GameObject::GetTopT(int centerT, int centerS, int radius) {
+//	return std::max(centerT - radius, 0);
+//}
+//int GameObject::GetBottomT(int centerT, int centerS, int radius) {
+//	return std::min(centerT + radius,(int)transform.GetScale().z * TEXTURE_DENSITY -1);
+//}
+//
 
 //int GameObject::GetLeftS(int centerS, int radius) {
 //	return std::max(centerS - radius, centerS * (int)transform.GetScale().x);

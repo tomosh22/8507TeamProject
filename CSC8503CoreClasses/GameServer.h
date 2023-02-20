@@ -1,10 +1,13 @@
 #pragma once
 #include "NetworkBase.h"
+#include "map"
 
 namespace NCL {
 	namespace CSC8503 {
-		class GameWorld;
-		class GameServer : public NetworkBase {
+
+#define MAX_CLIENT_NUM 4
+
+		class GameServer : public NetworkBase{
 		public:
 			GameServer(int onPort, int maxClients);
 			~GameServer();
@@ -12,10 +15,8 @@ namespace NCL {
 			bool Initialise();
 			void Shutdown();
 
-			void SetGameWorld(GameWorld &g);
-
-			bool SendGlobalPacket(int msgID);
 			bool SendGlobalPacket(GamePacket& packet);
+			bool SendGlobalPacket(int msgID);
 
 			virtual void UpdateServer();
 
@@ -23,10 +24,11 @@ namespace NCL {
 			int			port;
 			int			clientMax;
 			int			clientCount;
-			GameWorld*	gameWorld;
 
 			int incomingDataRate;
 			int outgoingDataRate;
+
+			std::map<int, float> connects;
 		};
 	}
 }

@@ -144,7 +144,8 @@ namespace NCL {
 			void AddDebugTriangleInfoToObject(GameObject* object);
 			TextureBase* metalTex;
 			TextureBase* testBumpTex;
-
+			void SendRayMarchData();
+			GameObject* floor;
 
 		};
 	}

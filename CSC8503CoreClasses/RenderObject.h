@@ -49,7 +49,7 @@ namespace NCL {
 			//this was me
 			//unsigned int texID;
 
-			TextureBase* triDataTex;
+			TextureBase* triDataTex = nullptr;
 			TextureBase* maskTex;
 			TextureBase* baseTex;
 			TextureBase* bumpTex;

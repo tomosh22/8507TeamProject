@@ -37,6 +37,9 @@ vec3 WorldSpaceToBarycentricCoords(vec3 point, vec3 vertA, vec3 vertB, vec3 vert
 	barycentric.x = float(GetAreaFromTriangleVerts(point, vertB, vertC) / totalArea);
 	barycentric.y = float(GetAreaFromTriangleVerts(vertA, point, vertC) / totalArea);
 	barycentric.z = float(GetAreaFromTriangleVerts(vertA, vertB, point) / totalArea);
+    if(isnan(barycentric.x))barycentric.x = 0;
+    if(isnan(barycentric.y))barycentric.y = 0;
+    if(isnan(barycentric.z))barycentric.z = 0;
 	return barycentric;
 }
 
@@ -168,6 +171,31 @@ bool EdgeIntersection(vec3 sphereCenter, float sphereRadius,
 
 }
 
+bool BasicCollisionDetection(vec3 sphereCenter, float sphereRadius,
+                                vec3 triA, vec3 triB, vec3 triC,
+                                out vec3 intersectionPoint){
+    vec3 point = vec3(0);
+    int numHits = 0;
+    if(length(triA - sphereCenter)<sphereRadius){
+        point += triA;
+        numHits++;
+    }
+    if(length(triB - sphereCenter)<sphereRadius){
+        point += triB;
+        numHits++;
+    }
+    if(length(triC - sphereCenter)<sphereRadius){
+        point += triC;
+        numHits++;
+    }
+    if(numHits > 0){
+        point /= numHits;
+        intersectionPoint = point;
+        return true;
+    }
+    return false;
+}
+
 void main() {
 	int id = int(gl_GlobalInvocationID.x);
 
@@ -183,6 +211,26 @@ void main() {
     vec2 uvB = vec2(tri.bu,tri.bv);
     vec2 uvC = vec2(tri.cu,tri.cv);
     if(triA == triB && triA == triC && triB == triC){return;}
+
+    /*if(BasicCollisionDetection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
+        vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,triA,triB,triC);
+        vec2 uv = BarycentricToUV(barycentric, uvA, uvB, uvC);
+        ivec2 IMAGE_COORDS = ivec2(uv.x * 1000,uv.y * 1000);
+    	imageStore(triDataTex,id,vec4(uv,0,1));
+
+        //imageStore(triDataTex,id,vec4(0,0,1,1));//debugging
+        for(int x = -20; x < 21;x++){
+            for(int y = -20; y < 21; y++){
+                imageStore(outputTex,IMAGE_COORDS + ivec2(x,y),vec4(1));
+            }
+        }
+        
+    }
+    else{
+    	imageStore(triDataTex,id,vec4(1,0,0,1));
+    }
+    
+    return;*/
     
 
     if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint) || EdgeIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
@@ -190,6 +238,7 @@ void main() {
         vec2 uv = BarycentricToUV(barycentric, uvA, uvB, uvC);
         ivec2 IMAGE_COORDS = ivec2(uv.x * 1000,uv.y * 1000);
     	imageStore(triDataTex,id,vec4(uv,0,1));
+
         //imageStore(triDataTex,id,vec4(0,0,1,1));//debugging
         for(int x = -20; x < 21;x++){
             for(int y = -20; y < 21; y++){

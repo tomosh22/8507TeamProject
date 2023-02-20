@@ -139,7 +139,7 @@ namespace NCL {
 			}
 
 			void setTorqueFriction(float newTorqueFriction) {
-				torqueFriction = newTorqueFriction;
+				torqueFriction = std::clamp(newTorqueFriction, 0.0f, 0.01f);
 			}
 
 			float getTorqueFriction() {

@@ -3,6 +3,7 @@
 
 namespace NCL {
 	namespace CSC8503 {
+
 		class GameWorld;
 		class GameServer : public NetworkBase {
 		public:
@@ -11,8 +12,6 @@ namespace NCL {
 
 			bool Initialise();
 			void Shutdown();
-
-			void SetGameWorld(GameWorld &g);
 
 			bool SendGlobalPacket(int msgID);
 			bool SendGlobalPacket(GamePacket& packet);
@@ -23,7 +22,6 @@ namespace NCL {
 			int			port;
 			int			clientMax;
 			int			clientCount;
-			GameWorld*	gameWorld;
 
 			int incomingDataRate;
 			int outgoingDataRate;

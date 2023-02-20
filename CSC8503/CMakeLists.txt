@@ -3,10 +3,17 @@ set(PROJECT_NAME CSC8503)
 ################################################################################
 # Source groups
 ################################################################################
+set(Networking
+    "NetworkedGame.h"
+    "NetworkedGame.cpp"
+    "NetworkPlayer.h"
+    "NetworkPlayer.cpp"
+)
+
+source_group("Networking" FILES ${Networking})
+
 set(Header_Files
     "GameTechRenderer.h"
-    "NetworkedGame.h"
-    "NetworkPlayer.h"
     "StateGameObject.h"
     "TutorialGame.h"
 )
@@ -15,8 +22,6 @@ source_group("Header Files" FILES ${Header_Files})
 set(Source_Files
     "GameTechRenderer.cpp"
     "Main.cpp"
-    "NetworkedGame.cpp"
-    "NetworkPlayer.cpp"
     "StateGameObject.cpp"
     "TutorialGame.cpp"
 )
@@ -33,9 +38,20 @@ endif()
 
 source_group("Source Files" FILES ${Source_Files})
 
+set(Networking
+    "NetworkedGame.h"
+    "NetworkPlayer.h"
+    "NetworkedGame.cpp"
+    "NetworkPlayer.cpp"
+)
+
+source_group("Networking" FILES ${Networking})
+
 set(ALL_FILES
     ${Header_Files}
+     ${Networking}
     ${Source_Files}
+    ${Networking}
 )
 
 if(USE_VULKAN)

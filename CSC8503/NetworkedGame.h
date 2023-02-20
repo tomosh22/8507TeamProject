@@ -1,10 +1,10 @@
 #pragma once
 #include "TutorialGame.h"
 #include "NetworkBase.h"
+#include "NetworkObject.h"
 
 namespace NCL {
 	namespace CSC8503 {
-		class GameServer;
 		class GameClient;
 		class NetworkPlayer;
 
@@ -12,37 +12,33 @@ namespace NCL {
 		public:
 			NetworkedGame();
 			~NetworkedGame();
-
-			void StartAsServer();
-			void StartAsClient(char a, char b, char c, char d);
+			void StartClient(char a, char b, char c, char d);
+			void CloseClient();
 
 			void UpdateGame(float dt) override;
-
-			void SpawnPlayer();
-
-			void StartLevel();
-
 			void ReceivePacket(int type, GamePacket* payload, int source) override;
+			void SetLocalPlayer(NetworkObject* object) { this->localPlayer = object; }
 
-			void OnPlayerCollision(NetworkPlayer* a, NetworkPlayer* b);
+			void HandleConnectConfirmed();
+			void HandlePlayerConnect(int id, ConnectPacket* packet);
+			void HandlePlayerDisconnect(int id);
+			void HandleUpdateState(bool delta, int id, GamePacket* payload);
 
 		protected:
-			void UpdateAsServer(float dt);
-			void UpdateAsClient(float dt);
+			void UpdateToServer(float dt);
 
 			void BroadcastSnapshot(bool deltaFrame);
 			void UpdateMinimumState();
 			std::map<int, int> stateIDs;
 
-			GameServer* thisServer;
-			GameClient* thisClient;
+			GameClient* client;
 			float timeToNextPacket;
 			int packetsToSnapshot;
 
-			std::vector<NetworkObject*> networkObjects;
+			std::map<int, NetworkObject*> serverPlayers;
+			NetworkObject* localPlayer;
 
-			std::map<int, GameObject*> serverPlayers;
-			GameObject* localPlayer;
+			bool online = false;
 		};
 	}
 }

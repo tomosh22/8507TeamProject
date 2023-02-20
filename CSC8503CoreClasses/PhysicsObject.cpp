@@ -7,7 +7,8 @@ using namespace CSC8503;
 PhysicsObject::PhysicsObject(Transform* parentTransform, const CollisionVolume* parentVolume)	{
 	transform	= parentTransform;
 	volume		= parentVolume;
-
+	
+        torqueFriction = 0.0f;
 	inverseMass = 1.0f;
 	elasticity	= 0.8f;
 	friction	= 0.8f;

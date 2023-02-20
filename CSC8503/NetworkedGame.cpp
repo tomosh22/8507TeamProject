@@ -63,7 +63,6 @@ void NetworkedGame::UpdateGame(float dt) {
 	}
 
 	TutorialGame::UpdateGame(dt);
-	UpdateToServer(dt);
 }
 
 void NetworkedGame::UpdateToServer(float dt) {

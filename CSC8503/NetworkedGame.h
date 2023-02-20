@@ -38,7 +38,7 @@ namespace NCL {
 			std::map<int, NetworkObject*> serverPlayers;
 			NetworkObject* localPlayer;
 
-			bool online;
+			bool online = false;
 		};
 	}
 }

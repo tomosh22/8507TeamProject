@@ -1,10 +1,10 @@
 #include "NetworkBase.h"
 #include "./enet/enet.h"
-NetworkBase::NetworkBase()	{
+NetworkBase::NetworkBase() {
 	netHandle = nullptr;
 }
 
-NetworkBase::~NetworkBase()	{
+NetworkBase::~NetworkBase() {
 	if (netHandle) {
 		enet_host_destroy(netHandle);
 	}

@@ -4,15 +4,15 @@
 using namespace NCL;
 using namespace CSC8503;
 
-GameServer::GameServer(int onPort, int maxClients)	{
-	port		= onPort;
-	clientMax	= maxClients;
+GameServer::GameServer(int onPort, int maxClients) {
+	port = onPort;
+	clientMax = maxClients;
 	clientCount = 0;
-	netHandle	= nullptr;
+	netHandle = nullptr;
 	Initialise();
 }
 
-GameServer::~GameServer()	{
+GameServer::~GameServer() {
 	Shutdown();
 }
 

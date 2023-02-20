@@ -38,8 +38,18 @@ endif()
 
 source_group("Source Files" FILES ${Source_Files})
 
+set(Networking
+    "NetworkedGame.h"
+    "NetworkPlayer.h"
+    "NetworkedGame.cpp"
+    "NetworkPlayer.cpp"
+)
+
+source_group("Networking" FILES ${Networking})
+
 set(ALL_FILES
     ${Header_Files}
+     ${Networking}
     ${Source_Files}
     ${Networking}
 )

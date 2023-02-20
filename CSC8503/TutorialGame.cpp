@@ -471,7 +471,7 @@ GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion& 
 
 	character->GetTransform()
 		.SetScale(Vector3(meshSize, meshSize, meshSize))
-		.SetPosition(position);
+		.SetPosition(position).SetOrientation(orientation);
 
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));

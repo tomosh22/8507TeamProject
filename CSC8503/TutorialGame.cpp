@@ -924,7 +924,8 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position) {
 
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
-
+	
+        character->GetPhysicsObject()->setTorqueFriction(0.005f);
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->setCoeficient(0.55f);
 	character->GetPhysicsObject()->InitSphereInertia();

@@ -44,7 +44,7 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	//Set up the light properties
 	lightColour = Vector4(0.8f, 0.8f, 0.5f, 1.0f);
 	lightRadius = 1000.0f;
-	lightPosition = Vector3(-200.0f, 200.0f, -200.0f);
+	lightPosition = Vector3(0.0f, 200.0f, 0.0f);
 
 	//Skybox!
 	skyboxShader = new OGLShader("skybox.vert", "skybox.frag");
@@ -556,7 +556,7 @@ void GameTechRenderer::ImGui() {
 	if (ImGui::TreeNode("World to UV Space Testing")) {
 		ImGui::SliderFloat3("Position", imguiptrs.testSphereCenter->array, -200, 500);
 		ImGui::SliderFloat("Sphere Radius", imguiptrs.testSphereRadius, 0, 2000);
-		if (ImGui::Button("Move to Center")) { *(imguiptrs.testSphereCenter) = Vector3(); }
+		if (ImGui::Button("Move to Center")) { *(imguiptrs.testSphereCenter) = Vector3(10, -20, -10); }
 
 		ImGui::TreePop();
 	}

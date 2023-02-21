@@ -48,6 +48,8 @@ namespace NCL {
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, float inverseMass = 10.0f);
 			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 
 			GameObject* AddPlayerToWorld(const Vector3& position);
 			GameObject* AddEnemyToWorld(const Vector3& position);
@@ -78,6 +80,9 @@ namespace NCL {
 			//this was me
 			MeshGeometry* triangleMesh = nullptr;
 			MeshGeometry* monkeyMesh = nullptr;
+			MeshGeometry* floorMesh = nullptr;
+			MeshGeometry* maxMesh = nullptr;
+			MeshGeometry* basicWallMesh = nullptr;
 
 			TextureBase*	basicTex	= nullptr;
 			ShaderBase*		basicShader = nullptr;
@@ -146,6 +151,8 @@ namespace NCL {
 			TextureBase* testBumpTex;
 			void SendRayMarchData();
 			GameObject* floor;
+			GameObject* max;
+			std::vector<GameObject*> walls;
 
 		};
 	}

@@ -257,5 +257,7 @@ void main(void)
 	
 	fragColor.a = albedo.a;
 
+	//fragColor = vec4(IN.texCoord,0,1);
+
 }
 

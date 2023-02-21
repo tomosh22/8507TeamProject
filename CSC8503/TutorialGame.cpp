@@ -213,6 +213,9 @@ void TutorialGame::InitialiseAssets() {
 	//this was me
 	triangleMesh = OGLMesh::GenerateTriangleWithIndices();
 	monkeyMesh = renderer->LoadMesh("monkey.msh");
+	floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh");
+	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh");
+	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh");
 #pragma region debuggingSphereTriangleCollisions
 	/*MESH_TRIANGLES_AND_UVS tris = capsuleMesh->GetAllTrianglesAndUVs();
 	std::vector<std::array<float, 4>> results{};
@@ -286,6 +289,11 @@ void TutorialGame::UpdateGame(float dt) {
 	glPopDebugGroup();
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
 	DispatchComputeShaderForEachTriangle(floor);
+	glPopDebugGroup();
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
+	for (GameObject*& wall: walls) {
+		DispatchComputeShaderForEachTriangle(wall);
+	}
 	glPopDebugGroup();
 
 	timePassed += dt;
@@ -628,12 +636,24 @@ void TutorialGame::InitWorld() {
 
 	//testTriangle = AddDebugTriangleToWorld({ 0,200,0 });
 
-	monkey = AddMonkeyToWorld({ 0,0,0 }, { 20,20,20 });
+	monkey = AddMonkeyToWorld({ 0,20,100 }, { 5,5,5 });
+	monkey->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(0, 180, 0));
+	walls.push_back(AddWallToWorld({ -80,-30,-70 }, { 20,20,20 }));
+	walls.push_back(AddWallToWorld({ -40,-30,-70 }, { 20,20,20 }));
+	walls.push_back(AddWallToWorld({ 0,-30,-70 }, { 20,20,20 }));
+	walls.push_back(AddWallToWorld({ 40,-30,-70 }, { 20,20,20 }));
+	walls.push_back(AddWallToWorld({ 80,-30,-70 }, { 20,20,20 }));
+
+	//max = AddMaxToWorld({ 10,10,-10 }, { 10,10,10 });
 
 #ifdef TRI_DEBUG
 	//AddDebugTriangleInfoToObject(testCube);
 	AddDebugTriangleInfoToObject(monkey);
 	AddDebugTriangleInfoToObject(floor);
+	//AddDebugTriangleInfoToObject(max);
+	for (GameObject*& wall : walls) {
+		AddDebugTriangleInfoToObject(wall);
+	}
 #endif
 	return;
 }
@@ -730,7 +750,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center, 1);
 #endif
 	
-	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), cubeMesh, nullptr, basicShader));
+	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), floorMesh, nullptr, basicShader));
 	InitPaintableTextureOnObject(floor);
 
 	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
@@ -824,6 +844,52 @@ GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dime
 	world->AddGameObject(monkey);
 
 	return monkey;
+}
+
+GameObject* TutorialGame::AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+	GameObject* wall = new GameObject();
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+	wall->SetBoundingVolume((CollisionVolume*)volume);
+
+	wall->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2);
+
+	wall->SetRenderObject(new RenderObject(&wall->GetTransform(), basicWallMesh, nullptr, basicShader));
+	wall->SetPhysicsObject(new PhysicsObject(&wall->GetTransform(), wall->GetBoundingVolume()));
+
+	wall->GetPhysicsObject()->SetInverseMass(inverseMass);
+	wall->GetPhysicsObject()->InitCubeInertia();
+
+	InitPaintableTextureOnObject(wall);
+
+	world->AddGameObject(wall);
+
+	return wall;
+}
+
+GameObject* TutorialGame::AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+	GameObject* max = new GameObject();
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+	max->SetBoundingVolume((CollisionVolume*)volume);
+
+	max->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2);
+
+	max->SetRenderObject(new RenderObject(&max->GetTransform(), maxMesh, nullptr, basicShader));
+	max->SetPhysicsObject(new PhysicsObject(&max->GetTransform(), max->GetBoundingVolume()));
+
+	max->GetPhysicsObject()->SetInverseMass(inverseMass);
+	max->GetPhysicsObject()->InitCubeInertia();
+
+	InitPaintableTextureOnObject(max);
+
+	world->AddGameObject(max);
+
+	return max;
 }
 
 GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {

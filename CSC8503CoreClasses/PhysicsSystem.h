@@ -26,7 +26,7 @@ namespace NCL {
 		protected:
 
 
-			void BasicCollisionDetection();
+			int BasicCollisionDetection();
 			void BroadPhase();
 			void NarrowPhase();
 

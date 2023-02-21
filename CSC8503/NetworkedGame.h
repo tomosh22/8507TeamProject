@@ -20,9 +20,10 @@ namespace NCL {
 			void SetLocalPlayer(NetworkObject* object) { this->localPlayer = object; }
 
 			void HandleConnectConfirmed();
-			void HandlePlayerConnect(int id, ConnectPacket* packet);
-			void HandlePlayerDisconnect(int id);
-			void HandleUpdateState(bool delta, int id, GamePacket* payload);
+			void HandlePlayerConnect(int pid, AddObjectPacket& packet);
+			void HandlePlayerDisconnect(int pid);
+			void HandleUpdateState(bool delta, int pid, GamePacket* payload);
+			void AddNewNetworkPlayerToWorld(int pid, NetworkState state);
 
 		protected:
 			void UpdateToServer(float dt);

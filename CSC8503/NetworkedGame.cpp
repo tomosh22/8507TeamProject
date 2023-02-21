@@ -5,6 +5,7 @@
 #include "GameClient.h"
 
 #define COLLISION_MSG 30
+#define NETWORK_ID_OFFSET 1000
 
 NetworkedGame::NetworkedGame() {
 	client = nullptr;
@@ -30,14 +31,16 @@ void NetworkedGame::StartClient(char a, char b, char c, char d) {
 	for (int i = BasicNetworkMessages::None; i < BasicNetworkMessages::MessageTypeMax; i++) {
 		client->RegisterPacketHandler(i, this);
 	}
+	if (selectionObject) {
+		localPlayer = new NetworkObject(selectionObject, 0);
+	}
 	std::cout << "Client: connecting server" << std::endl;
-	online = true;
 }
 
 void NetworkedGame::CloseClient() {
 	online = false;
 	if (client) {
-		delete client;
+		client->Destroy();
 	}
 	for (auto i : serverPlayers) {
 		if (i.second) {
@@ -51,15 +54,17 @@ void NetworkedGame::CloseClient() {
 void NetworkedGame::UpdateGame(float dt) {
 	if (!client && Window::GetKeyboard()->KeyPressed(KeyboardKeys::F9)) { StartClient(127, 0, 0, 1); }
 	if (client && Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) { CloseClient(); }
-	if (online && client) {
-		//broadcast
-		timeToNextPacket -= dt;
-		if (timeToNextPacket < 0) {
-			UpdateToServer(dt);
-			timeToNextPacket += 1.0f / 20.0f; //20hz server/client update
-		}
+	if (client) {
 		//update from server
 		client->UpdateClient();
+		if (online) {
+			//broadcast
+			timeToNextPacket -= dt;
+			if (timeToNextPacket < 0) {
+				UpdateToServer(dt);
+				timeToNextPacket += 1.0f / 20.0f; //20hz server/client update
+			}
+		}
 	}
 
 	TutorialGame::UpdateGame(dt);
@@ -108,8 +113,8 @@ void NetworkedGame::ReceivePacket(int type, GamePacket* payload, int source) {
 	case Connect_Confirmed:{
 		HandleConnectConfirmed();
 		break;}
-	case Player_Connected:{
-		HandlePlayerConnect(source, (ConnectPacket*)payload);
+	case Add_Object:{
+		HandlePlayerConnect(source, *(AddObjectPacket*)payload);
 		break;}
 	case Player_Disconnected:{
 		HandlePlayerDisconnect(source);
@@ -132,22 +137,18 @@ void NetworkedGame::ReceivePacket(int type, GamePacket* payload, int source) {
 }
 
 void NetworkedGame::HandleConnectConfirmed() {
-	ConnectPacket msg = ConnectPacket();
+	AddObjectPacket* msg = new AddObjectPacket();
 	if (localPlayer) {
-		msg.fullState.position = localPlayer->GetObjectPointer()->GetTransform().GetPosition();
-		msg.fullState.orientation = localPlayer->GetObjectPointer()->GetTransform().GetOrientation();
+		msg->fullState.position = localPlayer->GetObjectPointer()->GetTransform().GetPosition();
+		msg->fullState.orientation = localPlayer->GetObjectPointer()->GetTransform().GetOrientation();
 	}
-	client->SendPacket(msg);	//broadcast first connect;
+	client->SendPacket(*msg);	//broadcast first connect;
 	std::cout << "Client: connect server confirmed!" << std::endl;
+	online = true;
 }
 
-void NetworkedGame::HandlePlayerConnect(int pid, ConnectPacket* packet) {
-	auto it = serverPlayers.find(pid);
-	if (it != serverPlayers.end()) { return; } //player already exist;
-	auto player = this->AddPlayerToWorld(packet->fullState.position, packet->fullState.orientation);
-	auto nPlayer = new NetworkObject(player, pid);
-	serverPlayers.insert(std::pair<int, NetworkObject*>(pid, nPlayer));
-	std::cout << "Client: receive player[" << pid << "] connected, state: " << packet->GetPrintInfo() << std::endl;
+void NetworkedGame::HandlePlayerConnect(int pid, AddObjectPacket& packet) {
+	AddNewNetworkPlayerToWorld(pid, packet.fullState);
 }
 
 void NetworkedGame::HandlePlayerDisconnect(int pid) {
@@ -156,21 +157,30 @@ void NetworkedGame::HandlePlayerDisconnect(int pid) {
 	if (it != serverPlayers.end()) {
 		return;
 	}
-	//remove object in the world
+	//remove all objects of this server in the world
 	this->world->RemoveGameObject(it->second->GetObjectPointer(), true);
 	serverPlayers.erase(it);
 }
 
-void NetworkedGame::HandleUpdateState(bool delta, int id, GamePacket* payload) {
-	auto it = serverPlayers.find(id);
+void NetworkedGame::HandleUpdateState(bool delta, int pid, GamePacket* payload) {
+	if (!payload) { return; }
+	auto it = serverPlayers.find(pid);
 	if (serverPlayers.end() == it) {
+		if (Full_State == payload->type) {
+			auto fullPacket = (FullPacket*)payload;
+			AddNewNetworkPlayerToWorld(pid, fullPacket->fullState);
+		}
 		return;
 	}
 	it->second->ReadPacket(delta, payload);
-	if (delta){
-		std::cout << "Client: player[" << id << "] update delta state, state: " << payload->GetPrintInfo() << std::endl;
-	}
-	else{
-		std::cout << "Client: player[" << id << "] update full state, state: " << payload->GetPrintInfo() << std::endl;
-	}
+
+}
+
+void NetworkedGame::AddNewNetworkPlayerToWorld(int pid, NetworkState state) {
+	auto it = serverPlayers.find(pid);
+	if (it != serverPlayers.end()) { return; } //player already exist;
+	auto player = this->AddPlayerToWorld(state.position, state.orientation);
+	auto nPlayer = new NetworkObject(player, pid);
+	serverPlayers.insert(std::pair<int, NetworkObject*>(pid, nPlayer));
+	std::cout << "Client: receive new player[" << pid << "] connected, position: " << state.position << "orientation: " << state.orientation << std::endl;
 }

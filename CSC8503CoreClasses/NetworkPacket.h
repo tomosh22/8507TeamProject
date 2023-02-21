@@ -14,18 +14,13 @@ namespace NCL::CSC8503 {
 		}
 	};
 
-	struct ConnectPacket :public GamePacket {
+	struct AddObjectPacket :public GamePacket {
 		int objectID = -1;
 		NetworkState fullState;
 
-		ConnectPacket() {
-			type = Player_Connected;
-			size = sizeof(ConnectPacket) - sizeof(GamePacket);
-		}
-		std::string GetPrintInfo() override {
-			std::stringstream buffer;
-			buffer << "Position: (" << fullState.position << ") Orientation: (" << fullState.orientation << ")";
-			return buffer.str();
+		AddObjectPacket() {
+			type = Add_Object;
+			size = sizeof(AddObjectPacket) - sizeof(GamePacket);
 		}
 	};
 
@@ -36,12 +31,6 @@ namespace NCL::CSC8503 {
 		FullPacket() {
 			type = Full_State;
 			size = sizeof(FullPacket) - sizeof(GamePacket);
-		}
-		NetworkState* GetState() { return &fullState; }
-		std::string GetPrintInfo() override {
-			std::stringstream buffer;
-			buffer << "Position: (" << fullState.position << ") Orientation: (" << fullState.orientation << ")";
-			return buffer.str();
 		}
 	};
 
@@ -54,18 +43,6 @@ namespace NCL::CSC8503 {
 		DeltaPacket() {
 			type = Delta_State;
 			size = sizeof(DeltaPacket) - sizeof(GamePacket);
-		}
-		std::string GetPrintInfo() override {
-			std::stringstream buffer;
-			buffer << "Position: (";
-			for (int i = 0; i < 3; i++) {
-				buffer << (float)pos[i] << ", ";
-			}
-			buffer << ") Orientation: (";
-			for (int i = 0; i < 4; i++) {
-				buffer << (float)orientation[i] << ", ";
-			}
-			return buffer.str();
 		}
 	};
 

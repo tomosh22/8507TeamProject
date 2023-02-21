@@ -13,7 +13,10 @@ int main() {
 			server->UpdateServer();
 		}
 		//escape
-		if (_getch() == 27) { break; }
+		if (_getch() == 27) { 
+			server->Shutdown();
+			break;
+		}
 	}
 	std::cout << "Server: Shutdown..." << std::endl;
 }

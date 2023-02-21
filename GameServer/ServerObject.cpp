@@ -38,14 +38,10 @@ void ServerObject::UpdateServer() {
 
 //check if exception has occurred on clients 
 void ServerObject::CheckConnectExpire() {
-	auto tm = std::time(0);
+	auto tm = time(0);
 	for (auto it : connects) {
-		if (it.second.Expire((float)tm)) {
-			std::cout << "Expire" << it.second.updateTime << ":" << (float)tm << std::endl;
-			GamePacket packet;
-			packet.type = BasicNetworkMessages::Shutdown;
-			ENetPacket* msg = enet_packet_create(&packet, packet.GetTotalSize(), 0);
-			enet_peer_send(it.second.GetPeer(), 0, msg); // notice client
+		if (it.second.Expire(tm)) {
+			std::cout << "Expire" << it.second.updateTime + CONNECT_CHECK_OFFSET << ":" << tm << std::endl;
 			HandleDisconnected(it.first);
 			break;
 		}
@@ -55,7 +51,7 @@ void ServerObject::CheckConnectExpire() {
 void ServerObject::HandleConnected(ENetPeer* peer) {
 	if (!peer) { return; }
 	auto tm = time(0);
-	auto info = ConnectInfo{ peer, (float)tm };
+	auto info = ConnectInfo{ peer, tm };
 	connects.insert(std::pair<int, ConnectInfo>(peer->incomingPeerID, info));
 	std::cout << "Client[" << peer->incomingPeerID << "]: connected..., time: " << tm << std::endl;
 }
@@ -65,6 +61,7 @@ void ServerObject::HandleDisconnected(int pid) {
 	auto packet = new GamePacket();
 	packet->type = Player_Disconnected;
 	ProcessPacket(packet, pid);
+	delete packet;
 	std::cout << "Client[" << pid << "]: has disconnected..." << std::endl;
 }
 
@@ -75,7 +72,7 @@ void ServerObject::HandleReceived(int pid, GamePacket* packet) {
 		return;
 	}
 	auto tm = time(0);
-	it->second.UpdateTime((float)tm);
+	it->second.UpdateTime(tm);
 	ProcessPacket(packet, pid);
 }
 
@@ -84,14 +81,17 @@ void ServerObject::HandleReceived(int pid, GamePacket* packet) {
 //@param payload - message
 //@param source - source peer
 void ServerObject::ReceivePacket(int type, GamePacket* payload, int source) {
-	ENetPacket* dataPacket = enet_packet_create(&payload, payload->GetTotalSize(), 0);
+	GamePacket* packet = DeepCopyPacket(payload);
+	ENetPacket* dataPacket = enet_packet_create(packet, payload->GetTotalSize(), 0);
 	if (NULL == dataPacket) {
 		std::cout << "Client[" << source << "]: Create global packet error" << source << std::endl;
 		return;
 	}
+	//todo
+	//enet_host_broadcast(netHandle, 0, dataPacket);
 	Broadcast(type, dataPacket, source);
-
-	delete dataPacket;
+	
+	delete packet;
 }
 
 void ServerObject::ReplyToClient(int type, ENetPeer* peer) {
@@ -103,7 +103,6 @@ void ServerObject::ReplyToClient(int type, ENetPeer* peer) {
 		enet_peer_send(peer, 0, msg);
 	}
 	delete msgData;
-	delete msg;
 }
 
 //broadcast
@@ -114,7 +113,24 @@ void ServerObject::Broadcast(int type, ENetPacket* msg, int source) {
 		if (source == pid) {
 			continue;
 		}
-		std::cout << "Client[" << source << "]: Send to [" << pid << "], message_type: " << type << std::endl;
 		enet_peer_send(it.second.GetPeer(), 0, msg);
+	}
+}
+
+GamePacket* ServerObject::DeepCopyPacket(GamePacket* packet) {
+	if (!packet) { return NULL; }
+	switch (packet->type) {
+	case Message:
+		return new MessagePacket(*(MessagePacket*)packet);
+	case Add_Object:
+		return new AddObjectPacket(*(AddObjectPacket*)packet);
+	case Full_State:
+		return new FullPacket(*(FullPacket*)packet);
+	case Delta_State:
+		return new DeltaPacket(*(DeltaPacket*)packet);
+	case Received_State:
+		return new ClientPacket(*(ClientPacket*)packet);
+	default:
+		return new GamePacket(*packet);
 	}
 }

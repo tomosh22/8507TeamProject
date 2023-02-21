@@ -84,6 +84,11 @@ namespace NCL::CSC8503 {
 		//unsigned int texture;
 		bool isPaintable;
 		
+		virtual int collisionInfo() {
+			return 0;
+		}
+
+		
 		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
 			int& topT, int& bottomT, Vector2& texCoords);
 		int GetLeftS(int centerS, int radius);

@@ -63,6 +63,7 @@ void GameServer::UpdateServer() {
 			std::cout << "Server: Client[" << peer << "] connected..." << std::endl;
 		}
 		else if (ENetEventType::ENET_EVENT_TYPE_DISCONNECT == type) {
+			std::cout << "Server: Client[" << peer << "] has disconnected..." << std::endl;
 		}
 		else if (ENetEventType::ENET_EVENT_TYPE_RECEIVE == type) {
 			GamePacket* packet = (GamePacket*)event.packet->data;

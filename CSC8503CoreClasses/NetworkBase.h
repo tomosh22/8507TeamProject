@@ -7,12 +7,12 @@ struct _ENetEvent;
 enum BasicNetworkMessages {
 	None,
 	Message,
+	Connect_Confirmed,
+	Player_Disconnected,
+	Add_Object,
 	Full_State,		//Full transform etc
 	Delta_State,
 	Received_State, //received from a client
-	Connect_Confirmed,
-	Player_Connected,
-	Player_Disconnected,
 	Shutdown,
 
 	MessageTypeMax
@@ -31,11 +31,9 @@ struct GamePacket {
 		this->type	= type;
 	}
 
-	int GetType() { return type; }
 	int GetTotalSize() {
 		return sizeof(GamePacket) + size;
 	}
-	virtual std::string GetPrintInfo() { return ""; }
 };
 
 class PacketReceiver {

@@ -19,11 +19,13 @@ NetworkObject::~NetworkObject()	{
 bool NetworkObject::ReadPacket(bool delta, GamePacket* p) {
 	if (delta) {
 		DeltaPacket* packet = (DeltaPacket*)p;
+		std::cout << "Client: player[" << networkID << "] update delta state, position: " << packet->pos << " orientation: " << packet->orientation << std::endl;
 		ReadDeltaPacket(*packet);
 		return true;
 	}
 	FullPacket* packet = (FullPacket*)p;
-	ReadFullPacket(*packet->GetState());
+	ReadFullPacket(packet->fullState);
+	std::cout << "Client: player[" << networkID << "] update full state, position: " << packet->fullState.position << " orientation: " << packet->fullState.orientation << std::endl;
 	return false;
 }
 

@@ -154,6 +154,10 @@ namespace NCL::CSC8503 {
 			
 		}
 		
+		 int collisionInfo() override{
+			return this->getExplosionRadius();
+		}
+		
 	protected:
 		float explosionRadius;
 		float ProjectileRadius;

@@ -28,6 +28,9 @@ namespace NCL {
 			void UpdateGPUBuffers(unsigned int startVertex, unsigned int vertexCount);
 
 			static OGLMesh* GenerateQuadWithIndices();
+			static OGLMesh* GenerateTriangleWithIndices();
+
+			
 
 		protected:
 			GLuint	GetVAO()			const { return vao;			}

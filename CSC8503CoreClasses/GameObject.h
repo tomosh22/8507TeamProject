@@ -2,6 +2,10 @@
 #include "Transform.h"
 #include "CollisionVolume.h"
 
+#define TEXTURE_DENSITY 4
+
+//typedef std::array<int, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY> TEXTURE;
+
 using std::vector;
 
 namespace NCL::CSC8503 {

@@ -47,10 +47,16 @@ namespace NCL {
 			GameObject* AddFloorToWorld(const Vector3& position);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, float inverseMass = 10.0f);
 			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 
 			GameObject* AddPlayerToWorld(const Vector3& position, Quaternion& orientation);
 			GameObject* AddEnemyToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);
+
+			//this was me
+			GameObject* AddDebugTriangleToWorld(const Vector3& position);
 
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
@@ -71,6 +77,13 @@ namespace NCL {
 			MeshGeometry*	cubeMesh	= nullptr;
 			MeshGeometry*	sphereMesh	= nullptr;
 
+			//this was me
+			MeshGeometry* triangleMesh = nullptr;
+			MeshGeometry* monkeyMesh = nullptr;
+			MeshGeometry* floorMesh = nullptr;
+			MeshGeometry* maxMesh = nullptr;
+			MeshGeometry* basicWallMesh = nullptr;
+
 			TextureBase*	basicTex	= nullptr;
 			ShaderBase*		basicShader = nullptr;
 
@@ -88,16 +101,58 @@ namespace NCL {
 
 			GameObject* objClosest = nullptr;
 
-			GameObject* worldFloor;
+			GameObject* worldFloor = nullptr;
 			
 			//this was me
 			OGLComputeShader* computeShader;
-			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center);
+			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center, int teamID);
 			OGLShader* quadShader;
-			OGLTexture* quadTex = nullptr;
+			TextureBase* quadTex = nullptr;
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object);
+
+			void DispatchComputeShaderForEachTriangle(GameObject* object);
+			GLuint triangleSSBO;
+			void SetUpTriangleSSBOAndDataTexture();
+			OGLComputeShader* triComputeShader;
+			//OGLTexture* triDataTex;//1d texture
+			//GLuint triangleBoolSSBO;
+			bool SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint);
+
+			void DispatchComputeShaderForEachPixel();
+			OGLComputeShader* rayMarchComputeShader;
+			int maxSteps;
+			float hitDistance;
+			float noHitDistance;
+			float debugValue;
+			struct RayMarchSphere {
+				Vector3 center;
+				float radius;
+				Vector3 color;
+			};
+			std::vector<GameObject*> spheres;
+			std::vector<RayMarchSphere> rayMarchSpheres;
+			GLuint rayMarchSphereSSBO;
+			int maxRayMarchSpheres;
+			float timePassed = 0;
+			GLuint depthBufferTex;//for depth testing after raymarch
+			bool rayMarchDepthTest;
+			OGLTexture* testCollisionTex;
+			void InitTestCollisionTexture();
+			GameObject* testCube;
+			Vector3 testSphereCenter;
+			float testSphereRadius;
+			std::array<char, 1000 * 1000> zeros;
+			GameObject* testTriangle;
+			GameObject* monkey;
+			void AddDebugTriangleInfoToObject(GameObject* object);
+			TextureBase* metalTex;
+			TextureBase* testBumpTex;
+			void SendRayMarchData();
+			GameObject* floor;
+			GameObject* max;
+			std::vector<GameObject*> walls;
 
 		};
 	}

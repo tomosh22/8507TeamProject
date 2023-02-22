@@ -531,13 +531,11 @@ void TutorialGame::UpdateKeys() {
 			Vector2 center;
 			int radius = 10;
 			int startIndex, numInts, leftS, rightS, topT, bottomT;
-<<<<<<< HEAD
+
 			//worldFloor->ApplyPaintAtPosition(randVec, halfDims, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
 			//RunComputeShader(worldFloor,200,200, leftS, rightS, topT, bottomT, radius, center);
-=======
-			worldFloor->ApplyPaintAtPosition(randVec, halfDims, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-			RunComputeShader(worldFloor,200,200, leftS, rightS, topT, bottomT, radius, center, 4);
->>>>>>> raymarching
+
+
 		}
 		
 	}
@@ -745,17 +743,10 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	int radius = 10;
 	int startIndex, numInts, leftS,rightS,topT,bottomT;
 	Vector2 center;
-<<<<<<< HEAD
-	//floor->ApplyPaintAtPosition(Vector3(-50, 4, 0), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-	//RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center);
-	//floor->ApplyPaintAtPosition(Vector3(50, 4, 0), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-	//RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center);
-	//floor->ApplyPaintAtPosition(Vector3(0, 4, 50), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-	//RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center);
-	//floor->ApplyPaintAtPosition(Vector3(0, 4, -50), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-	//RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center);
 
-=======
+	
+
+
 	floor->ApplyPaintAtPosition(Vector3(-50, 4, 0), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
 	RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center, 1);
 	floor->ApplyPaintAtPosition(Vector3(50, 4, 0), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
@@ -765,7 +756,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	floor->ApplyPaintAtPosition(Vector3(0, 4, -50), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
 	RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center, 1);
 #endif
->>>>>>> raymarching
+
 	
 	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), floorMesh, nullptr, basicShader));
 	InitPaintableTextureOnObject(floor);
@@ -920,7 +911,7 @@ GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	return triangle;
 }
 
-GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position) {
+GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion& orientation) {
 	float meshSize		= 1.0f;
 	float inverseMass	= 0.5f;
 

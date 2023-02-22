@@ -123,12 +123,12 @@ namespace NCL::CSC8503 {
 
 		bool isPaintable;
 
-		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
+		/*void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
 			int& topT, int& bottomT, Vector2& texCoords);
 		int GetLeftS(int centerS, int radius);
 		int GetRightS(int centerS, int radius);
 		int GetTopT(int centerT, int centerS, int radius);
-		int GetBottomT(int centerT, int centerS, int radius);
+		int GetBottomT(int centerT, int centerS, int radius);*/
 
 	protected:
 		Transform			transform;

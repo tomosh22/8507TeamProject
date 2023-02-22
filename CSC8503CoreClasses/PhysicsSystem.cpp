@@ -204,7 +204,7 @@ to the collision set for later processing. The set will guarantee that
 a particular pair will only be added once, so objects colliding for
 multiple frames won't flood the set with duplicates.
 */
-int PhysicsSystem::BasicCollisionDetection() {
+PhysicsSystem::collisionData PhysicsSystem::BasicCollisionDetection() {
 	std::vector<GameObject*>::const_iterator first;
 	std::vector<GameObject*>::const_iterator last;
 	gameWorld.GetObjectIterators(first,last);
@@ -223,15 +223,15 @@ int PhysicsSystem::BasicCollisionDetection() {
 				info.framesLeft = numCollisionFrames;
 				allCollisions.insert(info);
 				if ((info.a)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
-					return (info.a)->collisionInfo();
+					return collisionData{ (info.a)->collisionInfo(),(info.a)->GetTransform().GetPosition()};
 				}
 				if ((info.b)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
-					return (info.b)->collisionInfo();
+					return collisionData{ (info.b)->collisionInfo(),(info.b)->GetTransform().GetPosition() };
 				}
 			}
 		}
 	}
-	return 0;
+	return collisionData{0,{}};
 }
 /*
 

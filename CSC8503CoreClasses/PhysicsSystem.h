@@ -7,6 +7,13 @@ namespace NCL {
 		public:
 			PhysicsSystem(GameWorld& g);
 			~PhysicsSystem();
+			
+			struct collisionData
+			{
+				float paintRadius;
+				Vector3 contactPosition;
+
+			};
 
 			void Clear();
 
@@ -26,7 +33,7 @@ namespace NCL {
 		protected:
 
 
-			int BasicCollisionDetection();
+			collisionData BasicCollisionDetection();
 			void BroadPhase();
 			void NarrowPhase();
 

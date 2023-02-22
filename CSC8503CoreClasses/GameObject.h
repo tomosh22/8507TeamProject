@@ -84,7 +84,7 @@ namespace NCL::CSC8503 {
 		//unsigned int texture;
 		bool isPaintable;
 		
-		virtual int collisionInfo() {
+		virtual float collisionInfo() {
 			return 0;
 		}
 

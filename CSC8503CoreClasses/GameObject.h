@@ -31,6 +31,16 @@ namespace NCL::CSC8503 {
 		}
 		// end ignoring detection
 
+		// testing ignoring detection
+		void toggleobjectdetection() {
+			if (!isActive) {
+				isActive = true;
+				return;
+			}
+			isActive = false;
+		}
+		// end ignoring detection
+
 		const CollisionVolume* GetBoundingVolume() const {
 			return boundingVolume;
 		}
@@ -95,7 +105,7 @@ namespace NCL::CSC8503 {
 
 		bool GetBroadphaseAABB(Vector3&outsize) const;
 
-		bool GetIsAlpha(){
+		bool GetIsAlpha() {
 			return isAlpha;
 		}
 
@@ -105,8 +115,17 @@ namespace NCL::CSC8503 {
 
 		void UpdateBroadphaseAABB();
 
+
 		void SetWorldID(int newID) {
 			worldID = newID;
+		}
+
+		void setImpactAbsorbtionAmount(float newAbsorbtionAmount) {
+			impactAbsorbtionAmount = newAbsorbtionAmount;
+		}
+
+		float getImpactAbsorbtionAmount() {
+			return impactAbsorbtionAmount;
 		}
 
 		int		GetWorldID() const {
@@ -121,6 +140,12 @@ namespace NCL::CSC8503 {
 			return impactAbsorbtionAmount;
 		}
 
+		virtual float collisionInfo() {
+			return 0;
+		}
+
+		//unsigned int ssbo;
+		//unsigned int texture;
 		bool isPaintable;
 
 		/*void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
@@ -141,12 +166,13 @@ namespace NCL::CSC8503 {
 
 
 		bool        isAlpha = false;
-	    bool		isActive;
+		bool		isActive;
 		int			worldID;
-	    float impactAbsorbtionAmount;
+		float impactAbsorbtionAmount;
 		std::string	name;
 
 		Vector3 broadphaseAABB;
 	};
 }
+
 

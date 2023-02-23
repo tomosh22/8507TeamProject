@@ -8,8 +8,14 @@
 #include "OrientationConstraint.h"
 #include "StateGameObject.h"
 #include <minmax.h>
+#include<cmath>
 
+#include "playerTracking.h"
+#include"Projectile.h"
 
+#include<iostream>
+
+using namespace std;
 using namespace NCL;
 using namespace CSC8503;
 
@@ -29,8 +35,9 @@ TutorialGame::TutorialGame()	{
 	forceMagnitude	= 10.0f;
 	useGravity		= false;
 	inSelectionMode = false;
+	testStateObject = nullptr;
 
-	
+	objectpool = new ObjectPool<Projectile>();
 
 	InitialiseAssets();
 
@@ -259,6 +266,9 @@ void TutorialGame::InitialiseAssets() {
 	
 	InitCamera();
 	InitWorld();
+
+	/*AddFloorToWorld({ 0, 0, 0 });
+	AddPlayerToWorld({ 0, 1, 0 });*/
 }
 
 TutorialGame::~TutorialGame()	{
@@ -274,6 +284,8 @@ TutorialGame::~TutorialGame()	{
 	delete physics;
 	delete renderer;
 	delete world;
+
+	delete objectpool;
 
 	//todo delete texture array
 	//todo delete compute shader
@@ -355,6 +367,7 @@ void TutorialGame::UpdateGame(float dt) {
 
 	SelectObject();
 	MoveSelectedObject();
+	//movePlayer(goatCharacter);
 
 	world->UpdateWorld(dt);
 	renderer->Update(dt);
@@ -496,6 +509,7 @@ void TutorialGame::UpdateKeys() {
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::G)) {
 		useGravity = !useGravity; //Toggle gravity!
 		physics->UseGravity(useGravity);
+		physics->SetGravity(Vector3(0, -9.81f, 0));
 	}
 	//Running certain physics updates in a consistent order might cause some
 	//bias in the calculations - the same objects might keep 'winning' the constraint
@@ -624,6 +638,13 @@ void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
 
+	InitDefaultFloor();
+}
+
+void TutorialGame::InitWorldtest() {
+	world->ClearAndErase();
+	physics->Clear();
+
 	//InitDefaultFloor();
 
 	//position is irrelevant at this point in testing as im overriding position later
@@ -661,8 +682,19 @@ void TutorialGame::InitWorld() {
 	return;
 }
 
-void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius, Vector2 center, int teamID) {
+
+void TutorialGame::InitWorldtest2() {
+	world->ClearAndErase();
+	physics->Clear();
 	
+
+	InitDefaultFloorRunway();
+}
+
+
+
+
+void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius, Vector2 center,int teamID) {
 	computeShader->Bind();
 	glActiveTexture(GL_TEXTURE0);
 	glBindImageTexture(0, ((OGLTexture*)floor->GetRenderObject()->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_R8UI);
@@ -771,6 +803,28 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	return floor;
 }
 
+GameObject* TutorialGame::AddRunwayToWorld(const Vector3& position) {
+	GameObject* floor = new GameObject();
+
+	Vector3 floorSize = Vector3(30, 2, 30);
+	AABBVolume* volume = new AABBVolume(floorSize);
+	floor->SetBoundingVolume((CollisionVolume*)volume);
+	floor->GetTransform()
+		.SetScale(floorSize * 2)
+		.SetPosition(position);
+
+	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), cubeMesh, basicTex, basicShader));
+	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
+
+	floor->GetPhysicsObject()->SetInverseMass(0);
+	floor->GetPhysicsObject()->InitCubeInertia();
+
+	world->AddGameObject(floor);
+
+	return floor;
+}
+
+
 /*
 
 Builds a game object that uses a sphere mesh for its graphics, and a bounding sphere for its
@@ -807,6 +861,33 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
 	return sphere;
 }
+
+GameObject* TutorialGame::AddDestructableCubeToWorld(const Vector3& position, Vector3 dimensions, float dt, float inverseMass) {
+	GameObject* cube = new GameObject();
+	srand(dt);
+	int random = rand() % 10;
+	int random2 = rand() % 20;
+	int random3 = rand() % 13;
+	int random4 = rand() % 7;
+	AABBVolume* volume = new AABBVolume(dimensions);
+	cube->SetBoundingVolume((CollisionVolume*)volume);
+
+	cube->GetTransform().SetPosition(position).SetScale(dimensions * 2);
+	cube->GetTransform().setDestructable();
+
+	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, basicTex, basicShader));
+	cube->GetRenderObject()->SetColour(Vector4(random, random2, random3, random4));
+	cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));
+
+	cube->GetPhysicsObject()->SetInverseMass(inverseMass);
+	cube->GetPhysicsObject()->InitCubeInertia();
+	cube->GetPhysicsObject()->SetAffectedByGravityFalse();
+
+	world->AddGameObject(cube);
+
+	return cube;
+}
+
 
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* cube = new GameObject();
@@ -900,6 +981,58 @@ GameObject* TutorialGame::AddMaxToWorld(const Vector3& position, Vector3 dimensi
 	return max;
 }
 
+void TutorialGame::setLockedObjectNull() {
+	lockedObject = nullptr;
+}
+
+void TutorialGame::setLockedObject(GameObject* goatPlayer) {
+	lockedObject = goatPlayer;
+}
+
+GameObject* TutorialGame::AddEnemyGoatToWorld(const Vector3& position) {
+	float meshSize = 2.0f;
+	float inverseMass = 0.6f;
+
+	GameObject* BadGoat = new GameObject();
+	SphereVolume* volume = new SphereVolume(1.7f);
+	BadGoat->SetBoundingVolume((CollisionVolume*)volume);
+	BadGoat->GetTransform().SetScale(Vector3(meshSize, meshSize, meshSize)).SetPosition(position);
+
+	BadGoat->SetRenderObject(new RenderObject(&BadGoat->GetTransform(), charMesh, nullptr, basicShader));
+	BadGoat->SetPhysicsObject(new PhysicsObject(&BadGoat->GetTransform(), BadGoat->GetBoundingVolume()));
+	BadGoat->GetRenderObject()->SetColour(Vector4(0, 0, 0, 1));
+	BadGoat->GetPhysicsObject()->SetInverseMass(inverseMass);
+	BadGoat->GetPhysicsObject()->setCoeficient(0.55f);
+	BadGoat->GetPhysicsObject()->InitSphereInertia();
+	TutorialGame::setEnemyGoat(BadGoat);
+	world->AddGameObject(BadGoat);
+
+	return BadGoat;
+}
+
+//GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position) { //Origonal
+//	float meshSize		= 1.0f;
+//	float inverseMass	= 0.5f;
+//
+//	GameObject* character = new GameObject();
+//	SphereVolume* volume  = new SphereVolume(1.0f);
+//
+//	character->SetBoundingVolume((CollisionVolume*)volume);
+//
+//	character->GetTransform()
+//		.SetScale(Vector3(meshSize, meshSize, meshSize))
+//		.SetPosition(position);
+//
+//	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
+//	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
+//
+//	character->GetPhysicsObject()->SetInverseMass(inverseMass);
+//	character->GetPhysicsObject()->InitSphereInertia();
+//
+//	world->AddGameObject(character);
+//
+//	return character;
+//}
 GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	GameObject* triangle = new GameObject();
 
@@ -911,28 +1044,168 @@ GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	return triangle;
 }
 
-GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion& orientation) {
-	float meshSize		= 1.0f;
-	float inverseMass	= 0.5f;
+playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation) {
+	float meshSize = 2.0f;
+	float inverseMass = 0.8f;
 
-	GameObject* character = new GameObject();
-	SphereVolume* volume  = new SphereVolume(1.0f);
+	playerTracking* character = new playerTracking();
+	AABBVolume* volume = new AABBVolume(Vector3{ 2,2,2 });
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
-	character->GetTransform()
-		.SetScale(Vector3(meshSize, meshSize, meshSize))
-		.SetPosition(position).SetOrientation(orientation);
+	character->GetTransform().SetScale(Vector3(meshSize, meshSize, meshSize)).SetPosition(position).SetOrientation(orientation);
+	character->GetTransform().setGoatID(7);
+	character->setImpactAbsorbtionAmount(0.9f);
 
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
+	character->GetPhysicsObject()->setTorqueFriction(0.005f);
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
+	character->GetPhysicsObject()->setCoeficient(0.55f);
 	character->GetPhysicsObject()->InitSphereInertia();
-
+	setGoatCharacter(character);
 	world->AddGameObject(character);
 
 	return character;
+}
+
+
+Projectile* TutorialGame::AddBulletToWorld(playerTracking* playableCharacter) {
+	if (playableCharacter->getBulletVectorSize() <= 200) {
+		return useNewBullet(playableCharacter);
+	}
+
+}
+
+
+Projectile* TutorialGame::useNewBullet(playerTracking* passedPlayableCharacter) {
+	gun wepType = passedPlayableCharacter->getWeponType();
+
+	Projectile* sphere = objectpool->GetObjectW();
+	float bulletsInverseMass = sphere->getWeight();
+	float radius = sphere->getProjectileRadius();
+	//Vector3 playerDirectionVector = (Vector3::Cross((passedPlayableCharacter->GetTransform().GetOrientation().ToEuler()) , Vector3 {1,0,0})).Normalised();
+	Vector3 playerDirectionVector = (passedPlayableCharacter->GetTransform().GetOrientation() * Vector3 { 0, 0, -1 });
+	Vector3 sphereSize = { radius,radius,radius };
+	Vector3 position = passedPlayableCharacter->GetTransform().GetPosition();
+	SphereVolume* volume = new SphereVolume(radius);
+	sphere->setBulletDirectionVector(playerDirectionVector);
+	sphere->SetBoundingVolume((CollisionVolume*)volume);
+	sphere->GetTransform().SetScale(sphereSize);
+	sphere->GetTransform().SetPosition(position - Vector3{ 0,0,10 });
+	sphere->GetTransform().SetPosition((position)-(Vector3{ 0,0,10 }));
+
+	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
+	sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
+	sphere->GetRenderObject()->SetColour(passedPlayableCharacter->getPaintColor());
+	PhysicsObject* physicsBullet = sphere->GetPhysicsObject();
+	if (!sphere->ProjectileAffectedByGravity() || true) {
+		physicsBullet->SetAffectedByGravityFalse();
+	}
+	sphere->GetPhysicsObject()->SetInverseMass(bulletsInverseMass);
+	sphere->GetPhysicsObject()->InitSphereInertia();
+
+	world->AddGameObject(sphere);
+	return sphere;
+
+}
+
+
+Projectile* TutorialGame::FireBullet(playerTracking* selectedPlayerCharacter) {
+	Projectile* loadedBullet = useNewBullet(selectedPlayerCharacter);
+	//selectedPlayerCharacter->addToBulletsUsed(loadedBullet);
+	PhysicsObject* physicsShot = loadedBullet->GetPhysicsObject();
+	//physicsShot->SetLayerID(); // set Id so bullets cannot collied with each other and players.
+	//loadedBullet->GetTransform().setDestructable();
+	physicsShot->SetLinearVelocity({ 0,0,0 });
+	physicsShot->ClearForces();
+	float const startingForce = loadedBullet->getPojectilePropultionForce();
+	Vector3 firingDirectionVector = loadedBullet->getBulletDirectionVector();
+	Vector3 firingDirectionVectorWithForce = firingDirectionVector * startingForce;
+	physicsShot->AddForce(firingDirectionVectorWithForce);
+
+
+	//testing bullet vector removal
+	/*if (selectedPlayerCharacter->getBulletVectorSize() > 10) {
+		selectedPlayerCharacter->clearBulletsUsed();
+	}*/
+	//testing bullet vector removal
+	return loadedBullet;
+}
+
+
+
+void TutorialGame::setGoatCharacter(playerTracking* assignCharcter) {
+	goatCharacter = assignCharcter;
+}
+
+void TutorialGame::setEnemyGoat(GameObject* assignCharcter) {
+	EnemyGoat = assignCharcter;
+}
+
+void TutorialGame::movePlayer(playerTracking* unitGoat) {
+	unitGoat->GetRenderObject()->SetColour(Vector4(0.1f, 0.2f, 0.4f, 1));
+	PhysicsObject* goatPhysicsObject = unitGoat->GetPhysicsObject();
+	Transform* goatTransform = &(unitGoat->GetTransform());
+	//jumping raycast test
+	Vector3 rayPos;
+	Vector3 rayDir;
+	rayDir = unitGoat->GetTransform().GetOrientation() * Vector3(0, -1, 0);
+	rayPos = unitGoat->GetTransform().GetPosition();
+
+	Ray r = Ray(rayPos, rayDir);
+
+	RayCollision grounded;
+	if (world->Raycast(r, grounded, true)) {
+		/*if (objClosest) {
+			objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
+		}*/
+		objClosest = (playerTracking*)grounded.node;
+		//objClosest->GetRenderObject()->SetColour(Vector4(1, 0, 1, 1));
+		float distanceFromPlatform = abs((unitGoat->GetTransform().GetPosition().y) - (objClosest->GetTransform().GetPosition().y));
+		if (distanceFromPlatform > 5) {
+			goatPhysicsObject->setCanJumpFalse();
+		}
+		//Debug::DrawLine(rayPos, Vector3(objClosest->GetRenderObject()->GetTransform()->GetPosition()), Vector4(1, 0, 0.7, 1), 20.0f);
+		//std::cout << distanceFromPlatform << std::endl;
+		if (distanceFromPlatform < 4.0f) {
+			goatPhysicsObject->setCanJumpTrue();
+
+
+		}
+	}
+	//jumping raycast test
+	if ((Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::H)) && (goatPhysicsObject->GetCanJump())) {
+		//std::cout << "hi we reached this point " << std::endl;
+		goatPhysicsObject->AddForce(Vector3(0.0f, 1100.0f, 0.0f));
+		/*playerState *a = new playerState();
+		a->setCurrentPlayerAction(a->jumping);
+		cout<< "current player action = " << a->getCurrentPlayerAction()<< endl;*/
+	};
+
+	if ((Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::F))) {
+		if (unitGoat->getPlayerProjectile()->GetCanFire()) {
+			FireBullet(unitGoat);
+			unitGoat->getPlayerProjectile()->toggleCanFire();
+		};
+	};
+
+	if ((Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::W)) || (Window::GetKeyboard()->KeyHeld(NCL::KeyboardKeys::W))) {
+		goatPhysicsObject->AddForce(((unitGoat->GetTransform().GetOrientation()) * (Vector3(0, 0, 1)).Normalised()) * -20.0f);
+	}
+
+	if ((Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::S)) || (Window::GetKeyboard()->KeyHeld(NCL::KeyboardKeys::S))) {
+		goatPhysicsObject->AddForce(((unitGoat->GetTransform().GetOrientation()) * (Vector3(0, 0, 1)).Normalised()) * 10.0f);
+	}
+
+	if ((Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::D)) || (Window::GetKeyboard()->KeyHeld(NCL::KeyboardKeys::D))) {
+		goatPhysicsObject->AddTorque(Vector3(0, -2.0, 0));
+	}
+	if ((Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::A)) || (Window::GetKeyboard()->KeyHeld(NCL::KeyboardKeys::A))) {
+		goatPhysicsObject->AddTorque(Vector3(0, 2.0, 0));
+	}
+
 }
 
 GameObject* TutorialGame::AddEnemyToWorld(const Vector3& position) {
@@ -985,6 +1258,10 @@ void TutorialGame::InitDefaultFloor() {
 	AddFloorToWorld(Vector3(0, -20, 0));
 }
 
+void TutorialGame::InitDefaultFloorRunway() {
+	AddRunwayToWorld(Vector3(0, -20, 0));
+}
+
 void TutorialGame::InitGameExamples() {
 	auto q = Quaternion();
 	AddPlayerToWorld(Vector3(0, 5, 0), q);
@@ -1019,6 +1296,27 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 		}
 	}
 }
+
+void TutorialGame::InitMixedGridWorldtest(int numRows, int numCols, float rowSpacing, float colSpacing) {
+	float sphereRadius = 1.0f;
+	Vector3 cubeDims = Vector3(1, 1, 1);
+	//	chainBallTest();
+	StateGameObject* AddStateObjectToWorld(const Vector3 & position);
+	playerTracking* player1 = AddPlayerToWorld(Vector3(-10, -10, 0));
+	movePlayer(player1);
+	setLockedObject(player1);
+	Vector3 position1 = Vector3(0 * colSpacing, 10.0f, 0 * rowSpacing);
+	Vector3 position2 = Vector3(1 * colSpacing, 10.0f, 1 * -rowSpacing);
+
+	AddCubeToWorld(position1, cubeDims);
+
+	//AddSphereToWorld(position2, sphereRadius);
+
+}
+
+
+
+
 
 void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims) {
 	for (int x = 1; x < numCols+1; ++x) {
@@ -1114,6 +1412,29 @@ void TutorialGame::MoveSelectedObject() {
 	}
 }
 
+
+
+
+StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
+	StateGameObject* object = new StateGameObject();
+
+	SphereVolume* volume = new SphereVolume(0.5f);
+	object->SetBoundingVolume((CollisionVolume*)volume);
+	object->GetTransform()
+		.SetScale(Vector3(2, 2, 2))
+		.SetPosition(position);
+
+	object->SetRenderObject(new RenderObject(&object->GetTransform(), sphereMesh, nullptr, basicShader));
+	object->SetPhysicsObject(new PhysicsObject(&object->GetTransform(), object->GetBoundingVolume()));
+
+	object->GetPhysicsObject()->SetInverseMass(1.0f);
+	object->GetPhysicsObject()->InitSphereInertia();
+
+	world->AddGameObject(object);
+
+	return object;
+
+}
 
 
 void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {

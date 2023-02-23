@@ -7,7 +7,7 @@ namespace NCL {
 		public:
 			PhysicsSystem(GameWorld& g);
 			~PhysicsSystem();
-			
+
 			struct collisionData
 			{
 				float paintRadius;
@@ -29,10 +29,7 @@ namespace NCL {
 
 			void SetGravity(const Vector3& g);
 
-
 		protected:
-
-
 			collisionData BasicCollisionDetection();
 			void BroadPhase();
 			void NarrowPhase();
@@ -57,7 +54,6 @@ namespace NCL {
 			Vector3 gravity;
 			float	dTOffset;
 			float	globalDamping;
-			
 
 			std::set<CollisionDetection::CollisionInfo> allCollisions;
 			std::set<CollisionDetection::CollisionInfo> broadphaseCollisions;
@@ -67,3 +63,4 @@ namespace NCL {
 		};
 	}
 }
+

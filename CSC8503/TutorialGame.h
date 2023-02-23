@@ -86,14 +86,13 @@ namespace NCL {
 			
 			Projectile* FireBullet(playerTracking* selectedPlayerCharacter);
 			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
-			GameObject* AddDestructableCubeToWorld(const Vector3& position, Vector3 dimensions, float dt, float inverseMass = 10.0f);
+			
 			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 
-			playerTracking* AddPlayerToWorld(const Vector3& position);
+			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation);
 			GameObject* AddEnemyGoatToWorld(const Vector3& position);
-			GameObject* AddPlayerToWorld(const Vector3& position, Quaternion& orientation);
 			GameObject* AddEnemyToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);
 

@@ -41,26 +41,13 @@ namespace NCL::CSC8503 {
 	}*/
 
 
-	void playerTracking::updateBulletsUsed() {
-		if (getBulletVectorSize() > 1) {
-			for (int ix = 0; ix < getBulletVectorSize(); ix++) {
-				bulletsUsed[ix]->GetPhysicsObject()->ClearForces();
-				bulletsUsed[ix]->GetPhysicsObject()->SetLinearVelocity(Vector3{0,0,0});
-				bulletsUsed[ix]->GetTransform().Remove();
-				bulletsUsed[ix]->SetActive(false);
-				/*bulletsUsedAndMoved.push_back(bulletsUsed[ix]);
-				bulletsUsed.erase(bulletsUsed.begin() + ix);
-				std::cout << bulletsUsedAndMoved.size() << std::endl*/;
-			}
-		}
-	}
-
+	
 
 	Projectile* playerTracking::reuseBullet() {
 		Projectile* reusedBullet = bulletsUsed.at(0);
 		reusedBullet->GetPhysicsObject()->SetLinearVelocity(Vector3{0,0,0});
 		reusedBullet->GetPhysicsObject()->ClearForces();
-		reusedBullet->GetPhysicsObject()->clearMomentum();
+		
 		reusedBullet->SetActive(true);
 		bulletsUsed.erase(bulletsUsed.begin(),bulletsUsed.begin()+1);
 		return reusedBullet;

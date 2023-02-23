@@ -37,7 +37,7 @@ TutorialGame::TutorialGame()	{
 	inSelectionMode = false;
 	testStateObject = nullptr;
 
-	objectpool = new ObjectPool<Projectile>();
+	objectpool = new ObjectPool<Projectile>(100);
 
 	InitialiseAssets();
 
@@ -639,6 +639,7 @@ void TutorialGame::InitWorld() {
 	physics->Clear();
 
 	InitDefaultFloor();
+	InitWorldtest();
 }
 
 void TutorialGame::InitWorldtest() {
@@ -862,31 +863,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	return sphere;
 }
 
-GameObject* TutorialGame::AddDestructableCubeToWorld(const Vector3& position, Vector3 dimensions, float dt, float inverseMass) {
-	GameObject* cube = new GameObject();
-	srand(dt);
-	int random = rand() % 10;
-	int random2 = rand() % 20;
-	int random3 = rand() % 13;
-	int random4 = rand() % 7;
-	AABBVolume* volume = new AABBVolume(dimensions);
-	cube->SetBoundingVolume((CollisionVolume*)volume);
 
-	cube->GetTransform().SetPosition(position).SetScale(dimensions * 2);
-	cube->GetTransform().setDestructable();
-
-	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, basicTex, basicShader));
-	cube->GetRenderObject()->SetColour(Vector4(random, random2, random3, random4));
-	cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));
-
-	cube->GetPhysicsObject()->SetInverseMass(inverseMass);
-	cube->GetPhysicsObject()->InitCubeInertia();
-	cube->GetPhysicsObject()->SetAffectedByGravityFalse();
-
-	world->AddGameObject(cube);
-
-	return cube;
-}
 
 
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
@@ -1054,7 +1031,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
 	character->GetTransform().SetScale(Vector3(meshSize, meshSize, meshSize)).SetPosition(position).SetOrientation(orientation);
-	character->GetTransform().setGoatID(7);
+	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
@@ -1302,7 +1279,8 @@ void TutorialGame::InitMixedGridWorldtest(int numRows, int numCols, float rowSpa
 	Vector3 cubeDims = Vector3(1, 1, 1);
 	//	chainBallTest();
 	StateGameObject* AddStateObjectToWorld(const Vector3 & position);
-	playerTracking* player1 = AddPlayerToWorld(Vector3(-10, -10, 0));
+	Quaternion q;
+	playerTracking* player1 = AddPlayerToWorld(Vector3(-10, -10, 0),q);
 	movePlayer(player1);
 	setLockedObject(player1);
 	Vector3 position1 = Vector3(0 * colSpacing, 10.0f, 0 * rowSpacing);

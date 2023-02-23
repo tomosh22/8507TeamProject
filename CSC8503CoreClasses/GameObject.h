@@ -31,15 +31,7 @@ namespace NCL::CSC8503 {
 		}
 		// end ignoring detection
 
-		// testing ignoring detection
-		void toggleobjectdetection() {
-			if (!isActive) {
-				isActive = true;
-				return;
-			}
-			isActive = false;
-		}
-		// end ignoring detection
+		
 
 		const CollisionVolume* GetBoundingVolume() const {
 			return boundingVolume;
@@ -132,13 +124,7 @@ namespace NCL::CSC8503 {
 			return worldID;
 		}
 
-		void setImpactAbsorbtionAmount(float newAbsorbtionAmount) {
-			impactAbsorbtionAmount = newAbsorbtionAmount;
-		}
-
-		float getImpactAbsorbtionAmount() {
-			return impactAbsorbtionAmount;
-		}
+		
 
 		virtual float collisionInfo() {
 			return 0;

@@ -16,6 +16,7 @@ set(Header_Files
     "GameTechRenderer.h"
     "StateGameObject.h"
     "TutorialGame.h"
+    "playerTracking.h"
 )
 source_group("Header Files" FILES ${Header_Files})
 
@@ -24,6 +25,7 @@ set(Source_Files
     "Main.cpp"
     "StateGameObject.cpp"
     "TutorialGame.cpp"
+    "playerTracking.cpp"
 )
 
 if(USE_VULKAN)

@@ -46,7 +46,6 @@ namespace NCL::CSC8503 {
 
 		void clearBulletsUsed();
 
-		void updateBulletsUsed();
 
 		 int getBulletVectorSize() {
 			return bulletsUsed.size();

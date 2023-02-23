@@ -24,12 +24,26 @@ namespace NCL::CSC8503 {
 			boundingVolume = vol;
 		}
 
+		// testing ignoring detection
+		void toggleobjectdetection() {
+			if (!isActive) {
+				isActive = true;
+				return;
+			}
+			isActive = false;
+		}
+		// end ignoring detection
+
 		const CollisionVolume* GetBoundingVolume() const {
 			return boundingVolume;
 		}
 
 		bool IsActive() const {
 			return isActive;
+		}
+
+		void SetActive(bool active) {
+			this->isActive = active;
 		}
 
 		Transform& GetTransform() {
@@ -56,6 +70,10 @@ namespace NCL::CSC8503 {
 			physicsObject = newObject;
 		}
 
+		void resetPhysicsObject() {
+			physicsObject = nullptr;
+		}
+
 		const std::string& GetName() const {
 			return name;
 		}
@@ -70,24 +88,40 @@ namespace NCL::CSC8503 {
 
 		bool GetBroadphaseAABB(Vector3&outsize) const;
 
+		bool GetIsAlpha() {
+			return isAlpha;
+		}
+
+		void setIsAlpha() {
+			isAlpha = true;
+		}
+
 		void UpdateBroadphaseAABB();
+
 
 		void SetWorldID(int newID) {
 			worldID = newID;
+		}
+
+		void setImpactAbsorbtionAmount(float newAbsorbtionAmount) {
+			impactAbsorbtionAmount = newAbsorbtionAmount;
+		}
+
+		float getImpactAbsorbtionAmount() {
+			return impactAbsorbtionAmount;
 		}
 
 		int		GetWorldID() const {
 			return worldID;
 		}
 
-		//unsigned int ssbo;
-		//unsigned int texture;
-		bool isPaintable;
-		
 		virtual float collisionInfo() {
 			return 0;
 		}
 
+		//unsigned int ssbo;
+		//unsigned int texture;
+		bool isPaintable;
 		
 		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
 			int& topT, int& bottomT, Vector2& texCoords);
@@ -103,11 +137,14 @@ namespace NCL::CSC8503 {
 		RenderObject*		renderObject;
 		NetworkObject*		networkObject;
 
+		bool        isAlpha = false;
 		bool		isActive;
 		int			worldID;
+		float impactAbsorbtionAmount;
 		std::string	name;
 
 		Vector3 broadphaseAABB;
 	};
 }
+
 

@@ -704,8 +704,8 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated
 		h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
 	}
 	else {
-		h = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
-		w = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+		w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
+		h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
 	}
 
 	object->GetRenderObject()->isPaintable = true;
@@ -843,6 +843,8 @@ GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dime
 
 	monkey->GetPhysicsObject()->SetInverseMass(inverseMass);
 	monkey->GetPhysicsObject()->InitCubeInertia();
+
+	monkey->GetRenderObject()->isComplex = true;
 
 	InitPaintableTextureOnObject(monkey);
 
@@ -1136,10 +1138,12 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 	int centerLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereCenter");
 	int textureWidthLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureWidth");
 	int textureHeightLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureHeight");
+	int isComplexLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "isComplex");
 	glUniform1f(radiusLocation, testSphereRadius);
 	glUniform3fv(centerLocation,1, testSphereCenter.array);
 	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
 	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
+	glUniform1i(isComplexLocation, object->GetRenderObject()->isComplex);
 	
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
 	std::array<float, MAX_TRIS * 15> emptyArray{};
@@ -1182,7 +1186,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 	glUniform3fv(pointLocation,1, testPoint.array);*/
 	
 	triComputeShader->Execute(object->GetRenderObject()->GetMesh()->GetIndexCount()/64+1, 1, 1);//todo change number of thread groups
-	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	triComputeShader->Unbind();
 }
 

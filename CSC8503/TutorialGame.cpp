@@ -632,17 +632,14 @@ void TutorialGame::InitWorld() {
 	
 
 	//testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
-	floor = AddFloorToWorld({0,0,0});
+	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 
 	//testTriangle = AddDebugTriangleToWorld({ 0,200,0 });
 
 	monkey = AddMonkeyToWorld({ 0,20,100 }, { 5,5,5 });
 	monkey->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(0, 180, 0));
-	walls.push_back(AddWallToWorld({ -80,-30,-70 }, { 20,20,20 }));
-	walls.push_back(AddWallToWorld({ -40,-30,-70 }, { 20,20,20 }));
-	walls.push_back(AddWallToWorld({ 0,-30,-70 }, { 20,20,20 }));
-	walls.push_back(AddWallToWorld({ 40,-30,-70 }, { 20,20,20 }));
-	walls.push_back(AddWallToWorld({ 80,-30,-70 }, { 20,20,20 }));
+	walls.push_back(AddFloorToWorld({ 0,25,-20 }, {100,1,25},true));
+	walls.back()->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(90, 0, 0));
 
 	//max = AddMaxToWorld({ 10,10,-10 }, { 10,10,10 });
 
@@ -700,9 +697,16 @@ void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 
-void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
-	int w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
-	int h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated) {
+	int w, h;
+	if (!rotated) {
+		w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
+		h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+	}
+	else {
+		h = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
+		w = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+	}
 
 	object->GetRenderObject()->isPaintable = true;
 	object->GetRenderObject()->maskTex = new OGLTexture();
@@ -711,6 +715,7 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
 	object->GetRenderObject()->baseTex = metalTex;
 	object->GetRenderObject()->bumpTex = testBumpTex;
 }
@@ -719,14 +724,14 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
 A single function to add a large immoveable cube to the bottom of our world
 
 */
-GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
+GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated) {
 	GameObject* floor = new GameObject();
 
-	Vector3 floorSize = Vector3(100, 2, 100);
-	AABBVolume* volume = new AABBVolume(floorSize);
+	
+	AABBVolume* volume = new AABBVolume(scale);
 	floor->SetBoundingVolume((CollisionVolume*)volume);
 	floor->GetTransform()
-		.SetScale(floorSize * 2)
+		.SetScale(scale * 2)
 		.SetPosition(position);
 
 	
@@ -751,7 +756,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 #endif
 	
 	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), floorMesh, nullptr, basicShader));
-	InitPaintableTextureOnObject(floor);
+	InitPaintableTextureOnObject(floor,rotated);
 
 	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 
@@ -974,7 +979,7 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 
 
 void TutorialGame::InitDefaultFloor() {
-	AddFloorToWorld(Vector3(0, -20, 0));
+	AddFloorToWorld(Vector3(0, -20, 0), {100,1,100});
 }
 
 void TutorialGame::InitGameExamples() {
@@ -990,7 +995,7 @@ void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacin
 			AddSphereToWorld(position, radius, 1.0f);
 		}
 	}
-	AddFloorToWorld(Vector3(0, -2, 0));
+	AddFloorToWorld(Vector3(0, -2, 0), { 100,1,100 });
 }
 
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {
@@ -1129,8 +1134,12 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 
 	int radiusLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereRadius");
 	int centerLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereCenter");
+	int textureWidthLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureWidth");
+	int textureHeightLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureHeight");
 	glUniform1f(radiusLocation, testSphereRadius);
 	glUniform3fv(centerLocation,1, testSphereCenter.array);
+	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
+	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
 	
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
 	std::array<float, MAX_TRIS * 15> emptyArray{};

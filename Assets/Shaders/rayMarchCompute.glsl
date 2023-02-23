@@ -158,7 +158,7 @@ void main() {
 
 	if (result.a < sceneDistanceFromCamera && result.a != -1) {
 		//sphere was hit and depth test passed
-		result.w = 1;//will need to rework if we want transparent spheres
+		result.w = 0.2;//will need to rework if we want transparent spheres
 		imageStore(tex, IMAGE_COORD, result);
 	}
 	else {

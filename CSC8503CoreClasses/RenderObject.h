@@ -54,6 +54,7 @@ namespace NCL {
 			TextureBase* baseTex;
 			TextureBase* bumpTex;
 			bool isPaintable = false;
+			Vector2 maskDimensions;
 
 		protected:
 			MeshGeometry*	mesh;

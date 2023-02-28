@@ -2,6 +2,10 @@
 #include "Transform.h"
 #include "CollisionVolume.h"
 
+#define TEXTURE_DENSITY 4
+
+//typedef std::array<int, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY> TEXTURE;
+
 using std::vector;
 
 namespace NCL::CSC8503 {
@@ -26,6 +30,8 @@ namespace NCL::CSC8503 {
 			isActive = false;
 		}
 		// end ignoring detection
+
+		
 
 		const CollisionVolume* GetBoundingVolume() const {
 			return boundingVolume;
@@ -91,7 +97,7 @@ namespace NCL::CSC8503 {
 
 		bool GetBroadphaseAABB(Vector3&outsize) const;
 
-		bool GetIsAlpha(){
+		bool GetIsAlpha() {
 			return isAlpha;
 		}
 
@@ -101,12 +107,9 @@ namespace NCL::CSC8503 {
 
 		void UpdateBroadphaseAABB();
 
+
 		void SetWorldID(int newID) {
 			worldID = newID;
-		}
-
-		int		GetWorldID() const {
-			return worldID;
 		}
 
 		void setImpactAbsorbtionAmount(float newAbsorbtionAmount) {
@@ -117,14 +120,26 @@ namespace NCL::CSC8503 {
 			return impactAbsorbtionAmount;
 		}
 
+		int		GetWorldID() const {
+			return worldID;
+		}
+
+		
+
+		virtual float collisionInfo() {
+			return 0;
+		}
+
+		//unsigned int ssbo;
+		//unsigned int texture;
 		bool isPaintable;
 
-		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
+		/*void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
 			int& topT, int& bottomT, Vector2& texCoords);
 		int GetLeftS(int centerS, int radius);
 		int GetRightS(int centerS, int radius);
 		int GetTopT(int centerT, int centerS, int radius);
-		int GetBottomT(int centerT, int centerS, int radius);
+		int GetBottomT(int centerT, int centerS, int radius);*/
 
 	protected:
 		Transform			transform;
@@ -137,12 +152,13 @@ namespace NCL::CSC8503 {
 
 
 		bool        isAlpha = false;
-	    bool		isActive;
+		bool		isActive;
 		int			worldID;
-	    float impactAbsorbtionAmount;
+		float impactAbsorbtionAmount;
 		std::string	name;
 
 		Vector3 broadphaseAABB;
 	};
 }
+
 

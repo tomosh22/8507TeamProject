@@ -2,6 +2,7 @@
 #include "TextureBase.h"
 #include "ShaderBase.h"
 #include <array>
+#define MAX_TRIS 10000
 
 namespace NCL {
 	using namespace NCL::Rendering;
@@ -47,6 +48,12 @@ namespace NCL {
 
 			//this was me
 			//unsigned int texID;
+
+			TextureBase* triDataTex = nullptr;
+			TextureBase* maskTex;
+			TextureBase* baseTex;
+			TextureBase* bumpTex;
+			bool isPaintable = false;
 
 		protected:
 			MeshGeometry*	mesh;

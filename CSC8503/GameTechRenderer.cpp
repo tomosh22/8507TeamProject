@@ -3,6 +3,10 @@
 #include "RenderObject.h"
 #include "Camera.h"
 #include "TextureLoader.h"
+
+//this was me
+#include <Win32Window.h>
+
 using namespace NCL;
 using namespace Rendering;
 using namespace CSC8503;
@@ -40,7 +44,7 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	//Set up the light properties
 	lightColour = Vector4(0.8f, 0.8f, 0.5f, 1.0f);
 	lightRadius = 1000.0f;
-	lightPosition = Vector3(-200.0f, 60.0f, -200.0f);
+	lightPosition = Vector3(0.0f, 200.0f, 0.0f);
 
 	//Skybox!
 	skyboxShader = new OGLShader("skybox.vert", "skybox.frag");
@@ -61,6 +65,22 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 
 	SetDebugStringBufferSizes(10000);
 	SetDebugLineBufferSizes(1000);
+
+
+	//this was me
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui::StyleColorsDark();
+
+
+	Win32Code::Win32Window* realWindow = (Win32Code::Win32Window*)&hostWindow;
+
+	
+
+	ImGui_ImplWin32_Init(realWindow->GetHandle());
+	
+	ImGui_ImplOpenGL3_Init("#version 330");
 }
 
 GameTechRenderer::~GameTechRenderer()	{
@@ -110,13 +130,15 @@ void GameTechRenderer::LoadSkybox() {
 
 void GameTechRenderer::RenderFrame() {
 	glEnable(GL_CULL_FACE);
-	glClearColor(1, 1, 1, 1);
+	glClearColor(0.1, 0.1, 0.1, 1);
 	BuildObjectList();
 	SortObjectList();
 	RenderShadowMap();
 	RenderSkybox();
 	RenderCamera();
+	glDepthMask(false);
 	if(renderFullScreenQuad)RenderFullScreenQuad();
+	glDepthMask(true);
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
@@ -126,6 +148,7 @@ void GameTechRenderer::RenderFrame() {
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	ImGui();
 }
 
 void GameTechRenderer::BuildObjectList() {
@@ -238,14 +261,18 @@ void GameTechRenderer::RenderCamera() {
 	int cameraLocation = 0;
 
 	//TODO - PUT IN FUNCTION
-	glActiveTexture(GL_TEXTURE0 + 1);
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 3, "123");
+
+	glActiveTexture(GL_TEXTURE0 + 2);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
+
+	
 
 	for (const auto&i : activeObjects) {
 		OGLShader* shader = (OGLShader*)(*i).GetShader();
 		BindShader(shader);
 
-		BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
+		
 
 		if (activeShader != shader) {
 			projLocation	= glGetUniformLocation(shader->GetProgramID(), "projMatrix");
@@ -277,7 +304,7 @@ void GameTechRenderer::RenderCamera() {
 			glUniform1f(lightRadiusLocation , lightRadius);
 
 			int shadowTexLocation = glGetUniformLocation(shader->GetProgramID(), "shadowTex");
-			glUniform1i(shadowTexLocation, 1);
+			glUniform1i(shadowTexLocation, 2);
 
 			activeShader = shader;
 		}
@@ -299,18 +326,36 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(widthLocation, (*i).GetTransform()->GetScale().x * TEXTURE_DENSITY);
 		glUniform1i(heightLocation, (*i).GetTransform()->GetScale().z * TEXTURE_DENSITY);
 
+		//glActiveTexture(GL_TEXTURE0);
+		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
+		if (i->isPaintable) {
+			glActiveTexture(GL_TEXTURE0);
+			glBindImageTexture(0, ((OGLTexture*)i->maskTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+			glUniform1i(glGetUniformLocation(shader->GetProgramID(), "maskTex"),0);
+			glActiveTexture(GL_TEXTURE1);
+			BindTextureToShader((OGLTexture*)(*i).baseTex, "baseTex", 1);
+			BindTextureToShader((OGLTexture*)(*i).bumpTex, "bumpTex", 3);
+		}
+		else {
+			glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+		}
+		
+		glDisable(GL_CULL_FACE);//todo turn back on
 		BindMesh((*i).GetMesh());
 		int layerCount = (*i).GetMesh()->GetSubMeshCount();
 		for (int i = 0; i < layerCount; ++i) {
 			DrawBoundMesh(i);
 		}
 	}
+	glPopDebugGroup();
 
 	
 }
 
 void GameTechRenderer::RenderFullScreenQuad() {
-	//this was me
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE); //todo reverse winding order
 	BindShader(quad->GetShader());
 	BindTextureToShader((OGLTexture*)quad->GetDefaultTexture(), "mainTex", 0);
@@ -487,4 +532,36 @@ void GameTechRenderer::SetDebugLineBufferSizes(size_t newVertCount) {
 
 		glBindVertexArray(0);
 	}
+}
+
+
+//this was me
+void GameTechRenderer::ImGui() {
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+	ImGui::Begin("NotSplatoon");
+	Vector3 camPos = gameWorld.GetMainCamera()->GetPosition();
+	std::string camPosStr = std::to_string(camPos.x) + " "
+		+ std::to_string(camPos.y) + " " + std::to_string(camPos.z);
+	ImGui::Text(camPosStr.c_str());
+	if (ImGui::TreeNode("Ray Marching")) {
+		ImGui::SliderInt("Max Steps", imguiptrs.rayMarchMaxSteps, 1, 1000);
+		ImGui::SliderFloat("Hit Distance", imguiptrs.rayMarchHitDistance, 0, 1);
+		ImGui::SliderFloat("No Hit Distance", imguiptrs.rayMarchNoHitDistance, 0, 1000);
+		ImGui::SliderFloat("Debug Value", imguiptrs.debugValue, -1, 10);
+		ImGui::Checkbox("Depth Test", imguiptrs.depthTest);
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("World to UV Space Testing")) {
+		ImGui::SliderFloat3("Position", imguiptrs.testSphereCenter->array, -200, 500);
+		ImGui::SliderFloat("Sphere Radius", imguiptrs.testSphereRadius, 0, 2000);
+		if (ImGui::Button("Move to Center")) { *(imguiptrs.testSphereCenter) = Vector3(10, -20, -10); }
+
+		ImGui::TreePop();
+	}
+	ImGui::End();
+	ImGui::EndFrame();
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

@@ -106,16 +106,16 @@ void GameObject::UpdateBroadphaseAABB() {
 
 
 
-	//int GameObject::GetLeftS(int centerS, int radius) {
-	//	return std::max(centerS - radius, centerS * (int)transform.GetScale().x);
-	//}
-	//int GameObject::GetRightS(int centerS, int radius) {
-	//	return std::min(centerS + radius, centerS * (int)transform.GetScale().x + (int)transform.GetScale().x - 1);
-	//}
-	//int GameObject::GetTopT(int centerT, int centerS, int radius) {
-	//	return std::max(centerT - radius * (int)transform.GetScale().x, centerS);
-	//}
-	//int GameObject::GetBottomT(int centerT, int centerS, int radius) {
-	//	return std::min(centerT + radius * (int)transform.GetScale().x
-	//		, ((int)transform.GetScale().x * (int)transform.GetScale().z - 1) - (((int)transform.GetScale().x - 1) - centerS));
-	//}
+//int GameObject::GetLeftS(int centerS, int radius) {
+//	return std::max(centerS - radius, centerS * (int)transform.GetScale().x);
+//}
+//int GameObject::GetRightS(int centerS, int radius) {
+//	return std::min(centerS + radius, centerS * (int)transform.GetScale().x + (int)transform.GetScale().x - 1);
+//}
+//int GameObject::GetTopT(int centerT, int centerS, int radius) {
+//	return std::max(centerT - radius * (int)transform.GetScale().x, centerS);
+//}
+//int GameObject::GetBottomT(int centerT, int centerS, int radius) {
+//	return std::min(centerT + radius * (int)transform.GetScale().x
+//		, ((int)transform.GetScale().x * (int)transform.GetScale().z - 1) - (((int)transform.GetScale().x - 1) - centerS));
+//}

@@ -37,13 +37,15 @@ OGLComputeShader::OGLComputeShader(const std::string& s)	{
 		threadsInGroup[0] = 0;
 		threadsInGroup[1] = 0;
 		threadsInGroup[2] = 0;
+
+		OGLShader::PrintCompileLog(shaderID);
+		__debugbreak();
 	}
 	else {
 		std::cout << "Compute shader loaded!" << std::endl;
 		
 		glGetProgramiv(programID, GL_COMPUTE_WORK_GROUP_SIZE, threadsInGroup);
 	}
-	OGLShader::PrintCompileLog(shaderID);
 };
 
 OGLComputeShader::~OGLComputeShader()	{

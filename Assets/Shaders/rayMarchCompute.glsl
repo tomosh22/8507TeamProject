@@ -95,7 +95,7 @@ HitInformation SDF(vec3 from) {
 //https://www.shadertoy.com/view/XlGBW3
 vec3 GetNormal(vec3 p) {
 	float d = SDF(p).closestDistance;
-    vec2 e = vec2(.0005, 0);
+    vec2 e = vec2(.01, 0);
     
     vec3 n = d - vec3(
         SDF(p-e.xyy).closestDistance,

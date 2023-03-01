@@ -4,19 +4,48 @@
 #include "GameTechVulkanRenderer.h"
 #endif
 #include "PhysicsSystem.h"
-
+#include"playerTracking.h"
 #include "StateGameObject.h"
-
+#include"Projectile.h"
 #include <array>
+#include"ObjectPool.h"
 
 namespace NCL {
 	namespace CSC8503 {
+		const int GAME_MODE_DEFAULT = 0;
+		const int GAME_MODE_GRAPHIC_TEST = 1;
+		const int GAME_MODE_PHISICAL_TEST = 2;
 		class TutorialGame		{
 		public:
 			TutorialGame();
 			~TutorialGame();
 
 			virtual void UpdateGame(float dt);
+			void SelectMode();
+			//void InitWorld(); //moved from protected
+			void InitGraphicTest();
+			void InitPhysicalTest();
+			void InitWorldtest2();
+
+			void setLockedObjectNull();
+
+			void addToRunningBulletTime(float timeIncrement) {
+				runnigBulletTime += timeIncrement;
+			}
+
+			void resetRunningBulletTime() {
+				runnigBulletTime = 0.0f;
+			}
+
+			bool runningBulletTimeLimitTest(float rateFireLim) {
+				if (runnigBulletTime >= rateFireLim) {
+					resetRunningBulletTime();
+					return true;
+				}
+				return false;
+			}
+
+			void setEnemyGoat(GameObject* assignCharcter);
 
 		protected:
 			void InitialiseAssets();
@@ -25,6 +54,8 @@ namespace NCL {
 			void UpdateKeys();
 
 			void InitWorld();
+
+			void setGoatCharacter(playerTracking* assignCharcter);
 
 			/*
 			These are some of the world/object creation functions I created when testing the functionality
@@ -36,22 +67,43 @@ namespace NCL {
 			void InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius);
 			void InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing);
 			void InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims);
+			void InitMixedGridWorldtest(int numRows, int numCols, float rowSpacing, float colSpacing);
+			
+		
 
 			void InitDefaultFloor();
+			void InitDefaultFloorRunway();
 
 			bool SelectObject();
 			void MoveSelectedObject();
 			void DebugObjectMovement();
 			void LockedObjectMovement();
+			void movePlayer(playerTracking* unitGoat);
+			void setLockedObject(GameObject* goatPlayer);
+
 
 			GameObject* AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated = false);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass = 10.0f);
-			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			
+
+			
+			GameObject* AddRunwayToWorld(const Vector3& position);
+			
+			Projectile* AddBulletToWorld(playerTracking* playableCharacter);
+			Projectile* useNewBullet(playerTracking* passedPlayableCharacter);
+
+			
+			Projectile* FireBullet(playerTracking* selectedPlayerCharacter);
+			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 1.0f);
+			GameObject* AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inversMass = 1.0f);
+			
+
 			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 
-			GameObject* AddPlayerToWorld(const Vector3& position);
+			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation);
+			GameObject* AddEnemyGoatToWorld(const Vector3& position);
 			GameObject* AddEnemyToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);
 
@@ -72,6 +124,7 @@ namespace NCL {
 			float		forceMagnitude;
 
 			GameObject* selectionObject = nullptr;
+			GameObject* phantomCubeOutput = nullptr;
 
 			MeshGeometry*	capsuleMesh = nullptr;
 			MeshGeometry*	cubeMesh	= nullptr;
@@ -94,14 +147,29 @@ namespace NCL {
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;
-			Vector3 lockedOffset		= Vector3(0, 14, 20);
+			//Vector3 lockedOffset		= Vector3(0, 14, 20); - origonal
+			Vector3 lockedOffset = Vector3(0, 7, 20);
 			void LockCameraToObject(GameObject* o) {
 				lockedObject = o;
 			}
 
+			StateGameObject* AddStateObjectToWorld(const Vector3& position); //for use in constraints 
+			StateGameObject* testStateObject; //for use in constraints 
+
 			GameObject* objClosest = nullptr;
 
-			GameObject* worldFloor = nullptr;
+			playerTracking* goatCharacter = nullptr;
+			GameObject* EnemyGoat = nullptr;
+			playerTracking* testplayer = nullptr;
+
+			const int bulletLifeLimit = 2;
+			const int bulletDeletionLimit = 5;
+			float runnigBulletTime = 0.0f;
+			float BulletDeleteTime = 0.0f;
+
+			ObjectPool<Projectile>* objectpool;
+
+			GameObject* worldFloor;
 			
 			//this was me
 			OGLComputeShader* computeShader;
@@ -156,7 +224,9 @@ namespace NCL {
 			std::vector<GameObject*> walls;
 			void UpdateRayMarchSpheres();
 
+			int gameMode = GAME_MODE_DEFAULT;
 		};
 	}
 }
+
 

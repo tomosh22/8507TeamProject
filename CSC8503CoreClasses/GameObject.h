@@ -2,19 +2,18 @@
 #include "Transform.h"
 #include "CollisionVolume.h"
 
-
 #define TEXTURE_DENSITY 4
 
 //typedef std::array<int, NUM_WORLD_UNITS_SQUARED * TEXTURE_DENSITY * TEXTURE_DENSITY> TEXTURE;
 
-
 using std::vector;
 
 namespace NCL::CSC8503 {
+
 	class NetworkObject;
 	class RenderObject;
 	class PhysicsObject;
-
+	class AgentMovement;
 	class GameObject	{
 	public:
 		GameObject(std::string name = "");
@@ -23,6 +22,16 @@ namespace NCL::CSC8503 {
 		void SetBoundingVolume(CollisionVolume* vol) {
 			boundingVolume = vol;
 		}
+		// testing ignoring detection
+		void toggleobjectdetection() {
+			if (!isActive) {
+				isActive = true;
+			}
+			isActive = false;
+		}
+		// end ignoring detection
+
+		
 
 		const CollisionVolume* GetBoundingVolume() const {
 			return boundingVolume;
@@ -30,6 +39,10 @@ namespace NCL::CSC8503 {
 
 		bool IsActive() const {
 			return isActive;
+		}
+
+		void SetActive(bool active) {
+			this->isActive = active;
 		}
 
 		Transform& GetTransform() {
@@ -48,6 +61,14 @@ namespace NCL::CSC8503 {
 			return networkObject;
 		}
 
+		AgentMovement* GetAgentObject()const {
+			return agentObject;
+		}
+
+		void SetAgentObject(AgentMovement* newObject) {
+			agentObject = newObject;
+		}
+
 		void SetRenderObject(RenderObject* newObject) {
 			renderObject = newObject;
 		}
@@ -56,9 +77,14 @@ namespace NCL::CSC8503 {
 			physicsObject = newObject;
 		}
 
+		void resetPhysicsObject() {
+			physicsObject = nullptr;
+		}
+
 		const std::string& GetName() const {
 			return name;
 		}
+
 
 		void SetName(std::string name)  {
 			this->name = name;
@@ -66,18 +92,40 @@ namespace NCL::CSC8503 {
 
 		virtual void OnCollisionBegin(GameObject* otherObject) {
 			//std::cout << "OnCollisionBegin event occured!\n";
+
+		
+			
+
 		}
 
-		virtual void OnCollisionEnd(GameObject* otherObject) {
-			//std::cout << "OnCollisionEnd event occured!\n";
+		virtual void OnCollisionEnd(GameObject* otherObject) 
+		{
+			
 		}
 
 		bool GetBroadphaseAABB(Vector3&outsize) const;
 
+		bool GetIsAlpha() {
+			return isAlpha;
+		}
+
+		void setIsAlpha() {
+			isAlpha = true;
+		}
+
 		void UpdateBroadphaseAABB();
+
 
 		void SetWorldID(int newID) {
 			worldID = newID;
+		}
+
+		void setImpactAbsorbtionAmount(float newAbsorbtionAmount) {
+			impactAbsorbtionAmount = newAbsorbtionAmount;
+		}
+
+		float getImpactAbsorbtionAmount() {
+			return impactAbsorbtionAmount;
 		}
 
 		int		GetWorldID() const {
@@ -85,16 +133,22 @@ namespace NCL::CSC8503 {
 		}
 
 		
+
+		virtual float collisionInfo() {
+			return 0;
+		}
+
 		//unsigned int ssbo;
 		//unsigned int texture;
 		bool isPaintable;
-		
-		void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
+
+		/*void ApplyPaintAtPosition(Vector3 localPos, Vector3 halfDims, int radius, int& startIndex, int& numInts, int& leftS, int& rightS,
 			int& topT, int& bottomT, Vector2& texCoords);
 		int GetLeftS(int centerS, int radius);
 		int GetRightS(int centerS, int radius);
 		int GetTopT(int centerT, int centerS, int radius);
-		int GetBottomT(int centerT, int centerS, int radius);
+		int GetBottomT(int centerT, int centerS, int radius);*/
+
 	protected:
 		Transform			transform;
 
@@ -102,12 +156,17 @@ namespace NCL::CSC8503 {
 		PhysicsObject*		physicsObject;
 		RenderObject*		renderObject;
 		NetworkObject*		networkObject;
+		AgentMovement*      agentObject;
 
+
+		bool        isAlpha = false;
 		bool		isActive;
 		int			worldID;
+		float impactAbsorbtionAmount;
 		std::string	name;
 
 		Vector3 broadphaseAABB;
 	};
 }
+
 

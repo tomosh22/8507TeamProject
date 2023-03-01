@@ -14,10 +14,10 @@ NetworkPlayer::~NetworkPlayer()	{
 }
 
 void NetworkPlayer::OnCollisionBegin(GameObject* otherObject) {
-	if (game) {
-		if (dynamic_cast<NetworkPlayer*>(otherObject))
-		{
-			game->OnPlayerCollision(this, (NetworkPlayer*)otherObject);
-		}
-	}
+	//if (game) {
+	//	if (dynamic_cast<NetworkPlayer*>(otherObject))
+	//	{
+	//		game->OnPlayerCollision(this, (NetworkPlayer*)otherObject);
+	//	}
+	//}
 }

@@ -112,7 +112,7 @@ namespace NCL {
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object, bool rotated = false);
 
-			void DispatchComputeShaderForEachTriangle(GameObject* object);
+			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius);
 			GLuint triangleSSBO;
 			void SetUpTriangleSSBOAndDataTexture();
 			OGLComputeShader* triComputeShader;

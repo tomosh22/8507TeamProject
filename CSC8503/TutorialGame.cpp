@@ -379,27 +379,45 @@ void TutorialGame::UpdateGame(float dt) {
 }
 
 void TutorialGame::UpdateRayMarchSpheres() {
-	unsigned int count = 0;
-	std::map<unsigned int, std::function<Vector3(float)>>{
-		
+	
+	std::map<unsigned int, std::function<Vector3(float)>> sinFunctions{
+		{0, [](float timePassed) {return Vector3(std::sin(timePassed) * 20,0,0); }},
+		{1, [](float timePassed) {return Vector3(std::sin(timePassed) * -20,0,0); }},
+		{2, [](float timePassed) {return Vector3(0, std::sin(timePassed) * 20, 0); }},
+		{3, [](float timePassed) {return Vector3(0, std::sin(timePassed) * -20, 0); }},
+		{4, [](float timePassed) {return Vector3(0, 0, std::sin(timePassed) * 20); }},
+		{5, [](float timePassed) {return Vector3(0, 0, std::sin(timePassed) * -20); }}
 	};
+	std::map<unsigned int, Vector3> colours{
+		{0, {1,0,0}},
+		{1, {0,1,0}},
+		{2, {0,0,1}},
+
+		{3, {0,1,1}},
+		{4, {1,0,1}},
+		{5, {1,1,0}},
+	};
+	unsigned int count = 0;
 	for (RayMarchSphere* sphere : rayMarchSpheres)
 	{
-		sphere->GetTransform().SetPosition({ std::sin(timePassed) * 20, 0, 0 });
+		std::function<Vector3(float)> sinFunction = sinFunctions.at(count % 6);
+		sphere->GetTransform().SetPosition(sinFunction(timePassed) + Vector3(20,20,20));
 		sphere->center = sphere->GetTransform().GetPosition();
 		Vector3 scale = sphere->GetTransform().GetScale();
 		sphere->radius = scale.x;
-		sphere->color = { 1,1,0 };
+		sphere->color = colours.at(count %6);
+		count++;
 	}
 }
 
 void TutorialGame::SendRayMarchData() {
 	//just for testing, i know this is a horrible way of doing this
 	int numSpheresSent = 0;
+	unsigned int size = sizeof(RayMarchSphere);
 	for (RayMarchSphere* sphere : rayMarchSpheres)
 	{
 		
-		int offset = numSpheresSent * sizeof(RayMarchSphere);
+		int offset = numSpheresSent * sizeof(float) * 7;
 
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(sphere->center.x));
@@ -417,10 +435,10 @@ void TutorialGame::SendRayMarchData() {
 		numSpheresSent++;
 	}
 
-	
+	return;
 	Vector3 position = testSphereCenter;
 	float radius = testSphereRadius;
-	int offset = 4 * sizeof(RayMarchSphere);
+	int offset = numSpheresSent * sizeof(RayMarchSphere);
 	Vector3 color = { 1,1,0 };
 	float radiusExtension = radius / 2;
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
@@ -579,9 +597,11 @@ void TutorialGame::InitWorld() {
 
 	//position is irrelevant at this point in testing as im overriding position later
 	//for raymarching
-	AddSphereToWorld({ 0,0,0 }, 10);
-	AddSphereToWorld({ 0,0,0 }, 10);
-	AddSphereToWorld({ 0,0,0 }, 10);
+	for (int i = 0; i < 10; i++)
+	{
+		AddSphereToWorld({ 0,0,0 }, 10, false);
+	}
+	
 
 	
 
@@ -732,7 +752,7 @@ rigid body representation. This and the cube function will let you build a lot o
 physics worlds. You'll probably need another function for the creation of OBB cubes too.
 
 */
-GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, float inverseMass) {
+GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass) {
 	RayMarchSphere* sphere = new RayMarchSphere();
 
 	Vector3 sphereSize = Vector3(radius, radius, radius);
@@ -743,7 +763,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 		.SetScale(sphereSize)
 		.SetPosition(position);
 
-	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
+	if(render)sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
 	sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
 
 	sphere->GetPhysicsObject()->SetInverseMass(inverseMass);
@@ -976,7 +996,7 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 				AddCubeToWorld(position, cubeDims);
 			}
 			else {
-				AddSphereToWorld(position, sphereRadius);
+				AddSphereToWorld(position, sphereRadius,true);
 			}
 		}
 	}

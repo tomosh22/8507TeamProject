@@ -107,7 +107,7 @@ vec3 GetNormal(vec3 p) {
 
 
 vec4 RayMarch(vec3 rayDir) {
-	vec3 lightPos = vec3(0, 40, 20);//stop hardcoding
+	vec3 lightPos = vec3(0, 100, 20);//stop hardcoding
 	float distanceFromOrigin = 0;
 	for (int i = 0; i < maxSteps; i++)
 	{
@@ -158,7 +158,7 @@ void main() {
 
 	if (result.a < sceneDistanceFromCamera && result.a != -1) {
 		//sphere was hit and depth test passed
-		result.w = 0.5;//will need to rework if we want transparent spheres
+		result.w = 0.9;//will need to rework if we want transparent spheres
 		imageStore(tex, IMAGE_COORD, result);
 	}
 	else {

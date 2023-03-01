@@ -193,7 +193,7 @@ void main(void)
 	vec2 offset = vec2(fbm(IN.texCoord * noiseScale), 0);
 		offset.y = fbm((1.0 - IN.texCoord)  * noiseScale);
 	offset = 2.0 * offset + 1.0;
-	offset *= 0.04;
+	offset *= 0.00;
 
 	vec2 realCoords = imageSize(maskTex) * (IN.texCoord + offset);
 	vec2 iCoords = floor(realCoords);
@@ -203,6 +203,11 @@ void main(void)
 	uint value10 = imageLoad(maskTex, ivec2(iCoords) + ivec2(1, 0)).r;
 	uint value01 = imageLoad(maskTex, ivec2(iCoords) + ivec2(0, 1)).r;
 	uint value11 = imageLoad(maskTex, ivec2(iCoords) + ivec2(1, 1)).r;
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////
+	//fragColor = vec4(vec3(value00),1);
+	//return;
+	///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	vec3 a = teamColor(value00);
     vec3 b = teamColor(value10);

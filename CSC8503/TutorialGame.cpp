@@ -633,13 +633,16 @@ void TutorialGame::InitWorld() {
 
 	//testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	floor->SetName(std::string("floor"));
 
 	//testTriangle = AddDebugTriangleToWorld({ 0,200,0 });
 
 	monkey = AddMonkeyToWorld({ 0,20,100 }, { 5,5,5 });
+	monkey->SetName(std::string("monkey"));
 	monkey->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(0, 180, 0));
 	walls.push_back(AddFloorToWorld({ 0,25,-20 }, {100,1,25},true));
 	walls.back()->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(90, 0, 0));
+	walls.back()->SetName(std::string("back"));
 
 	//max = AddMaxToWorld({ 10,10,-10 }, { 10,10,10 });
 
@@ -830,6 +833,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 
 GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* monkey = new GameObject();
+	
 
 	AABBVolume* volume = new AABBVolume(dimensions);
 	monkey->SetBoundingVolume((CollisionVolume*)volume);
@@ -1119,11 +1123,12 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 	MESH_TRIANGLES_AND_UVS tris = object->GetRenderObject()->GetMesh()->GetAllTrianglesAndUVs();
 	triComputeShader->Bind();
 
+	Vector2 maskDims = object->GetRenderObject()->maskDimensions;
 	
 	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, 1000, 1000, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, maskDims.x, maskDims.y, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
 #ifdef TRI_DEBUG

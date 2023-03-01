@@ -323,8 +323,9 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(hasTexLocation, (OGLTexture*)(*i).GetDefaultTexture() ? 1:0);
 
 		//this was me
-		glUniform1i(widthLocation, (*i).GetTransform()->GetScale().x * TEXTURE_DENSITY);
-		glUniform1i(heightLocation, (*i).GetTransform()->GetScale().z * TEXTURE_DENSITY);
+		Vector2 maskDims = (*i).maskDimensions;
+		glUniform1i(widthLocation, maskDims.x);
+		glUniform1i(heightLocation, maskDims.y);
 
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);

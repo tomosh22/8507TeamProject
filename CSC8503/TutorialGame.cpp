@@ -374,100 +374,47 @@ void TutorialGame::UpdateGame(float dt) {
 	if (1000 * dt > testFloat)std::cout << "fps drop\n";*/
 
 	//timePassed = 0;
+	UpdateRayMarchSpheres();
 	SendRayMarchData();
+}
+
+void TutorialGame::UpdateRayMarchSpheres() {
+	unsigned int count = 0;
+	std::map<unsigned int, std::function<Vector3(float)>>{
+		
+	};
+	for (RayMarchSphere* sphere : rayMarchSpheres)
+	{
+		sphere->GetTransform().SetPosition({ std::sin(timePassed) * 20, 0, 0 });
+		sphere->center = sphere->GetTransform().GetPosition();
+		Vector3 scale = sphere->GetTransform().GetScale();
+		sphere->radius = scale.x;
+		sphere->color = { 1,1,0 };
+	}
 }
 
 void TutorialGame::SendRayMarchData() {
 	//just for testing, i know this is a horrible way of doing this
-	int idk = 0;
-	for (GameObject* sphere : spheres)
+	int numSpheresSent = 0;
+	for (RayMarchSphere* sphere : rayMarchSpheres)
 	{
-		if (idk == 0) {
-			sphere->GetTransform().SetPosition({ std::sin(timePassed) * 20, 0, 0 });
-			Vector3 position = sphere->GetTransform().GetPosition();
-			Vector3 scale = sphere->GetTransform().GetScale();
-			float radius = scale.x;
-			int offset = 0 * sizeof(RayMarchSphere);
-			Vector3 color = { 1,1,0 };
-			float radiusExtension = radius / 2;
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
+		
+		int offset = numSpheresSent * sizeof(RayMarchSphere);
 
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(sphere->center.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(sphere->center.y));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(sphere->center.z));
 
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(sphere->radius));
 
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		}
-		else if (idk == 1) {
-			sphere->GetTransform().SetPosition({ -std::sin(timePassed) * 20, 0,0 });
-			Vector3 position = sphere->GetTransform().GetPosition();
-			Vector3 scale = sphere->GetTransform().GetScale();
-			float radius = scale.x;
-			int offset = 1 * sizeof(RayMarchSphere);
-			Vector3 color = { 1,0,1 };
-			float radiusExtension = radius / 2;
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(sphere->color.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(sphere->color.y));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(sphere->color.z));
 
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
-
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
-
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		}
-		else if (idk == 2) {
-			sphere->GetTransform().SetPosition({ 0, std::sin(timePassed) * 20, 0 });
-			Vector3 position = sphere->GetTransform().GetPosition();
-			Vector3 scale = sphere->GetTransform().GetScale();
-			float radius = scale.x;
-			int offset = 2 * sizeof(RayMarchSphere);
-			Vector3 color = { 0,1,0 };
-			float radiusExtension = radius / 2;
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
-
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
-
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
-
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		}
-		else if (idk == 3) {
-			sphere->GetTransform().SetPosition({ 0,  -std::sin(timePassed) * 20,0 });
-			Vector3 position = sphere->GetTransform().GetPosition();
-			Vector3 scale = sphere->GetTransform().GetScale();
-			float radius = scale.x;
-			int offset = 3 * sizeof(RayMarchSphere);
-			Vector3 color = { 0,1,1 };
-			float radiusExtension = radius / 2;
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
-
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
-
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
-
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		}
-		idk++;
-		if (idk == 4)idk = 0;
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		
+		numSpheresSent++;
 	}
 
 	
@@ -786,7 +733,7 @@ physics worlds. You'll probably need another function for the creation of OBB cu
 
 */
 GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, float inverseMass) {
-	GameObject* sphere = new GameObject();
+	RayMarchSphere* sphere = new RayMarchSphere();
 
 	Vector3 sphereSize = Vector3(radius, radius, radius);
 	SphereVolume* volume = new SphereVolume(radius);
@@ -802,8 +749,12 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	sphere->GetPhysicsObject()->SetInverseMass(inverseMass);
 	sphere->GetPhysicsObject()->InitSphereInertia();
 
-	//world->AddGameObject(sphere);
-	rayMarchSpheres.push_back({ position,radius,Vector3(0,0,0) });
+	world->AddGameObject(sphere);
+
+	sphere->color = { 1,0,0 };
+	sphere->radius = radius;
+	sphere->center = position;
+	rayMarchSpheres.push_back(sphere);
 	spheres.push_back(sphere);
 	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
@@ -814,6 +765,8 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
 	return sphere;
 }
+
+
 
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* cube = new GameObject();

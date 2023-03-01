@@ -126,13 +126,14 @@ namespace NCL {
 			float hitDistance;
 			float noHitDistance;
 			float debugValue;
-			struct RayMarchSphere {
+			class RayMarchSphere : public GameObject {
+			public:
 				Vector3 center;
 				float radius;
 				Vector3 color;
 			};
 			std::vector<GameObject*> spheres;
-			std::vector<RayMarchSphere> rayMarchSpheres;
+			std::vector<RayMarchSphere*> rayMarchSpheres;
 			GLuint rayMarchSphereSSBO;
 			int maxRayMarchSpheres;
 			float timePassed = 0;
@@ -153,6 +154,7 @@ namespace NCL {
 			GameObject* floor;
 			GameObject* max;
 			std::vector<GameObject*> walls;
+			void UpdateRayMarchSpheres();
 
 		};
 	}

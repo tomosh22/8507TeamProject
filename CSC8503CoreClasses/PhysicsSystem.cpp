@@ -273,7 +273,6 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 	}
 	else
 	{
-
 		/*typedef std::numeric_limits< float > dbl;
 		std::cout.precision(dbl::max_digits10);
 		std::cout << p.normal << std::endl;*/

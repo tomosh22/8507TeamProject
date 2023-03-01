@@ -291,23 +291,46 @@ TutorialGame::~TutorialGame()	{
 	//todo delete compute shader
 }
 
-void TutorialGame::UpdateGame(float dt) {
-
-	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "cube");
-	//DispatchComputeShaderForEachTriangle(testCube);
-	glPopDebugGroup();
-	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
-	DispatchComputeShaderForEachTriangle(monkey);
-	glPopDebugGroup();
-	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-	DispatchComputeShaderForEachTriangle(floor);
-	glPopDebugGroup();
-	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
-	for (GameObject*& wall: walls) {
-		DispatchComputeShaderForEachTriangle(wall);
+void TutorialGame::SelectMode() {
+	string text = "1. Graphic Test Mode.";
+	Debug::Print(text, Vector2(35, 30), Debug::GREEN);
+	text = "2. Physical Test Mode.";
+	Debug::Print(text, Vector2(35, 50), Debug::GREEN);
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM1)) {
+		gameMode = GAME_MODE_GRAPHIC_TEST;
+		InitGraphicTest();
 	}
-	glPopDebugGroup();
+	else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM2)) {
+		gameMode = GAME_MODE_PHISICAL_TEST;
+		InitPhysicalTest();
+	}
+}
 
+void TutorialGame::UpdateGame(float dt) {
+	if (GAME_MODE_DEFAULT == gameMode) {
+		SelectMode();
+		renderer->Update(dt);
+		renderer->Render();
+		Debug::UpdateRenderables(dt);
+		return;
+	}
+	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "cube");
+		//DispatchComputeShaderForEachTriangle(testCube);
+		glPopDebugGroup();
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
+		DispatchComputeShaderForEachTriangle(monkey);
+		glPopDebugGroup();
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
+		DispatchComputeShaderForEachTriangle(floor);
+		glPopDebugGroup();
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
+		for (GameObject*& wall : walls) {
+			DispatchComputeShaderForEachTriangle(wall);
+		}
+		glPopDebugGroup();
+	}
+	
 	timePassed += dt;
 	//TODO DELETE THIS !!!
 	DispatchComputeShaderForEachPixel();
@@ -380,7 +403,9 @@ void TutorialGame::UpdateGame(float dt) {
 	if (1000 * dt > testFloat)std::cout << "fps drop\n";*/
 
 	//timePassed = 0;
-	SendRayMarchData();
+	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
+		SendRayMarchData();
+	}
 }
 
 void TutorialGame::SendRayMarchData() {
@@ -637,12 +662,10 @@ void TutorialGame::InitCamera() {
 void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
-
-	InitDefaultFloor();
-	InitWorldtest();
+	gameMode = GAME_MODE_DEFAULT;
 }
 
-void TutorialGame::InitWorldtest() {
+void TutorialGame::InitGraphicTest() {
 	world->ClearAndErase();
 	physics->Clear();
 
@@ -683,6 +706,10 @@ void TutorialGame::InitWorldtest() {
 	return;
 }
 
+void TutorialGame::InitPhysicalTest() {
+	InitGameExamples();
+	InitDefaultFloor();
+}
 
 void TutorialGame::InitWorldtest2() {
 	world->ClearAndErase();
@@ -869,12 +896,10 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* cube = new GameObject();
 
-	AABBVolume* volume = new AABBVolume(dimensions);
+	OBBVolume* volume = new OBBVolume(dimensions);
 	cube->SetBoundingVolume((CollisionVolume*)volume);
 
-	cube->GetTransform()
-		.SetPosition(position)
-		.SetScale(dimensions * 2);
+	cube->GetTransform().SetPosition(position).SetScale(dimensions * 3.0f);
 
 	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, nullptr, basicShader));
 	cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));
@@ -887,6 +912,26 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	world->AddGameObject(cube);
 
 	return cube;
+}
+
+GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inverseMass) {
+	GameObject* capsule = new GameObject();
+
+	CapsuleVolume* volume = new CapsuleVolume(halfHeight, radius);
+	capsule->SetBoundingVolume((CollisionVolume*)volume);
+
+	capsule->GetTransform().SetScale(Vector3(radius, halfHeight, radius)).SetPosition(position);
+
+	capsule->SetRenderObject(new RenderObject(&capsule->GetTransform(), capsuleMesh, basicTex, basicShader));
+	capsule->SetPhysicsObject(new PhysicsObject(&capsule->GetTransform(), capsule->GetBoundingVolume()));
+
+	capsule->GetPhysicsObject()->SetInverseMass(inverseMass);
+	capsule->GetPhysicsObject()->InitCubeInertia();
+
+	world->AddGameObject(capsule);
+
+	return capsule;
+
 }
 
 GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
@@ -1240,11 +1285,13 @@ void TutorialGame::InitDefaultFloorRunway() {
 }
 
 void TutorialGame::InitGameExamples() {
-	auto q = Quaternion();
-	//TODO
-	selectionObject = AddPlayerToWorld(Vector3(0, 5, 0), q);
-	AddEnemyToWorld(Vector3(5, 5, 0));
-	AddBonusToWorld(Vector3(10, 5, 0));
+	AddCubeToWorld(Vector3(0.0f, 15.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
+	AddCapsuleToWorld(Vector3(0.0f, 15.0f, 5.0f), 2.5, 2.5);
+	//auto q = Quaternion();
+	////TODO
+	//selectionObject = AddPlayerToWorld(Vector3(0, 5, 0), q);
+	//AddEnemyToWorld(Vector3(5, 5, 0));
+	//AddBonusToWorld(Vector3(10, 5, 0));
 }
 
 void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius) {

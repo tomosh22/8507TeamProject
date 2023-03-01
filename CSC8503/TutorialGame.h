@@ -12,15 +12,19 @@
 
 namespace NCL {
 	namespace CSC8503 {
+		const int GAME_MODE_DEFAULT = 0;
+		const int GAME_MODE_GRAPHIC_TEST = 1;
+		const int GAME_MODE_PHISICAL_TEST = 2;
 		class TutorialGame		{
 		public:
 			TutorialGame();
 			~TutorialGame();
 
 			virtual void UpdateGame(float dt);
-
+			void SelectMode();
 			//void InitWorld(); //moved from protected
-			void InitWorldtest();
+			void InitGraphicTest();
+			void InitPhysicalTest();
 			void InitWorldtest2();
 
 			void setLockedObjectNull();
@@ -85,7 +89,8 @@ namespace NCL {
 
 			
 			Projectile* FireBullet(playerTracking* selectedPlayerCharacter);
-			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 1.0f);
+			GameObject* AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inversMass = 1.0f);
 			
 			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
@@ -211,6 +216,7 @@ namespace NCL {
 			GameObject* max;
 			std::vector<GameObject*> walls;
 
+			int gameMode = GAME_MODE_DEFAULT;
 		};
 	}
 }

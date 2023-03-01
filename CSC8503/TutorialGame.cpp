@@ -111,8 +111,11 @@ void TutorialGame::InitQuadTexture() {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 	//todo maybe move this somewhere else? still somewhat related
-	maxSteps = 50;
-	hitDistance = 0.1;
+
+	//may need to adjust if fps tanks
+	maxSteps = 500;
+	hitDistance = 0.001;
+
 	noHitDistance = 1000;
 	debugValue = 1;
 	rayMarchDepthTest = true;

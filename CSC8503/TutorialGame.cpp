@@ -58,7 +58,6 @@ TutorialGame::TutorialGame()	{
 	glGenBuffers(1, &rayMarchSphereSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, maxRayMarchSpheres * sizeof(RayMarchSphere), NULL, GL_DYNAMIC_DRAW);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, rayMarchSphereSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	glGenTextures(1, &depthBufferTex);
@@ -86,7 +85,7 @@ TutorialGame::TutorialGame()	{
 	{
 		zeros[i] = 0;
 	}
-
+	glGenBuffers(1, &(tempSSBO));
 	return;
 
 	
@@ -125,6 +124,7 @@ void TutorialGame::InitQuadTexture() {
 
 //raymarching
 void TutorialGame::DispatchComputeShaderForEachPixel() {
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, rayMarchSphereSSBO);
 	int width = renderer->GetWindowWidth();
 	int height = renderer->GetWindowHeight();
 
@@ -305,12 +305,12 @@ void TutorialGame::UpdateGame(float dt) {
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "cube");
 		//DispatchComputeShaderForEachTriangle(testCube);
 		//glPopDebugGroup();
-		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
-		//DispatchComputeShaderForEachTriangle(monkey);
-		//glPopDebugGroup();
-		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		//DispatchComputeShaderForEachTriangle(floor);
-		//glPopDebugGroup();
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
+		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius);
+		glPopDebugGroup();
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
+		DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius);
+		glPopDebugGroup();
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
 		//for (GameObject*& wall : walls) {
 			//DispatchComputeShaderForEachTriangle(wall);
@@ -319,7 +319,7 @@ void TutorialGame::UpdateGame(float dt) {
 	}
 	
 	timePassed += dt;
-	//TODO DELETE THIS !!!
+	
 	DispatchComputeShaderForEachPixel();
 	if(worldFloor != nullptr)
 	Debug::DrawAxisLines(worldFloor->GetTransform().GetMatrix());
@@ -1464,13 +1464,20 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	MESH_TRIANGLES_AND_UVS tris = object->GetRenderObject()->GetMesh()->GetAllTrianglesAndUVs();//TODO use vao instead
 	triComputeShader->Bind();
 
+	OGLMesh* mesh = (OGLMesh*)object->GetRenderObject()->GetMesh();
+	GLuint vao = mesh->vao;
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER,tempSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mesh->attributeBuffers[VertexAttribute::Positions]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mesh->attributeBuffers[VertexAttribute::TextureCoords]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mesh->indexBuffer);
+
 	Vector2 maskDims = object->GetRenderObject()->maskDimensions;
 	
-	/*glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()));
+	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, maskDims.x, maskDims.y, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
-	glBindTexture(GL_TEXTURE_2D, 0);*/
+	glBindTexture(GL_TEXTURE_2D, 0);
 	
 #ifdef TRI_DEBUG
 	glActiveTexture(GL_TEXTURE0);
@@ -1485,11 +1492,13 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	int textureWidthLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureWidth");
 	int textureHeightLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureHeight");
 	int isComplexLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "isComplex");
+	int modelMatrixLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "modelMatrix");
 	glUniform1f(radiusLocation, sphereRadius);
 	glUniform3fv(centerLocation,1, spherePosition.array);
 	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
 	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
 	glUniform1i(isComplexLocation, object->GetRenderObject()->isComplex);
+	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
 	
 	//TODO change all of this to use vao
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
@@ -1528,7 +1537,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	
-	triComputeShader->Execute(object->GetRenderObject()->GetMesh()->GetIndexCount()/64+1, 1, 1);//todo change number of thread groups
+	triComputeShader->Execute((mesh->GetIndexCount()/3)/64+1, 1, 1);//todo change number of thread groups
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	triComputeShader->Unbind();
 }
@@ -1552,6 +1561,8 @@ void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(float) * 15, NULL, GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, triangleSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	
 
 	/*glGenBuffers(1, &triangleBoolSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);

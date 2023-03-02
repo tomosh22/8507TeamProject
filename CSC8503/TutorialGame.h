@@ -225,6 +225,8 @@ namespace NCL {
 			void UpdateRayMarchSpheres();
 
 			int gameMode = GAME_MODE_DEFAULT;
+
+			GLuint tempSSBO;
 		};
 	}
 }

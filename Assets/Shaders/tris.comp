@@ -22,7 +22,20 @@ struct Edge{
 	vec3 b;
 };
 
+uniform mat4 modelMatrix;
+
 uniform vec3 point;
+
+layout(std430, binding = 2) buffer Positions{
+    vec3 positions[];
+};
+layout(std430, binding = 3) buffer TexCoords{
+    vec2 texCoords[];
+};
+layout(std430, binding = 4) buffer Indices{
+    int indices[];
+};
+
 
 layout(std430, binding = 5) buffer TriangleSSBO{
 	Triangle triangles[];
@@ -184,30 +197,9 @@ bool EdgeIntersection(vec3 sphereCenter, float sphereRadius,
 
 }
 
-bool BasicCollisionDetection(vec3 sphereCenter, float sphereRadius,
-                                vec3 triA, vec3 triB, vec3 triC,
-                                out vec3 intersectionPoint){
-    vec3 point = vec3(0);
-    int numHits = 0;
-    if(length(triA - sphereCenter)<sphereRadius){
-        point += triA;
-        numHits++;
-    }
-    if(length(triB - sphereCenter)<sphereRadius){
-        point += triB;
-        numHits++;
-    }
-    if(length(triC - sphereCenter)<sphereRadius){
-        point += triC;
-        numHits++;
-    }
-    if(numHits > 0){
-        point /= numHits;
-        intersectionPoint = point;
-        return true;
-    }
-    return false;
-}
+
+
+#define NEW
 
 void main() {
 	int id = int(gl_GlobalInvocationID.x);
@@ -223,27 +215,24 @@ void main() {
     vec2 uvA = vec2(tri.au,tri.av);
     vec2 uvB = vec2(tri.bu,tri.bv);
     vec2 uvC = vec2(tri.cu,tri.cv);
+
+#ifdef NEW
+    int index0 = indices[id * 3];
+    int index1 = indices[id * 3 + 1];
+    int index2 = indices[id * 3 + 2];
+
+    triA = (modelMatrix * vec4(positions[index0],1)).xyz;
+    triB = (modelMatrix * vec4(positions[index1],1)).xyz;
+    triC = (modelMatrix * vec4(positions[index2],1)).xyz;
+
+    uvA = texCoords[index0];
+    uvB = texCoords[index1];
+    uvC = texCoords[index2];
+#endif
+
     if(triA == triB && triA == triC && triB == triC && triA == vec3(0)){return;}
 
-    /*if(BasicCollisionDetection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
-        vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,triA,triB,triC);
-        vec2 uv = BarycentricToUV(barycentric, uvA, uvB, uvC);
-        ivec2 IMAGE_COORDS = ivec2(uv.x * 1000,uv.y * 1000);
-    	imageStore(triDataTex,id,vec4(uv,0,1));
-
-        //imageStore(triDataTex,id,vec4(0,0,1,1));//debugging
-        for(int x = -20; x < 21;x++){
-            for(int y = -20; y < 21; y++){
-                imageStore(outputTex,IMAGE_COORDS + ivec2(x,y),vec4(1));
-            }
-        }
-        
-    }
-    else{
-    	imageStore(triDataTex,id,vec4(1,0,0,1));
-    }
-    q
-    return;*/
+    
     
 
     if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint) || EdgeIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){

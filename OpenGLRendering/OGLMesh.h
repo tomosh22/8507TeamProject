@@ -30,7 +30,10 @@ namespace NCL {
 			static OGLMesh* GenerateQuadWithIndices();
 			static OGLMesh* GenerateTriangleWithIndices();
 
-			
+			GLuint vao;
+			GLuint oglType;
+			GLuint attributeBuffers[VertexAttribute::MAX_ATTRIBUTES];
+			GLuint indexBuffer;
 
 		protected:
 			GLuint	GetVAO()			const { return vao;			}
@@ -38,10 +41,7 @@ namespace NCL {
 
 			int		subCount;
 
-			GLuint vao;
-			GLuint oglType;
-			GLuint attributeBuffers[VertexAttribute::MAX_ATTRIBUTES];
-			GLuint indexBuffer;
+			
 		};
 	}
 }

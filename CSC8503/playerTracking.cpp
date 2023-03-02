@@ -11,6 +11,9 @@ namespace NCL::CSC8503 {
 		teamID = 0;
 		IndividualplayerScore = 0;
 		type = pistol;
+		
+		bulletPool =new ObjectPool<Projectile>(10);
+
 		playerProjectile = new Projectile();
 		paintColor = { 1,1,0,1 };
 		bulletsUsed = {};
@@ -53,8 +56,43 @@ namespace NCL::CSC8503 {
 		return reusedBullet;
 	}
 
+	// This is me 
+
+void playerTracking::FireBullet() 
+{		
+		Projectile newBullet = *bulletPool->GetObject();
+		ResetBullet(newBullet);
+		//Projectile* loadedBullet = useNewBullet(selectedPlayerCharacter);
+		//selectedPlayerCharacter->addToBulletsUsed(loadedBullet);
+		PhysicsObject* physicsShot = newBullet.GetPhysicsObject();
+		//physicsShot->SetLayerID(); // set Id so bullets cannot collied with each other and players.
+		//loadedBullet->GetTransform().setDestructable();
+		physicsShot->SetLinearVelocity({ 0,0,0 });
+		physicsShot->ClearForces();
+
+		//TODO::Force and firing direction should based on the character
+		
+		float const startingForce = newBullet.getPojectilePropultionForce();
+		Vector3 firingDirectionVector = newBullet.getBulletDirectionVector();
+		Vector3 firingDirectionVectorWithForce = firingDirectionVector * startingForce;
+		physicsShot->AddForce(firingDirectionVectorWithForce);
 
 
+		//testing bullet vector removal
+		/*if (selectedPlayerCharacter->getBulletVectorSize() > 10) {
+			selectedPlayerCharacter->clearBulletsUsed();
+		}*/
+		//testing bullet vector removal
+		return;
+	}
+void playerTracking::ResetBullet(Projectile bullet)
+{
+
+}
+void playerTracking::ReTurnBullet(Projectile bullet)
+{
+
+}
 }
 
 

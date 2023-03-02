@@ -9,6 +9,9 @@ namespace NCL::CSC8503 {
 		//physicsProjectile = nullptr;
 		bulletDirectionVector = { 0,0,0 };
 		canFire = true;
+
+
+
 		}
 
 

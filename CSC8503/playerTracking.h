@@ -4,7 +4,7 @@
 #include"Projectile.h"
 #include<vector>
 #include"Vector4.h"
-
+#include"ObjectPool.h"
 
 namespace NCL::CSC8503 {
 
@@ -69,7 +69,9 @@ namespace NCL::CSC8503 {
 			return playerProjectile;
 		}
         
-
+		void FireBullet();
+		void ResetBullet(Projectile bullet);
+		void ReTurnBullet(Projectile bullet);
 	protected:
 		 
 		 float playerYawOrientation;
@@ -80,6 +82,10 @@ namespace NCL::CSC8503 {
 		 Projectile* playerProjectile;
 		 gun type;
 		 Vector4 paintColor;
+
+		 //This is me 
+		 ObjectPool<Projectile> *bulletPool;
+		 
 		 vector<Projectile*> bulletsUsed;
 		 vector<Projectile*> bulletsUsedAndMoved;
 	};

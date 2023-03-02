@@ -1,8 +1,5 @@
 #pragma once
 
-
-
-#pragma once
 #include "Transform.h"
 #include "CollisionVolume.h"
 #include"GameObject.h"
@@ -11,9 +8,6 @@
 
 
 namespace NCL::CSC8503 {
-
-
-
 
 	struct gun {
 		float radius;
@@ -157,6 +151,8 @@ namespace NCL::CSC8503 {
 	    float collisionInfo() override{
 			return this->getExplosionRadius();
 		}
+
+
 
 	protected:
 		float explosionRadius;

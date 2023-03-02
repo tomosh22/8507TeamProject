@@ -270,6 +270,7 @@ void TutorialGame::InitialiseAssets() {
 	InitCamera();
 	InitWorld();
 
+	InitMixedGridWorldtest(1, 1, 1, 1);
 	/*AddFloorToWorld({ 0, 0, 0 });
 	AddPlayerToWorld({ 0, 1, 0 });*/
 }

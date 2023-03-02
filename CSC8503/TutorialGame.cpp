@@ -111,8 +111,11 @@ void TutorialGame::InitQuadTexture() {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 	//todo maybe move this somewhere else? still somewhat related
-	maxSteps = 50;
-	hitDistance = 0.1;
+
+	//may need to adjust if fps tanks
+	maxSteps = 500;
+	hitDistance = 0.001;
+
 	noHitDistance = 1000;
 	debugValue = 1;
 	rayMarchDepthTest = true;
@@ -291,20 +294,7 @@ TutorialGame::~TutorialGame()	{
 	//todo delete compute shader
 }
 
-void TutorialGame::SelectMode() {
-	string text = "1. Graphic Test Mode.";
-	Debug::Print(text, Vector2(35, 30), Debug::GREEN);
-	text = "2. Physical Test Mode.";
-	Debug::Print(text, Vector2(35, 50), Debug::GREEN);
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM1)) {
-		gameMode = GAME_MODE_GRAPHIC_TEST;
-		InitGraphicTest();
-	}
-	else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM2)) {
-		gameMode = GAME_MODE_PHISICAL_TEST;
-		InitPhysicalTest();
-	}
-}
+
 
 void TutorialGame::UpdateGame(float dt) {
 	if (GAME_MODE_DEFAULT == gameMode) {
@@ -315,20 +305,20 @@ void TutorialGame::UpdateGame(float dt) {
 		return;
 	}
 	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "cube");
+		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "cube");
 		//DispatchComputeShaderForEachTriangle(testCube);
-		glPopDebugGroup();
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
-		DispatchComputeShaderForEachTriangle(monkey);
-		glPopDebugGroup();
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor);
-		glPopDebugGroup();
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
-		for (GameObject*& wall : walls) {
-			DispatchComputeShaderForEachTriangle(wall);
-		}
-		glPopDebugGroup();
+		//glPopDebugGroup();
+		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
+		//DispatchComputeShaderForEachTriangle(monkey);
+		//glPopDebugGroup();
+		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
+		//DispatchComputeShaderForEachTriangle(floor);
+		//glPopDebugGroup();
+		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
+		//for (GameObject*& wall : walls) {
+			//DispatchComputeShaderForEachTriangle(wall);
+		//}
+		//glPopDebugGroup();
 	}
 	
 	timePassed += dt;
@@ -403,108 +393,89 @@ void TutorialGame::UpdateGame(float dt) {
 	if (1000 * dt > testFloat)std::cout << "fps drop\n";*/
 
 	//timePassed = 0;
+
 	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
+    UpdateRayMarchSpheres();
 		SendRayMarchData();
+	}
+}
+
+void TutorialGame::SelectMode() {
+	string text = "1. Graphic Test Mode.";
+	Debug::Print(text, Vector2(35, 30), Debug::GREEN);
+	text = "2. Physical Test Mode.";
+	Debug::Print(text, Vector2(35, 50), Debug::GREEN);
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM1)) {
+		gameMode = GAME_MODE_GRAPHIC_TEST;
+		InitGraphicTest();
+	}
+	else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM2)) {
+		gameMode = GAME_MODE_PHISICAL_TEST;
+		InitPhysicalTest();
+	}
+}
+
+void TutorialGame::UpdateRayMarchSpheres() {
+	
+	std::map<unsigned int, std::function<Vector3(float)>> sinFunctions{
+		{0, [](float timePassed) {return Vector3(std::sin(timePassed) * 20,0,0); }},
+		{1, [](float timePassed) {return Vector3(std::sin(timePassed) * -20,0,0); }},
+		{2, [](float timePassed) {return Vector3(0, std::sin(timePassed) * 20, 0); }},
+		{3, [](float timePassed) {return Vector3(0, std::sin(timePassed) * -20, 0); }},
+		{4, [](float timePassed) {return Vector3(0, 0, std::sin(timePassed) * 20); }},
+		{5, [](float timePassed) {return Vector3(0, 0, std::sin(timePassed) * -20); }}
+	};
+	std::map<unsigned int, Vector3> colours{
+		{0, {1,0,0}},
+		{1, {0,1,0}},
+		{2, {0,0,1}},
+
+		{3, {0,1,1}},
+		{4, {1,0,1}},
+		{5, {1,1,0}},
+	};
+	unsigned int count = 0;
+	for (RayMarchSphere* sphere : rayMarchSpheres)
+	{
+		std::function<Vector3(float)> sinFunction = sinFunctions.at(count % 6);
+		sphere->GetTransform().SetPosition(sinFunction(timePassed) + Vector3(20,20,20));
+		sphere->center = sphere->GetTransform().GetPosition();
+		Vector3 scale = sphere->GetTransform().GetScale();
+		sphere->radius = scale.x;
+		sphere->color = colours.at(count %6);
+		count++;
 	}
 }
 
 void TutorialGame::SendRayMarchData() {
 	//just for testing, i know this is a horrible way of doing this
-	int idk = 0;
-	for (GameObject* sphere : spheres)
+	int numSpheresSent = 0;
+	unsigned int size = sizeof(RayMarchSphere);
+	for (RayMarchSphere* sphere : rayMarchSpheres)
 	{
-		if (idk == 0) {
-			sphere->GetTransform().SetPosition({ std::sin(timePassed) * 20, 0, 0 });
-			Vector3 position = sphere->GetTransform().GetPosition();
-			Vector3 scale = sphere->GetTransform().GetScale();
-			float radius = scale.x;
-			int offset = 0 * sizeof(RayMarchSphere);
-			Vector3 color = { 1,1,0 };
-			float radiusExtension = radius / 2;
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
+		
+		int offset = numSpheresSent * sizeof(float) * 7;
 
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(sphere->center.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(sphere->center.y));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(sphere->center.z));
 
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(sphere->radius));
 
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		}
-		else if (idk == 1) {
-			sphere->GetTransform().SetPosition({ -std::sin(timePassed) * 20, 0,0 });
-			Vector3 position = sphere->GetTransform().GetPosition();
-			Vector3 scale = sphere->GetTransform().GetScale();
-			float radius = scale.x;
-			int offset = 1 * sizeof(RayMarchSphere);
-			Vector3 color = { 1,0,1 };
-			float radiusExtension = radius / 2;
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(sphere->color.x));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(sphere->color.y));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(sphere->color.z));
 
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
-
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
-
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		}
-		else if (idk == 2) {
-			sphere->GetTransform().SetPosition({ 0, std::sin(timePassed) * 20, 0 });
-			Vector3 position = sphere->GetTransform().GetPosition();
-			Vector3 scale = sphere->GetTransform().GetScale();
-			float radius = scale.x;
-			int offset = 2 * sizeof(RayMarchSphere);
-			Vector3 color = { 0,1,0 };
-			float radiusExtension = radius / 2;
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
-
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
-
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
-
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		}
-		else if (idk == 3) {
-			sphere->GetTransform().SetPosition({ 0,  -std::sin(timePassed) * 20,0 });
-			Vector3 position = sphere->GetTransform().GetPosition();
-			Vector3 scale = sphere->GetTransform().GetScale();
-			float radius = scale.x;
-			int offset = 3 * sizeof(RayMarchSphere);
-			Vector3 color = { 0,1,1 };
-			float radiusExtension = radius / 2;
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
-
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
-
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
-
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		}
-		idk++;
-		if (idk == 4)idk = 0;
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		
+		numSpheresSent++;
 	}
 
-	
+	return;
 	Vector3 position = testSphereCenter;
 	float radius = testSphereRadius;
-	int offset = 4 * sizeof(RayMarchSphere);
+	int offset = numSpheresSent * sizeof(RayMarchSphere);
 	Vector3 color = { 1,1,0 };
 	float radiusExtension = radius / 2;
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
@@ -560,7 +531,7 @@ void TutorialGame::UpdateKeys() {
 	else {
 		DebugObjectMovement();
 	}
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
+	/*if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
 		for (int i = 0; i < 1; i++)
 		{
 			Vector3 halfDims = worldFloor->GetTransform().GetScale() / 2;
@@ -577,6 +548,14 @@ void TutorialGame::UpdateKeys() {
 
 		}
 		
+	}*/
+  if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
+		float randX = (rand() % 200) - 100;
+		float randZ = (rand() % 200) - 100;
+		Vector3 randVec(randX, 2, randZ);
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
+		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10);
+		glPopDebugGroup();
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F)) {
 		renderer->renderFullScreenQuad = !renderer->renderFullScreenQuad;
@@ -673,24 +652,26 @@ void TutorialGame::InitGraphicTest() {
 
 	//position is irrelevant at this point in testing as im overriding position later
 	//for raymarching
-	AddSphereToWorld({ 0,0,0 }, 10);
-	AddSphereToWorld({ 0,0,0 }, 10);
-	AddSphereToWorld({ 0,0,0 }, 10);
+	for (int i = 0; i < 10; i++)
+	{
+		AddSphereToWorld({ 0,0,0 }, 10, false);
+	}
+	
 
 	
 
 	//testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
-	floor = AddFloorToWorld({0,0,0});
+	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	floor->SetName(std::string("floor"));
 
 	//testTriangle = AddDebugTriangleToWorld({ 0,200,0 });
 
 	monkey = AddMonkeyToWorld({ 0,20,100 }, { 5,5,5 });
+	monkey->SetName(std::string("monkey"));
 	monkey->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(0, 180, 0));
-	walls.push_back(AddWallToWorld({ -80,-30,-70 }, { 20,20,20 }));
-	walls.push_back(AddWallToWorld({ -40,-30,-70 }, { 20,20,20 }));
-	walls.push_back(AddWallToWorld({ 0,-30,-70 }, { 20,20,20 }));
-	walls.push_back(AddWallToWorld({ 40,-30,-70 }, { 20,20,20 }));
-	walls.push_back(AddWallToWorld({ 80,-30,-70 }, { 20,20,20 }));
+	walls.push_back(AddFloorToWorld({ 0,25,-20 }, {100,1,25},true));
+	walls.back()->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(90, 0, 0));
+	walls.back()->SetName(std::string("back"));
 
 	//max = AddMaxToWorld({ 10,10,-10 }, { 10,10,10 });
 
@@ -766,9 +747,16 @@ void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 
-void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
-	int w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
-	int h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated) {
+	int w, h;
+	if (!rotated) {
+		w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
+		h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+	}
+	else {
+		w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
+		h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+	}
 
 	object->GetRenderObject()->isPaintable = true;
 	object->GetRenderObject()->maskTex = new OGLTexture();
@@ -777,6 +765,7 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
 	object->GetRenderObject()->baseTex = metalTex;
 	object->GetRenderObject()->bumpTex = testBumpTex;
 }
@@ -785,14 +774,14 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object) {
 A single function to add a large immoveable cube to the bottom of our world
 
 */
-GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
+GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated) {
 	GameObject* floor = new GameObject();
 
-	Vector3 floorSize = Vector3(100, 2, 100);
-	AABBVolume* volume = new AABBVolume(floorSize);
+	
+	AABBVolume* volume = new AABBVolume(scale);
 	floor->SetBoundingVolume((CollisionVolume*)volume);
 	floor->GetTransform()
-		.SetScale(floorSize * 2)
+		.SetScale(scale * 2)
 		.SetPosition(position);
 
 	
@@ -822,7 +811,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 
 	
 	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), floorMesh, nullptr, basicShader));
-	InitPaintableTextureOnObject(floor);
+	InitPaintableTextureOnObject(floor,rotated);
 
 	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 
@@ -863,8 +852,8 @@ rigid body representation. This and the cube function will let you build a lot o
 physics worlds. You'll probably need another function for the creation of OBB cubes too.
 
 */
-GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, float inverseMass) {
-	GameObject* sphere = new GameObject();
+GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass) {
+	RayMarchSphere* sphere = new RayMarchSphere();
 
 	Vector3 sphereSize = Vector3(radius, radius, radius);
 	SphereVolume* volume = new SphereVolume(radius);
@@ -874,14 +863,18 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 		.SetScale(sphereSize)
 		.SetPosition(position);
 
-	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
+	if(render)sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
 	sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
 
 	sphere->GetPhysicsObject()->SetInverseMass(inverseMass);
 	sphere->GetPhysicsObject()->InitSphereInertia();
 
-	//world->AddGameObject(sphere);
-	rayMarchSpheres.push_back({ position,radius,Vector3(0,0,0) });
+	world->AddGameObject(sphere);
+
+	sphere->color = { 1,0,0 };
+	sphere->radius = radius;
+	sphere->center = position;
+	rayMarchSpheres.push_back(sphere);
 	spheres.push_back(sphere);
 	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
@@ -892,6 +885,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
 	return sphere;
 }
+
 
 
 
@@ -941,6 +935,7 @@ GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfH
 
 GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* monkey = new GameObject();
+	
 
 	AABBVolume* volume = new AABBVolume(dimensions);
 	monkey->SetBoundingVolume((CollisionVolume*)volume);
@@ -954,6 +949,8 @@ GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dime
 
 	monkey->GetPhysicsObject()->SetInverseMass(inverseMass);
 	monkey->GetPhysicsObject()->InitCubeInertia();
+
+	monkey->GetRenderObject()->isComplex = true;
 
 	InitPaintableTextureOnObject(monkey);
 
@@ -1284,7 +1281,7 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 
 
 void TutorialGame::InitDefaultFloor() {
-	AddFloorToWorld(Vector3(0, -20, 0));
+	AddFloorToWorld(Vector3(0, -20, 0), {100,1,100});
 }
 
 void TutorialGame::InitDefaultFloorRunway() {
@@ -1309,7 +1306,7 @@ void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacin
 			AddSphereToWorld(position, radius, 1.0f);
 		}
 	}
-	AddFloorToWorld(Vector3(0, -2, 0));
+	AddFloorToWorld(Vector3(0, -2, 0), { 100,1,100 });
 }
 
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {
@@ -1324,7 +1321,7 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 				AddCubeToWorld(position, cubeDims);
 			}
 			else {
-				AddSphereToWorld(position, sphereRadius);
+				AddSphereToWorld(position, sphereRadius,true);
 			}
 		}
 	}
@@ -1449,6 +1446,7 @@ void TutorialGame::MoveSelectedObject() {
 
 
 
+
 StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 	StateGameObject* object = new StateGameObject();
 
@@ -1471,17 +1469,19 @@ StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 }
 
 
-void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
+void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius) {
+
 	Matrix4 modelMatrix = object->GetTransform().GetMatrix();
-	MESH_TRIANGLES_AND_UVS tris = object->GetRenderObject()->GetMesh()->GetAllTrianglesAndUVs();
+	MESH_TRIANGLES_AND_UVS tris = object->GetRenderObject()->GetMesh()->GetAllTrianglesAndUVs();//TODO use vao instead
 	triComputeShader->Bind();
 
+	Vector2 maskDims = object->GetRenderObject()->maskDimensions;
 	
-	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()));
+	/*glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, 1000, 1000, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, maskDims.x, maskDims.y, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
+	glBindTexture(GL_TEXTURE_2D, 0);*/
 	
 #ifdef TRI_DEBUG
 	glActiveTexture(GL_TEXTURE0);
@@ -1493,9 +1493,16 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 
 	int radiusLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereRadius");
 	int centerLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "sphereCenter");
-	glUniform1f(radiusLocation, testSphereRadius);
-	glUniform3fv(centerLocation,1, testSphereCenter.array);
+	int textureWidthLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureWidth");
+	int textureHeightLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureHeight");
+	int isComplexLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "isComplex");
+	glUniform1f(radiusLocation, sphereRadius);
+	glUniform3fv(centerLocation,1, spherePosition.array);
+	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
+	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
+	glUniform1i(isComplexLocation, object->GetRenderObject()->isComplex);
 	
+	//TODO change all of this to use vao
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
 	std::array<float, MAX_TRIS * 15> emptyArray{};
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(float) * MAX_TRIS * 15, emptyArray.data());
@@ -1532,12 +1539,8 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object) {
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	
-	/*Vector3 testPoint(3, 5, 7);
-	int pointLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "point");
-	glUniform3fv(pointLocation,1, testPoint.array);*/
-	
 	triComputeShader->Execute(object->GetRenderObject()->GetMesh()->GetIndexCount()/64+1, 1, 1);//todo change number of thread groups
-	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	triComputeShader->Unbind();
 }
 

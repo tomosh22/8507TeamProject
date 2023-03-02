@@ -85,9 +85,17 @@ namespace NCL::CSC8503 {
 			return name;
 		}
 
-		virtual void OnCollisionBegin(GameObject* otherObject)
-		{
+
+		void SetName(std::string name)  {
+			this->name = name;
+		}
+
+		virtual void OnCollisionBegin(GameObject* otherObject) {
+			//std::cout << "OnCollisionBegin event occured!\n";
+
+		
 			
+
 		}
 
 		virtual void OnCollisionEnd(GameObject* otherObject) 

@@ -707,6 +707,9 @@ void TutorialGame::InitGraphicTest() {
 }
 
 void TutorialGame::InitPhysicalTest() {
+	world->ClearAndErase();
+	physics->Clear();
+
 	InitGameExamples();
 	InitDefaultFloor();
 }
@@ -928,6 +931,8 @@ GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfH
 	capsule->GetPhysicsObject()->SetInverseMass(inverseMass);
 	capsule->GetPhysicsObject()->InitCubeInertia();
 
+	InitPaintableTextureOnObject(capsule);
+
 	world->AddGameObject(capsule);
 
 	return capsule;
@@ -1087,6 +1092,8 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	character->GetPhysicsObject()->setCoeficient(0.55f);
 	character->GetPhysicsObject()->InitSphereInertia();
 	setGoatCharacter(character);
+	InitPaintableTextureOnObject(character);
+
 	world->AddGameObject(character);
 
 	return character;
@@ -1285,11 +1292,12 @@ void TutorialGame::InitDefaultFloorRunway() {
 }
 
 void TutorialGame::InitGameExamples() {
-	AddCubeToWorld(Vector3(0.0f, 15.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
-	AddCapsuleToWorld(Vector3(0.0f, 15.0f, 5.0f), 2.5, 2.5);
-	//auto q = Quaternion();
-	////TODO
-	//selectionObject = AddPlayerToWorld(Vector3(0, 5, 0), q);
+	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
+	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 2.5, 2.5);
+	
+	//TODO
+	auto q = Quaternion();
+	selectionObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	//AddEnemyToWorld(Vector3(5, 5, 0));
 	//AddBonusToWorld(Vector3(10, 5, 0));
 }

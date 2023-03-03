@@ -12,8 +12,24 @@ namespace NCL {
 			{
 				float paintRadius;
 				Vector3 contactPosition;
+				GameObject* objectHit;
 
 			};
+
+			vector <collisionData> getCurrentCollisions() {
+				return currentCollisions;
+			}
+
+			void clearCurrentCollisions() {
+				currentCollisions = {};
+			}
+
+			void AddToCurrentCollision(collisionData nextSphereData) {
+				if (nextSphereData.paintRadius == 0.0f) {
+					return;
+				}
+				currentCollisions.push_back(nextSphereData);
+			}
 
 			void Clear();
 
@@ -30,7 +46,7 @@ namespace NCL {
 			void SetGravity(const Vector3& g);
 
 		protected:
-			collisionData BasicCollisionDetection();
+			void BasicCollisionDetection();
 			void BroadPhase();
 			void NarrowPhase();
 
@@ -52,6 +68,7 @@ namespace NCL {
 
 			bool	applyGravity;
 			Vector3 gravity;
+			vector <collisionData> currentCollisions;
 			float	dTOffset;
 			float	globalDamping;
 

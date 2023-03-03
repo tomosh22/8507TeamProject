@@ -1464,7 +1464,10 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	MESH_TRIANGLES_AND_UVS tris = object->GetRenderObject()->GetMesh()->GetAllTrianglesAndUVs();//TODO use vao instead
 	triComputeShader->Bind();
 
+	
+
 	OGLMesh* mesh = (OGLMesh*)object->GetRenderObject()->GetMesh();
+	unsigned int numTris = mesh->GetIndexCount() / 3;
 	GLuint vao = mesh->vao;
 	//glBindBuffer(GL_SHADER_STORAGE_BUFFER,tempSSBO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mesh->attributeBuffers[VertexAttribute::Positions]);
@@ -1493,12 +1496,14 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	int textureHeightLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureHeight");
 	int isComplexLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "isComplex");
 	int modelMatrixLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "modelMatrix");
+	int numTrisLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "numTris");
 	glUniform1f(radiusLocation, sphereRadius);
 	glUniform3fv(centerLocation,1, spherePosition.array);
 	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
 	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
 	glUniform1i(isComplexLocation, object->GetRenderObject()->isComplex);
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
+	glUniform1i(numTrisLocation, numTris);
 	
 	//TODO change all of this to use vao
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
@@ -1536,8 +1541,12 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvC.y));
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, debugTriangleSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, debugTriangleSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	
-	triComputeShader->Execute((mesh->GetIndexCount()/3)/64+1, 1, 1);//todo change number of thread groups
+	triComputeShader->Execute((numTris)/64+1, 1, 1);//todo change number of thread groups
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	triComputeShader->Unbind();
 }
@@ -1560,6 +1569,12 @@ void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(float) * 15, NULL, GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, triangleSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	glGenBuffers(1, &(debugTriangleSSBO));
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, debugTriangleSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(float) * 15, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugTriangleSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	

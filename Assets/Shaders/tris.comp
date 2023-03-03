@@ -9,6 +9,8 @@ uniform float sphereRadius;
 uniform int textureWidth;
 uniform int textureHeight;
 
+uniform int numTris;
+
 uniform bool isComplex;
 
 struct Triangle{
@@ -27,7 +29,7 @@ uniform mat4 modelMatrix;
 uniform vec3 point;
 
 layout(std430, binding = 2) buffer Positions{
-    vec3 positions[];
+    float positions[];
 };
 layout(std430, binding = 3) buffer TexCoords{
     vec2 texCoords[];
@@ -40,8 +42,8 @@ layout(std430, binding = 4) buffer Indices{
 layout(std430, binding = 5) buffer TriangleSSBO{
 	Triangle triangles[];
 };
-layout(std430, binding = 6) buffer TriangleBoolSSBO{
-	bool triangleBools[];
+layout(std430, binding = 6) buffer DebugTriangleSSBO{
+	Triangle debugTriangleSSBO[];
 };
 
 
@@ -201,9 +203,13 @@ bool EdgeIntersection(vec3 sphereCenter, float sphereRadius,
 
 #define NEW
 
+vec3 getPosition(int index0) {
+    return vec3(positions[3 * index0 + 0], positions[3 * index0 + 1], positions[3 * index0 + 2]);
+}
+
 void main() {
 	int id = int(gl_GlobalInvocationID.x);
-
+    if(id >= numTris)return;
     
     Triangle tri = triangles[id];
     vec3 intersectionPoint;
@@ -221,13 +227,34 @@ void main() {
     int index1 = indices[id * 3 + 1];
     int index2 = indices[id * 3 + 2];
 
-    triA = (modelMatrix * vec4(positions[index0],1)).xyz;
-    triB = (modelMatrix * vec4(positions[index1],1)).xyz;
-    triC = (modelMatrix * vec4(positions[index2],1)).xyz;
+    triA = (modelMatrix * vec4(getPosition(index0),1)).xyz;
+    triB = (modelMatrix * vec4(getPosition(index1),1)).xyz;
+    triC = (modelMatrix * vec4(getPosition(index2),1)).xyz;
 
     uvA = texCoords[index0];
     uvB = texCoords[index1];
     uvC = texCoords[index2];
+
+    Triangle debugTri;
+    debugTri.ax = triA.x;
+    debugTri.ay = triA.y;
+    debugTri.az = triA.z;
+
+    debugTri.bx = triB.x;
+    debugTri.by = triB.y;
+    debugTri.bz = triB.z;
+
+    debugTri.cx = triC.x;
+    debugTri.cy = triC.y;
+    debugTri.cz = triC.z;
+
+    debugTri.au = uvA.x;
+    debugTri.av = uvA.y;
+
+    debugTri.bu = uvB.x;
+    debugTri.bv = uvB.y;
+
+    debugTriangleSSBO[id] = debugTri;
 #endif
 
     if(triA == triB && triA == triC && triB == triC && triA == vec3(0)){return;}

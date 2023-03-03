@@ -182,6 +182,7 @@ namespace NCL {
 
 			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius);
 			GLuint triangleSSBO;
+			GLuint debugTriangleSSBO;
 			void SetUpTriangleSSBOAndDataTexture();
 			OGLComputeShader* triComputeShader;
 			//OGLTexture* triDataTex;//1d texture

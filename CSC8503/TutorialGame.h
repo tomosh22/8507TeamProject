@@ -12,15 +12,19 @@
 
 namespace NCL {
 	namespace CSC8503 {
+		const int GAME_MODE_DEFAULT = 0;
+		const int GAME_MODE_GRAPHIC_TEST = 1;
+		const int GAME_MODE_PHISICAL_TEST = 2;
 		class TutorialGame		{
 		public:
 			TutorialGame();
 			~TutorialGame();
 
 			virtual void UpdateGame(float dt);
-
+			void SelectMode();
 			//void InitWorld(); //moved from protected
-			void InitWorldtest();
+			void InitGraphicTest();
+			void InitPhysicalTest();
 			void InitWorldtest2();
 
 			void setLockedObjectNull();
@@ -77,16 +81,23 @@ namespace NCL {
 			void movePlayer(playerTracking* unitGoat);
 			void setLockedObject(GameObject* goatPlayer);
 
-			GameObject* AddFloorToWorld(const Vector3& position);
+
+			GameObject* AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated = false);
+			GameObject* AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass = 10.0f);
+			
+
+			
 			GameObject* AddRunwayToWorld(const Vector3& position);
-			GameObject* AddSphereToWorld(const Vector3& position, float radius, float inverseMass = 10.0f);
+			
 			Projectile* AddBulletToWorld(playerTracking* playableCharacter);
 			Projectile* useNewBullet(playerTracking* passedPlayableCharacter);
 
 			
 			Projectile* FireBullet(playerTracking* selectedPlayerCharacter);
-			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 1.0f);
+			GameObject* AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inversMass = 1.0f);
 			
+
 			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
@@ -167,9 +178,9 @@ namespace NCL {
 			TextureBase* quadTex = nullptr;
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
-			void InitPaintableTextureOnObject(GameObject* object);
+			void InitPaintableTextureOnObject(GameObject* object, bool rotated = false);
 
-			void DispatchComputeShaderForEachTriangle(GameObject* object);
+			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius);
 			GLuint triangleSSBO;
 			void SetUpTriangleSSBOAndDataTexture();
 			OGLComputeShader* triComputeShader;
@@ -183,13 +194,14 @@ namespace NCL {
 			float hitDistance;
 			float noHitDistance;
 			float debugValue;
-			struct RayMarchSphere {
+			class RayMarchSphere : public GameObject {
+			public:
 				Vector3 center;
 				float radius;
 				Vector3 color;
 			};
 			std::vector<GameObject*> spheres;
-			std::vector<RayMarchSphere> rayMarchSpheres;
+			std::vector<RayMarchSphere*> rayMarchSpheres;
 			GLuint rayMarchSphereSSBO;
 			int maxRayMarchSpheres;
 			float timePassed = 0;
@@ -210,9 +222,12 @@ namespace NCL {
 			GameObject* floor;
 			GameObject* max;
 			std::vector<GameObject*> walls;
+			void UpdateRayMarchSpheres();
 
+			int gameMode = GAME_MODE_DEFAULT;
 		};
 	}
 }
+
 
 

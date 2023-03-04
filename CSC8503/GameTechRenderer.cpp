@@ -257,6 +257,7 @@ void GameTechRenderer::RenderCamera() {
 	int lightPosLocation	= 0;
 	int lightColourLocation = 0;
 	int lightRadiusLocation = 0;
+	int noiseOffsetMultiplerLocation = 0;
 
 	int cameraLocation = 0;
 
@@ -282,10 +283,12 @@ void GameTechRenderer::RenderCamera() {
 			colourLocation  = glGetUniformLocation(shader->GetProgramID(), "objectColour");
 			hasVColLocation = glGetUniformLocation(shader->GetProgramID(), "hasVertexColours");
 			hasTexLocation  = glGetUniformLocation(shader->GetProgramID(), "hasTexture");
+			
 
 			//this was me
 			widthLocation = glGetUniformLocation(shader->GetProgramID(), "width");
 			heightLocation = glGetUniformLocation(shader->GetProgramID(), "height");
+			noiseOffsetMultiplerLocation = glGetUniformLocation(shader->GetProgramID(), "noiseOffsetMultipler");
 
 			lightPosLocation	= glGetUniformLocation(shader->GetProgramID(), "lightPos");
 			lightColourLocation = glGetUniformLocation(shader->GetProgramID(), "lightColour");
@@ -326,6 +329,7 @@ void GameTechRenderer::RenderCamera() {
 		Vector2 maskDims = (*i).maskDimensions;
 		glUniform1i(widthLocation, maskDims.x);
 		glUniform1i(heightLocation, maskDims.y);
+		glUniform1f(noiseOffsetMultiplerLocation, noiseOffsetMultipler);
 
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
@@ -557,7 +561,8 @@ void GameTechRenderer::ImGui() {
 	if (ImGui::TreeNode("World to UV Space Testing")) {
 		ImGui::SliderFloat3("Position", imguiptrs.testSphereCenter->array, -200, 500);
 		ImGui::SliderFloat("Sphere Radius", imguiptrs.testSphereRadius, 0, 2000);
-		if (ImGui::Button("Move to Center")) { *(imguiptrs.testSphereCenter) = Vector3(10, -20, -10); }
+		ImGui::SliderFloat("Noise Offset Multiplier", imguiptrs.noiseOffsetMultipler, 0, 0.5);
+		if (ImGui::Button("Move to Center")) { *(imguiptrs.testSphereCenter) = Vector3(0, 0, 0); }
 
 		ImGui::TreePop();
 	}

@@ -47,6 +47,8 @@ namespace NCL {
 
 			void setEnemyGoat(GameObject* assignCharcter);
 
+			
+
 		protected:
 			void InitialiseAssets();
 
@@ -217,6 +219,7 @@ namespace NCL {
 			GameObject* testTriangle;
 			GameObject* monkey;
 			void AddDebugTriangleInfoToObject(GameObject* object);
+			
 			TextureBase* metalTex;
 			TextureBase* testBumpTex;
 			void SendRayMarchData();

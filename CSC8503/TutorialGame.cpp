@@ -81,6 +81,11 @@ TutorialGame::TutorialGame()	{
 	testSphereRadius = 10;
 	renderer->imguiptrs.testSphereCenter = &testSphereCenter;
 	renderer->imguiptrs.testSphereRadius = &testSphereRadius;
+
+	renderer->noiseOffsetMultipler = 0.04;
+	renderer->imguiptrs.noiseOffsetMultipler = &renderer->noiseOffsetMultipler;
+
+
 	for (int i = 0; i < 1000 * 1000; i++)
 	{
 		zeros[i] = 0;
@@ -1371,7 +1376,7 @@ bool TutorialGame::SelectObject() {
 
 		if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT)) {
 			if (selectionObject) {	//set colour to deselected;
-				selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
+				if (selectionObject->GetRenderObject() != nullptr)selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
 				selectionObject = nullptr;
 			}
 
@@ -1381,7 +1386,7 @@ bool TutorialGame::SelectObject() {
 			if (world->Raycast(ray, closestCollision, true)) {
 				selectionObject = (GameObject*)closestCollision.node;
 
-				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
+				if(selectionObject->GetRenderObject() != nullptr)selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
 				return true;
 			}
 			else {
@@ -1476,11 +1481,9 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 
 	Vector2 maskDims = object->GetRenderObject()->maskDimensions;
 	
-	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, maskDims.x, maskDims.y, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
-	glBindTexture(GL_TEXTURE_2D, 0);
+	
+	glClearTexImage((((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()), 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, 0);
+	
 	
 #ifdef TRI_DEBUG
 	glActiveTexture(GL_TEXTURE0);

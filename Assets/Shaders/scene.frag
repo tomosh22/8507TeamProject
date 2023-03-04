@@ -20,6 +20,8 @@ uniform bool isPaintable;
 uniform int width;
 uniform int height;
 
+uniform float noiseOffsetMultipler;
+
 layout(std430, binding = 4) buffer PaintSSBO{
 	int paintData[];
 };
@@ -192,8 +194,8 @@ void main(void)
 
 	vec2 offset = vec2(fbm(IN.texCoord * noiseScale), 0);
 		offset.y = fbm((1.0 - IN.texCoord)  * noiseScale);
-	offset = 2.0 * offset + 1.0;
-	offset *= 0.00;
+	offset = (offset - 1.0)/2;
+	offset *= noiseOffsetMultipler;
 
 	vec2 realCoords = imageSize(maskTex) * (IN.texCoord + offset);
 	vec2 iCoords = floor(realCoords);
@@ -223,7 +225,7 @@ void main(void)
 	fragColor.rgb = color;
 	fragColor.a = 1;
 
-	if(fragColor != vec4(0,0,0,1))return;
+	if(length(color) > 0.95)return;
 
 	float shadow = 1.0; // New !
 	

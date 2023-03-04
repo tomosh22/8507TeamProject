@@ -272,6 +272,8 @@ void main() {
         //imageStore(triDataTex,id,vec4(0,0,1,1));//debugging
         for(int x = -area.x; x <= area.x;x++){
             for(int y = -area.y; y <= area.y; y++){
+                //if(x != 0 && y != 0)
+                if(length(vec2(x,y)) < area.x)
                 imageStore(outputTex,IMAGE_COORDS + ivec2(x,y) + ivec2(textureWidth,textureHeight)/4,uvec4(1,0,0,0));
                 
             }

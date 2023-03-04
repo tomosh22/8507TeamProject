@@ -37,8 +37,11 @@ namespace NCL {
 				bool* depthTest;
 				Vector3* testSphereCenter;
 				float* testSphereRadius;
+				float* noiseOffsetMultipler;
 			};
 			ImGUIPtrs imguiptrs;
+
+			float noiseOffsetMultipler;
 
 			bool renderFullScreenQuad = true;
 

@@ -182,7 +182,7 @@ namespace NCL {
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object, bool rotated = false);
 
-			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius);
+			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID);
 			GLuint triangleSSBO;
 			GLuint debugTriangleSSBO;
 			void SetUpTriangleSSBOAndDataTexture();
@@ -231,6 +231,20 @@ namespace NCL {
 			int gameMode = GAME_MODE_DEFAULT;
 
 			GLuint tempSSBO;
+
+			enum Team {
+				teamNull,
+				team1,
+				team2,
+				team3,
+				team4,
+				team5,
+				team6,
+				team7,
+				team8,
+			};
+			//Team currentTeam = Team::team2;
+			//int currentTeamInt = 1;
 		};
 	}
 }

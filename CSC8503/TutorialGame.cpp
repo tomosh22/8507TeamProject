@@ -125,6 +125,7 @@ void TutorialGame::InitQuadTexture() {
 	renderer->imguiptrs.rayMarchNoHitDistance = &noHitDistance;
 	renderer->imguiptrs.debugValue = &debugValue;
 	renderer->imguiptrs.depthTest = &rayMarchDepthTest;
+	//renderer->imguiptrs.currentTeamInt = &currentTeamInt;
 }
 
 //raymarching
@@ -311,10 +312,10 @@ void TutorialGame::UpdateGame(float dt) {
 		//DispatchComputeShaderForEachTriangle(testCube);
 		//glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
-		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius);
+		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, Team::team1);
 		glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius);
+		DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius, Team::team1);
 		glPopDebugGroup();
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
 		//for (GameObject*& wall : walls) {
@@ -556,7 +557,7 @@ void TutorialGame::UpdateKeys() {
 		float randZ = (rand() % 200) - 100;
 		Vector3 randVec(randX, 2, randZ);
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10);
+		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10, Team::team1);
 		glPopDebugGroup();
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F)) {
@@ -1463,7 +1464,7 @@ StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 }
 
 
-void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius) {
+void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID) {
 
 	Matrix4 modelMatrix = object->GetTransform().GetMatrix();
 	MESH_TRIANGLES_AND_UVS tris = object->GetRenderObject()->GetMesh()->GetAllTrianglesAndUVs();//TODO use vao instead
@@ -1500,6 +1501,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	int isComplexLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "isComplex");
 	int modelMatrixLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "modelMatrix");
 	int numTrisLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "numTris");
+	int teamIDLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "teamID");
 	glUniform1f(radiusLocation, sphereRadius);
 	glUniform3fv(centerLocation,1, spherePosition.array);
 	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
@@ -1507,6 +1509,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	glUniform1i(isComplexLocation, object->GetRenderObject()->isComplex);
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
 	glUniform1i(numTrisLocation, numTris);
+	glUniform1i(teamIDLocation, teamID);
 	
 	//TODO change all of this to use vao
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);

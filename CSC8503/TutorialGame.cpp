@@ -84,6 +84,7 @@ TutorialGame::TutorialGame()	{
 
 	renderer->noiseOffsetMultipler = 0.04;
 	renderer->imguiptrs.noiseOffsetMultipler = &renderer->noiseOffsetMultipler;
+	renderer->imguiptrs.newMethod = &renderer->newMethod;
 
 
 	for (int i = 0; i < 1000 * 1000; i++)
@@ -1502,6 +1503,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	int modelMatrixLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "modelMatrix");
 	int numTrisLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "numTris");
 	int teamIDLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "teamID");
+	int newMethodLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "newMethod");
 	glUniform1f(radiusLocation, sphereRadius);
 	glUniform3fv(centerLocation,1, spherePosition.array);
 	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
@@ -1510,6 +1512,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
 	glUniform1i(numTrisLocation, numTris);
 	glUniform1i(teamIDLocation, teamID);
+	glUniform1i(newMethodLocation, renderer->newMethod);
 	
 	//TODO change all of this to use vao
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);

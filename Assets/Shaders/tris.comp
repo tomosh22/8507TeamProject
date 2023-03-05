@@ -15,6 +15,8 @@ uniform bool isComplex;
 
 uniform int teamID;
 
+uniform bool newMethod;
+
 struct Triangle{
 	float ax,ay,az,au,av;
 	float bx,by,bz,bu,bv;
@@ -56,6 +58,8 @@ float GetAreaFromTriangleVerts(vec3 a, vec3 b, vec3 c) {
     float area = 0.5 * length(crossProduct);
     return area;
 }
+
+
 
 vec3 WorldSpaceToBarycentricCoords(vec3 point, vec3 vertA, vec3 vertB, vec3 vertC) {
 	vec3 barycentric;
@@ -203,6 +207,73 @@ bool EdgeIntersection(vec3 sphereCenter, float sphereRadius,
 
 
 
+void NaiveMethod(vec3 triA, vec3 triB, vec3 triC, vec2 uvA, vec2 uvB, vec2 uvC, vec3 intersectionPoint, int id){
+    vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,triA,triB,triC);
+        vec2 uv = BarycentricToUV(barycentric, uvA, uvB, uvC);
+        ivec2 IMAGE_COORDS = ivec2(uv.x * textureWidth,uv.y * textureHeight) - ivec2(textureWidth,textureHeight)/4;
+        float dist = length(intersectionPoint - sphereCenter);
+    	imageStore(triDataTex,id,vec4(IMAGE_COORDS,0,dist));
+        ivec2 area = ivec2(textureWidth,textureHeight)/40;
+        //imageStore(triDataTex,id,vec4(0,0,1,1));//debugging
+        for(int x = -area.x; x <= area.x;x++){
+            for(int y = -area.y; y <= area.y; y++){
+                //if(x != 0 && y != 0)
+                if(length(vec2(x,y)) < area.x)
+                imageStore(outputTex,IMAGE_COORDS + ivec2(x,y) + ivec2(textureWidth,textureHeight)/4,uvec4(teamID,0,0,0));
+                
+            }
+        }
+}
+
+vec3 pointInTriangle(vec2 triA, vec2 triB, vec2 triC, vec2 point) {
+    float areaABC = abs((triB.x - triA.x)*(triC.y - triA.y) - (triC.x - triA.x)*(triB.y - triA.y));
+    float areaPBC = abs((triB.x - point.x)*(triC.y - point.y) - (triC.x - point.x)*(triB.y - point.y));
+    float areaPCA = abs((triC.x - point.x)*(triA.y - point.y) - (triA.x - point.x)*(triC.y - point.y));
+    float areaPAB = abs((triA.x - point.x)*(triB.y - point.y) - (triB.x - point.x)*(triA.y - point.y));
+
+    vec3 barycentric;
+    barycentric.x = areaPBC / areaABC;
+    barycentric.y = areaPCA / areaABC;
+    barycentric.z = areaPAB / areaABC;
+
+    //return vec3(areaABC);
+    if (abs((barycentric.x + barycentric.y + barycentric.z) - 1) < 0.1) {
+        return barycentric;
+    } else {
+        return vec3(-1);
+    }
+}
+
+bool pointInSphere(vec3 triA, vec3 triB, vec3 triC, vec3 barycentric){
+    vec3 worldSpacePoint = (barycentric.x * triA) + (barycentric.y * triB) + (barycentric.z * triC);
+    return length(worldSpacePoint - sphereCenter) < sphereRadius;
+}
+
+void NewMethod(vec3 triA, vec3 triB, vec3 triC, vec2 uvA, vec2 uvB, vec2 uvC, vec3 intersectionPoint, int id){
+    int minTexCoordX = int(min(uvA.x,min(uvB.x,uvC.x)) * textureWidth);
+    int maxTexCoordX = int(max(uvA.x,max(uvB.x,uvC.x)) * textureWidth);
+    int minTexCoordY = int(min(uvA.y,min(uvB.y,uvC.y)) * textureWidth);
+    int maxTexCoordY = int(max(uvA.y,max(uvB.y,uvC.y)) * textureWidth);
+
+    vec2 texCoordA = vec2(uvA * vec2(textureWidth, textureHeight));
+    vec2 texCoordB = vec2(uvB * vec2(textureWidth, textureHeight));
+    vec2 texCoordC = vec2(uvC * vec2(textureWidth, textureHeight));
+
+    for(int x = minTexCoordX; x <= maxTexCoordX;x++ ){
+        for(int y = minTexCoordY; y <= maxTexCoordY;y++ ){
+            vec3 barycentric;
+            if((barycentric = pointInTriangle(texCoordA,texCoordB,texCoordC,vec2(x,y))) != vec3(-1)){
+                
+                if(pointInSphere(triA,triB,triC,barycentric)){
+                    imageStore(triDataTex,id,vec4(1,1,1,1));
+                    imageStore(outputTex,ivec2(x,y),uvec4(teamID,0,0,0));
+                }
+            }
+            else{ imageStore(triDataTex,id,vec4(1,1,1,1)*2);}
+        }
+    }
+}
+
 #define NEW
 
 vec3 getPosition(int index0) {
@@ -265,21 +336,10 @@ void main() {
     
 
     if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint) || EdgeIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
-    	vec3 barycentric = WorldSpaceToBarycentricCoords(intersectionPoint,triA,triB,triC);
-        vec2 uv = BarycentricToUV(barycentric, uvA, uvB, uvC);
-        ivec2 IMAGE_COORDS = ivec2(uv.x * textureWidth,uv.y * textureHeight) - ivec2(textureWidth,textureHeight)/4;
-        float dist = length(intersectionPoint - sphereCenter);
-    	imageStore(triDataTex,id,vec4(IMAGE_COORDS,0,dist));
-        ivec2 area = ivec2(textureWidth,textureHeight)/40;
-        //imageStore(triDataTex,id,vec4(0,0,1,1));//debugging
-        for(int x = -area.x; x <= area.x;x++){
-            for(int y = -area.y; y <= area.y; y++){
-                //if(x != 0 && y != 0)
-                if(length(vec2(x,y)) < area.x)
-                imageStore(outputTex,IMAGE_COORDS + ivec2(x,y) + ivec2(textureWidth,textureHeight)/4,uvec4(teamID,0,0,0));
-                
-            }
-        }
+        
+        if(newMethod)NewMethod(triA,triB,triC,uvA,uvB,uvC,intersectionPoint, id);
+        else NaiveMethod(triA,triB,triC,uvA,uvB,uvC,intersectionPoint, id);
+    	
         //imageStore(outputTex,IMAGE_COORDS,vec4(1,1,1,1));
     }
     else{

@@ -245,6 +245,7 @@ namespace NCL {
 			};
 			//Team currentTeam = Team::team2;
 			//int currentTeamInt = 1;
+			
 		};
 	}
 }

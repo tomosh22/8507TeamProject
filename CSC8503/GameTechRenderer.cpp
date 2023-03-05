@@ -562,6 +562,8 @@ void GameTechRenderer::ImGui() {
 		ImGui::SliderFloat3("Position", imguiptrs.testSphereCenter->array, -200, 500);
 		ImGui::SliderFloat("Sphere Radius", imguiptrs.testSphereRadius, 0, 2000);
 		ImGui::SliderFloat("Noise Offset Multiplier", imguiptrs.noiseOffsetMultipler, 0, 0.5);
+		ImGui::Checkbox("New Method", imguiptrs.newMethod);
+		//ImGui::SliderInt("Current Team", imguiptrs.currentTeamInt, 0, 32);
 		if (ImGui::Button("Move to Center")) { *(imguiptrs.testSphereCenter) = Vector3(0, 0, 0); }
 
 		ImGui::TreePop();

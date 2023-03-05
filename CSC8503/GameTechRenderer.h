@@ -38,10 +38,14 @@ namespace NCL {
 				Vector3* testSphereCenter;
 				float* testSphereRadius;
 				float* noiseOffsetMultipler;
+				//int* currentTeamInt;
+				bool* newMethod;
 			};
 			ImGUIPtrs imguiptrs;
 
 			float noiseOffsetMultipler;
+
+			bool newMethod = true;
 
 			bool renderFullScreenQuad = true;
 

@@ -140,6 +140,7 @@ bool sphereTriangleIntersection(vec3 sphereCenter, float sphereRadius,
 bool EdgeIntersection(vec3 sphereCenter, float sphereRadius,
                                 vec3 v0, vec3 v1, vec3 v2,
                                 out vec3 intersectionPoint){
+    return true;
     #ifdef IGNORE_EDGE
     return false;
     #endif

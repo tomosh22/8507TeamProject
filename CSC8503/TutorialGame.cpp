@@ -1492,7 +1492,7 @@ StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID) {
 
 	Matrix4 modelMatrix = object->GetTransform().GetMatrix();
-	MESH_TRIANGLES_AND_UVS tris = object->GetRenderObject()->GetMesh()->GetAllTrianglesAndUVs();//TODO use vao instead
+	
 	triComputeShader->Bind();
 
 	
@@ -1538,53 +1538,22 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	glUniform1i(teamIDLocation, teamID);
 	glUniform1i(newMethodLocation, renderer->newMethod);
 	
-	//TODO change all of this to use vao
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, debugTriangleSSBO);
-	std::array<float, MAX_TRIS * 15> emptyArray{};
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(float) * MAX_TRIS * 15, emptyArray.data());
-
-	for (int i = 0; i < tris.size(); i++)
-	{
-		int offset = i * sizeof(float) * 3 * 5;
-		int numFloatsSent = 0;
-		std::tuple<std::array<Vector3, 3>, std::array<Vector2, 3>> tri = tris[i];
-		Vector3 vertA = modelMatrix * std::get<0>(tri)[0];
-		Vector3 vertB = modelMatrix * std::get<0>(tri)[1];
-		Vector3 vertC = modelMatrix * std::get<0>(tri)[2];
-
-		Vector2 uvA = std::get<1>(tri)[0];
-		Vector2 uvB = std::get<1>(tri)[1];
-		Vector2 uvC = std::get<1>(tri)[2];
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.y));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.z));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(uvA.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(uvA.y));
-
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.y));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.z));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvB.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvB.y));
-
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.y));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.z));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvC.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvC.y));
-	}
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	
+	
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, debugTriangleSSBO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, debugTriangleSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+	int zero = 0;
+
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
+	glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32I, GL_RED_INTEGER, GL_INT, &zero);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, triangleBoolSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBO);
+	glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32I, GL_RED_INTEGER, GL_INT, &zero);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, triangleRasteriseSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	//int* ints = new int[highestTriCount];
@@ -1599,9 +1568,9 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	unsigned int maxWidth = 0;
 	unsigned int maxHeight = 0;
 
-	int a = static_cast<int>(maxHeight);
 
 	std::vector<std::tuple<unsigned int, unsigned int>> coords;
+	std::vector<int> indices;
 #pragma region 2 ints in 1
 	/*unsigned int rightHalf = 0;
 	for (int i = 0; i < sizeof(unsigned int) / 2; i++)
@@ -1618,6 +1587,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	{
 		if (ints[i]) {
 			numTrisHit++;
+			indices.push_back(i);
 			if(ints2[4 * i + 0] > maxWidth) maxWidth = ints2[4 * i + 0];
 			if(ints2[4 * i + 1] > maxHeight) maxHeight = ints2[4 * i + 1];
 			coords.push_back({ ints2[4 * i + 2], ints2[4 * i + 3] });
@@ -1637,7 +1607,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	uint32_t* data = new uint32_t[numTrisHit * 3];
 	for (int i = 0; i < numTrisHit; i++)
 	{
-		data[3 * i + 0] = i;
+		data[3 * i + 0] = indices[i];
 		data[3 * i + 1] = std::get<0>(coords[i]);
 		data[3 * i + 2] = std::get<1>(coords[i]);
 	}
@@ -1652,12 +1622,14 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	textureWidthLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "textureWidth");
 	textureHeightLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "textureHeight");
 	teamIDLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "teamID");
+	modelMatrixLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "modelMatrix");
 
 	glUniform1f(radiusLocation, sphereRadius);
 	glUniform3fv(centerLocation, 1, spherePosition.array);
 	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
 	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
 	glUniform1i(teamIDLocation, teamID);
+	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
 
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "second");
 	triRasteriseShader->Execute(maxWidth,maxHeight,numTrisHit);

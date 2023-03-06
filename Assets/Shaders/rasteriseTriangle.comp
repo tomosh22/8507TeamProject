@@ -1,5 +1,5 @@
 #version 430 core
-layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;//todo change work groups
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;//todo change work groups
 layout(	rgba16f, binding = 0) uniform image1D triDataTex;
 layout(	r8ui, binding = 1) uniform uimage2D outputTex;
 
@@ -10,6 +10,8 @@ uniform int textureWidth;
 uniform int textureHeight;
 
 uniform int teamID;
+
+uniform mat4 modelMatrix;
 
 struct Triangle{
 	float ax,ay,az,au,av;
@@ -22,7 +24,7 @@ struct Edge{
 	vec3 b;
 };
 
-uniform mat4 modelMatrix;
+
 
 uniform vec3 point;
 
@@ -64,7 +66,7 @@ vec3 pointInTriangle(vec2 triA, vec2 triB, vec2 triC, vec2 point) {
     barycentric.z = areaPAB / areaABC;
 
     //return vec3(areaABC);
-    if (abs((barycentric.x + barycentric.y + barycentric.z) - 1) < 0.1) {
+    if (abs((barycentric.x + barycentric.y + barycentric.z) - 1) < 0.001) {
         return barycentric;
     } else {
         return vec3(-1);
@@ -79,19 +81,26 @@ bool pointInSphere(vec3 triA, vec3 triB, vec3 triC, vec3 barycentric){
 
 
 
+vec3 getPosition(int index0) {
+    return vec3(positions[3 * index0 + 0], positions[3 * index0 + 1], positions[3 * index0 + 2]);
+}
 
 void main() {
     int invoc = int(gl_GlobalInvocationID.z);
     int id = int(triangleRasteriseSSBO[3 * invoc + 0]);
 	Triangle tri = triangles[id];
 
-    vec3 triA = vec3(tri.ax,tri.ay,tri.az);
-    vec3 triB = vec3(tri.bx,tri.by,tri.bz);
-    vec3 triC = vec3(tri.cx,tri.cy,tri.cz);
+    int index0 = indices[id * 3];
+    int index1 = indices[id * 3 + 1];
+    int index2 = indices[id * 3 + 2];
 
-    vec2 uvA = vec2(tri.au,tri.av);
-    vec2 uvB = vec2(tri.bu,tri.bv);
-    vec2 uvC = vec2(tri.cu,tri.cv);
+    vec3 triA = (modelMatrix * vec4(getPosition(index0),1)).xyz;
+    vec3 triB = (modelMatrix * vec4(getPosition(index1),1)).xyz;
+    vec3 triC = (modelMatrix * vec4(getPosition(index2),1)).xyz;
+
+    vec2 uvA = texCoords[index0];
+    vec2 uvB = texCoords[index1];
+    vec2 uvC = texCoords[index2];
 
     vec2 texCoordA = vec2(uvA * vec2(textureWidth, textureHeight));
     vec2 texCoordB = vec2(uvB * vec2(textureWidth, textureHeight));
@@ -102,15 +111,18 @@ void main() {
     int y = int(gl_GlobalInvocationID.y);
 
     uvec2 topLeftCorner = uvec2(triangleRasteriseSSBO[3 * id + 1], triangleRasteriseSSBO[3 * id + 2]);
-
+    imageStore(triDataTex,id,vec4(uvB,1,1));
+    
     if((barycentric = pointInTriangle(texCoordA,texCoordB,texCoordC,topLeftCorner + uvec2(x,y))) != vec3(-1)){
                 
                 if(pointInSphere(triA,triB,triC,barycentric)){
-                    imageStore(triDataTex,id,vec4(1,1,1,1));
+                    imageStore(outputTex,ivec2(topLeftCorner) + ivec2(x,y),uvec4(teamID,0,0,0));
                     imageStore(outputTex,ivec2(x,y),uvec4(teamID,0,0,0));
                 }
             }
-            else{ imageStore(triDataTex,id,vec4(1,1,1,1)*2);}
+            else{
+                //imageStore(triDataTex,id,vec4(1,1,1,1)*2);
+            }
     
     return;
 }

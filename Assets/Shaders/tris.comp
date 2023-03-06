@@ -52,6 +52,9 @@ layout(std430, binding = 6) buffer DebugTriangleSSBO{
 layout(std430, binding = 7) buffer TriangleBoolSSBO{
 	bool triangleBoolSSBO[];
 };
+layout(std430, binding = 8) buffer TriangleRasteriseSSBO{
+	uint triangleRasteriseSSBO[];
+};
 
 
 float GetAreaFromTriangleVerts(vec3 a, vec3 b, vec3 c) {
@@ -132,9 +135,14 @@ bool sphereTriangleIntersection(vec3 sphereCenter, float sphereRadius,
     return true;
 }
 
+//#define IGNORE_EDGE
+
 bool EdgeIntersection(vec3 sphereCenter, float sphereRadius,
                                 vec3 v0, vec3 v1, vec3 v2,
                                 out vec3 intersectionPoint){
+    #ifdef IGNORE_EDGE
+    return false;
+    #endif
     if(!isComplex)return false;
 	float furthestDistance = 0.;
 	int furthestVert = -1;
@@ -240,7 +248,7 @@ vec3 pointInTriangle(vec2 triA, vec2 triB, vec2 triC, vec2 point) {
     barycentric.z = areaPAB / areaABC;
 
     //return vec3(areaABC);
-    if (abs((barycentric.x + barycentric.y + barycentric.z) - 1) < 0.1) {
+    if (abs((barycentric.x + barycentric.y + barycentric.z) - 1) < 0.01) {
         return barycentric;
     } else {
         return vec3(-1);
@@ -253,17 +261,28 @@ bool pointInSphere(vec3 triA, vec3 triB, vec3 triC, vec3 barycentric){
 }
 
 void NewMethod(vec3 triA, vec3 triB, vec3 triC, vec2 uvA, vec2 uvB, vec2 uvC, vec3 intersectionPoint, int id){
-    int minTexCoordX = int(min(uvA.x,min(uvB.x,uvC.x)) * textureWidth);
-    int maxTexCoordX = int(max(uvA.x,max(uvB.x,uvC.x)) * textureWidth);
-    int minTexCoordY = int(min(uvA.y,min(uvB.y,uvC.y)) * textureWidth);
-    int maxTexCoordY = int(max(uvA.y,max(uvB.y,uvC.y)) * textureWidth);
+    uint minTexCoordX = uint(min(uvA.x,min(uvB.x,uvC.x)) * textureWidth);
+    uint maxTexCoordX = uint(max(uvA.x,max(uvB.x,uvC.x)) * textureWidth);
+    uint minTexCoordY = uint(min(uvA.y,min(uvB.y,uvC.y)) * textureWidth);
+    uint maxTexCoordY = uint(max(uvA.y,max(uvB.y,uvC.y)) * textureWidth);
 
+    uint texCoordWidth = maxTexCoordX - minTexCoordX;
+    uint texCoordHeight = maxTexCoordY - minTexCoordY;
+    uint combined = texCoordWidth + (texCoordHeight << 16);
+
+    triangleRasteriseSSBO[4 * id + 0] = texCoordWidth;
+    triangleRasteriseSSBO[4 * id + 1] = texCoordHeight;
+    triangleRasteriseSSBO[4 * id + 2] = minTexCoordX;
+    triangleRasteriseSSBO[4 * id + 3] = minTexCoordY;
+
+    return;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     vec2 texCoordA = vec2(uvA * vec2(textureWidth, textureHeight));
     vec2 texCoordB = vec2(uvB * vec2(textureWidth, textureHeight));
     vec2 texCoordC = vec2(uvC * vec2(textureWidth, textureHeight));
 
-    for(int x = minTexCoordX; x <= maxTexCoordX;x++ ){
-        for(int y = minTexCoordY; y <= maxTexCoordY;y++ ){
+    for(uint x = minTexCoordX; x <= maxTexCoordX;x++ ){
+        for(uint y = minTexCoordY; y <= maxTexCoordY;y++ ){
             vec3 barycentric;
             if((barycentric = pointInTriangle(texCoordA,texCoordB,texCoordC,vec2(x,y))) != vec3(-1)){
                 
@@ -284,6 +303,8 @@ vec3 getPosition(int index0) {
 }
 
 void main() {
+
+    
 	int id = int(gl_GlobalInvocationID.x);
     if(id >= numTris)return;
     
@@ -332,12 +353,12 @@ void main() {
 
     debugTriangleSSBO[id] = debugTri;
 #endif
-
+    triangleBoolSSBO[id] = false;
     if(triA == triB && triA == triC && triB == triC && triA == vec3(0)){return;}
 
     
     
-    triangleBoolSSBO[id] = false;
+    
     if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint) || EdgeIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
         
         if(newMethod){

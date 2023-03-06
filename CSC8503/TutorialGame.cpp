@@ -91,6 +91,16 @@ TutorialGame::TutorialGame()	{
 	glBufferData(GL_SHADER_STORAGE_BUFFER, highestTriCount * sizeof(int), NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+	glGenBuffers(1, &triangleRasteriseSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, highestTriCount * sizeof(int) * 4, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	glGenBuffers(1, &triangleRasteriseSSBOSecondShader);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBOSecondShader);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, highestTriCount * sizeof(int) * 3, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 
 	for (int i = 0; i < 1000 * 1000; i++)
 	{
@@ -278,6 +288,7 @@ void TutorialGame::InitialiseAssets() {
 	quadShader = new OGLShader("quad.vert", "quad.frag");
 
 	triComputeShader = new OGLComputeShader("tris.comp");
+	triRasteriseShader = new OGLComputeShader("rasteriseTriangle.comp");
 
 	rayMarchComputeShader = new OGLComputeShader("rayMarchCompute.glsl");
 
@@ -1529,6 +1540,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	
 	//TODO change all of this to use vao
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, debugTriangleSSBO);
 	std::array<float, MAX_TRIS * 15> emptyArray{};
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(float) * MAX_TRIS * 15, emptyArray.data());
 
@@ -1570,22 +1582,89 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, triangleBoolSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, triangleRasteriseSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	//int* ints = new int[highestTriCount];
 	
 	triComputeShader->Execute((numTris)/64+1, 1, 1);//todo change number of thread groups
-	int* ints = (int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	int* ints = (int*)glMapNamedBuffer(triangleBoolSSBO, GL_READ_ONLY);//todo store 32 bools in one int
+	unsigned int* ints2 = (unsigned int*)glMapNamedBuffer(triangleRasteriseSSBO, GL_READ_ONLY);
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	
 	//glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, highestTriCount * sizeof(int), ints);
-	bool collisionDetected = false;
-	for (int i = 0; i < 1000; i++)
+	unsigned int numTrisHit = 0;
+	unsigned int maxWidth = 0;
+	unsigned int maxHeight = 0;
+
+	int a = static_cast<int>(maxHeight);
+
+	std::vector<std::tuple<unsigned int, unsigned int>> coords;
+#pragma region 2 ints in 1
+	/*unsigned int rightHalf = 0;
+	for (int i = 0; i < sizeof(unsigned int) / 2; i++)
 	{
-		if (ints[i]) { collisionDetected = true; break; }
+		rightHalf += 1 << i;
 	}
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	unsigned int leftHalf = 0;
+	for (int i = sizeof(unsigned int) / 2; i < sizeof(unsigned int); i++)
+	{
+		leftHalf += 1 << i;
+	}*/
+#pragma endregion
+	for (int i = 0; i < highestTriCount; i++)
+	{
+		if (ints[i]) {
+			numTrisHit++;
+			if(ints2[4 * i + 0] > maxWidth) maxWidth = ints2[4 * i + 0];
+			if(ints2[4 * i + 1] > maxHeight) maxHeight = ints2[4 * i + 1];
+			coords.push_back({ ints2[4 * i + 2], ints2[4 * i + 3] });
+		}
+	}
+
+	glUnmapNamedBuffer(triangleBoolSSBO);
+	glUnmapNamedBuffer(triangleRasteriseSSBO);
+
+
+
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	triComputeShader->Unbind();
+
+	triRasteriseShader->Bind();
+
+	uint32_t* data = new uint32_t[numTrisHit * 3];
+	for (int i = 0; i < numTrisHit; i++)
+	{
+		data[3 * i + 0] = i;
+		data[3 * i + 1] = std::get<0>(coords[i]);
+		data[3 * i + 2] = std::get<1>(coords[i]);
+	}
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBOSecondShader);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, triangleRasteriseSSBOSecondShader);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER,0, sizeof(uint32_t) * numTrisHit * 3, data);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	radiusLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "sphereRadius");
+	centerLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "sphereCenter");
+	textureWidthLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "textureWidth");
+	textureHeightLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "textureHeight");
+	teamIDLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "teamID");
+
+	glUniform1f(radiusLocation, sphereRadius);
+	glUniform3fv(centerLocation, 1, spherePosition.array);
+	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
+	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
+	glUniform1i(teamIDLocation, teamID);
+
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "second");
+	triRasteriseShader->Execute(maxWidth,maxHeight,numTrisHit);
+	glPopDebugGroup();
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	triRasteriseShader->Unbind();
+	
 }
 
 void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
@@ -1611,7 +1690,7 @@ void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 	glGenBuffers(1, &(debugTriangleSSBO));
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, debugTriangleSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(float) * 15, NULL, GL_DYNAMIC_DRAW);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugTriangleSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, debugTriangleSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	

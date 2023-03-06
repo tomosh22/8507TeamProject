@@ -86,6 +86,11 @@ TutorialGame::TutorialGame()	{
 	renderer->imguiptrs.noiseOffsetMultipler = &renderer->noiseOffsetMultipler;
 	renderer->imguiptrs.newMethod = &renderer->newMethod;
 
+	glGenBuffers(1, &triangleBoolSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, highestTriCount * sizeof(int), NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 
 	for (int i = 0; i < 1000 * 1000; i++)
 	{
@@ -218,18 +223,26 @@ for this module, even in the coursework, but you can add it if you like!
 
 */
 void TutorialGame::InitialiseAssets() {
-	cubeMesh	= renderer->LoadMesh("cube.msh");
-	sphereMesh	= renderer->LoadMesh("sphere.msh");
-	charMesh	= renderer->LoadMesh("goat.msh");
-	enemyMesh	= renderer->LoadMesh("Keeper.msh");
-	bonusMesh	= renderer->LoadMesh("apple.msh");
-	capsuleMesh = renderer->LoadMesh("capsule.msh");
+	std::vector<MeshGeometry*> meshes;
+	cubeMesh	= renderer->LoadMesh("cube.msh",&meshes);
+	sphereMesh	= renderer->LoadMesh("sphere.msh", &meshes);
+	charMesh	= renderer->LoadMesh("goat.msh", &meshes);
+	enemyMesh	= renderer->LoadMesh("Keeper.msh", &meshes);
+	bonusMesh	= renderer->LoadMesh("apple.msh", &meshes);
+	capsuleMesh = renderer->LoadMesh("capsule.msh", &meshes);
 	//this was me
 	triangleMesh = OGLMesh::GenerateTriangleWithIndices();
-	monkeyMesh = renderer->LoadMesh("monkey.msh");
-	floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh");
-	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh");
-	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh");
+	monkeyMesh = renderer->LoadMesh("monkey.msh", &meshes);
+	floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh", &meshes);
+	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh", &meshes);
+	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
+
+	for (MeshGeometry*& mesh : meshes) {
+		if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
+		if (mesh->GetIndexCount() / 3 > highestTriCount) {
+			highestTriCount = mesh->GetIndexCount() / 3;
+		}
+	}
 #pragma region debuggingSphereTriangleCollisions
 	/*MESH_TRIANGLES_AND_UVS tris = capsuleMesh->GetAllTrianglesAndUVs();
 	std::vector<std::array<float, 4>> results{};
@@ -1554,9 +1567,24 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, debugTriangleSSBO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, debugTriangleSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, triangleBoolSSBO);
+
+	//int* ints = new int[highestTriCount];
 	
 	triComputeShader->Execute((numTris)/64+1, 1, 1);//todo change number of thread groups
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	int* ints = (int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	
+	//glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, highestTriCount * sizeof(int), ints);
+	bool collisionDetected = false;
+	for (int i = 0; i < 1000; i++)
+	{
+		if (ints[i]) { collisionDetected = true; break; }
+	}
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	triComputeShader->Unbind();
 }
 

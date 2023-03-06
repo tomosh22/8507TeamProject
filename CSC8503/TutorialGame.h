@@ -188,7 +188,7 @@ namespace NCL {
 			void SetUpTriangleSSBOAndDataTexture();
 			OGLComputeShader* triComputeShader;
 			//OGLTexture* triDataTex;//1d texture
-			//GLuint triangleBoolSSBO;
+			GLuint triangleBoolSSBO;
 			bool SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint);
 
 			void DispatchComputeShaderForEachPixel();
@@ -246,6 +246,7 @@ namespace NCL {
 			//Team currentTeam = Team::team2;
 			//int currentTeamInt = 1;
 			
+			int highestTriCount = 0;
 		};
 	}
 }

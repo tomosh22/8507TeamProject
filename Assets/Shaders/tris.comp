@@ -49,6 +49,9 @@ layout(std430, binding = 5) buffer TriangleSSBO{
 layout(std430, binding = 6) buffer DebugTriangleSSBO{
 	Triangle debugTriangleSSBO[];
 };
+layout(std430, binding = 7) buffer TriangleBoolSSBO{
+	bool triangleBoolSSBO[];
+};
 
 
 float GetAreaFromTriangleVerts(vec3 a, vec3 b, vec3 c) {
@@ -334,10 +337,13 @@ void main() {
 
     
     
-
+    triangleBoolSSBO[id] = false;
     if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint) || EdgeIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
         
-        if(newMethod)NewMethod(triA,triB,triC,uvA,uvB,uvC,intersectionPoint, id);
+        if(newMethod){
+            triangleBoolSSBO[id] = true;
+            NewMethod(triA,triB,triC,uvA,uvB,uvC,intersectionPoint, id);
+        }
         else NaiveMethod(triA,triB,triC,uvA,uvB,uvC,intersectionPoint, id);
     	
         //imageStore(outputTex,IMAGE_COORDS,vec4(1,1,1,1));

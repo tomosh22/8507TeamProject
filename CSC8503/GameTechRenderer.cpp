@@ -368,10 +368,11 @@ void GameTechRenderer::RenderFullScreenQuad() {
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-MeshGeometry* GameTechRenderer::LoadMesh(const string& name) {
+MeshGeometry* GameTechRenderer::LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes) {
 	OGLMesh* mesh = new OGLMesh(name);
 	mesh->SetPrimitiveType(GeometryPrimitive::Triangles);
 	mesh->UploadToGPU();
+	if (meshes != nullptr)meshes->push_back(mesh);
 	return mesh;
 }
 

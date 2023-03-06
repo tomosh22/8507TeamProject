@@ -23,7 +23,7 @@ namespace NCL {
 			GameTechRenderer(GameWorld& world);
 			~GameTechRenderer();
 
-			MeshGeometry*	LoadMesh(const string& name);
+			MeshGeometry*	LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes = nullptr);
 			TextureBase*	LoadTexture(const string& name);
 			ShaderBase*		LoadShader(const string& vertex, const string& fragment);
 

@@ -1,10 +1,14 @@
 #include"playerTracking.h"
 #include <iostream>
 #include"PhysicsObject.h"
+#include "TutorialGame.h"
 
-namespace NCL::CSC8503 {
+using namespace NCL;
+using namespace CSC8503;
 
-	playerTracking::playerTracking() {
+
+
+playerTracking::playerTracking() {
 		playerYawOrientation = 0.0f;
 		playerPitchOrientation = 0.0f;
 		playerID = 1;
@@ -18,10 +22,23 @@ namespace NCL::CSC8503 {
 		paintColor = { 1,1,0,1 };
 		bulletsUsed = {};
 		bulletsUsedAndMoved = {};
+
+
 	}
 
+void NCL::CSC8503::playerTracking::Update(float dt)
+{
+	Rotate();
+}
+void NCL::CSC8503::playerTracking::Rotate()
+{
 
-	void playerTracking::clearBulletsUsed() {
+}
+
+
+
+void playerTracking::clearBulletsUsed() 
+{
 		int numOfUsedBullets = bulletsUsedAndMoved.size();
 		if(numOfUsedBullets > 0){
 			for (int i = 0; i < 1; i++) {
@@ -29,7 +46,7 @@ namespace NCL::CSC8503 {
 			}
 		}
 		
-	}
+}
 
 
 	/*void playerTracking::updateBulletsUsed() {
@@ -60,7 +77,7 @@ namespace NCL::CSC8503 {
 
 void playerTracking::FireBullet() 
 {		
-		Projectile newBullet = *bulletPool->GetObject();
+		Projectile newBullet = *bulletPool->GetObject2();
 		ResetBullet(newBullet);
 		//Projectile* loadedBullet = useNewBullet(selectedPlayerCharacter);
 		//selectedPlayerCharacter->addToBulletsUsed(loadedBullet);
@@ -93,6 +110,6 @@ void playerTracking::ReTurnBullet(Projectile bullet)
 {
 
 }
-}
+
 
 

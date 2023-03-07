@@ -26,7 +26,7 @@ public:
 		_nSize = 0;
 	}
 
-	Object* GetObject()
+	Object* GetObject2()
 	{
 		Object* pObj = NULL;
 		if (_nSize == 0)
@@ -49,7 +49,7 @@ public:
 		++_nSize;
 	}
 
-	std::list ReturnList()
+	std::list<Object*> ReturnList()
 	{
 		return _mPool;
 	}

@@ -6,92 +6,103 @@
 #include"Vector4.h"
 #include"ObjectPool.h"
 
-namespace NCL::CSC8503 {
+namespace NCL {
+	namespace CSC8503 {
 
-	class playerTracking :public GameObject {
-	public:
+		class playerTracking :public GameObject {
+		public:
 
-		playerTracking();
+			playerTracking();
 
-		~playerTracking() {
-			delete playerProjectile;
-			bulletsUsed.clear();
-			bulletsUsedAndMoved.clear();
+			~playerTracking() {
+				delete playerProjectile;
+				bulletsUsed.clear();
+				bulletsUsedAndMoved.clear();
 
-		}
+			}
 
-		void setplayerID(int assignedPlayerID) {
-			playerID = assignedPlayerID;
-		}
-
-		void setTeamID(int assignedTeamID) {
-			playerID = assignedTeamID;
-		}
-
-		void resetPlayerProjectile() {
-			playerProjectile = nullptr;
-		}
-
-		void setWeponType(gun newWeponType) {
-			type = newWeponType;
-		}
-
-		void setPaintColor(Vector4 newPaintColor) {
-			paintColor = newPaintColor;
-		}
-
-		void addToBulletsUsed(Projectile* bulletToAdd) {
-			bulletsUsed.push_back(bulletToAdd);
-		}
-
-		void clearBulletsUsed();
+			
+			void Update(float dt);
 
 
-		 int getBulletVectorSize() {
-			return bulletsUsed.size();
-		}
+			void Move(float dt);
+			void Rotate();
+			float SmoothDamp(float current, float target, float& currentVelocity, float smoothTime, float maxSpeed, float deltaTime);
 
-		 Projectile* reuseBullet();
+			void setplayerID(int assignedPlayerID) {
+				playerID = assignedPlayerID;
+			}
 
-		Vector4 getPaintColor() {
-			return paintColor;
-		}
+			void setTeamID(int assignedTeamID) {
+				playerID = assignedTeamID;
+			}
 
-		gun getWeponType() {
-			return type;
-		}
+			void resetPlayerProjectile() {
+				playerProjectile = nullptr;
+			}
 
-		/*void AssignPlayerWeapon(gun weponType) {
-			playerProjectile->setGunType(weponType);
-		}*/
+			void setWeponType(gun newWeponType) {
+				type = newWeponType;
+			}
 
-		Projectile* getPlayerProjectile() {
-			return playerProjectile;
-		}
-        
-		void FireBullet();
-		void ResetBullet(Projectile bullet);
-		void ReTurnBullet(Projectile bullet);
-	protected:
-		 
-		 float playerYawOrientation;
-		 float playerPitchOrientation;
-		 int playerID;
-		 int teamID;
-		 int IndividualplayerScore;
-		 Projectile* playerProjectile;
-		 gun type;
-		 Vector4 paintColor;
+			void setPaintColor(Vector4 newPaintColor) {
+				paintColor = newPaintColor;
+			}
 
-		 //This is me 
-		 ObjectPool<Projectile> *bulletPool;
-		 
-		 vector<Projectile*> bulletsUsed;
-		 vector<Projectile*> bulletsUsedAndMoved;
-	};
+			void addToBulletsUsed(Projectile* bulletToAdd) {
+				bulletsUsed.push_back(bulletToAdd);
+			}
+
+			void clearBulletsUsed();
 
 
+			int getBulletVectorSize() {
+				return bulletsUsed.size();
+			}
+
+			Projectile* reuseBullet();
+
+			Vector4 getPaintColor() {
+				return paintColor;
+			}
+
+			gun getWeponType() {
+				return type;
+			}
+
+			/*void AssignPlayerWeapon(gun weponType) {
+				playerProjectile->setGunType(weponType);
+			}*/
+
+			Projectile* getPlayerProjectile() {
+				return playerProjectile;
+			}
+
+			void FireBullet();
+			void ResetBullet(Projectile bullet);
+			void ReTurnBullet(Projectile bullet);
+
+
+		protected:
+
+			float playerYawOrientation;
+			float playerPitchOrientation;
+			int playerID;
+			int teamID;
+			int IndividualplayerScore;
+			Projectile *playerProjectile;
+			gun type;
+			Vector4 paintColor;
+
+			//This is me 
+			ObjectPool<Projectile> *bulletPool;
+
+			vector<Projectile*> bulletsUsed;
+			vector<Projectile*> bulletsUsedAndMoved;
+		};
 
 
 
+
+	}
 }

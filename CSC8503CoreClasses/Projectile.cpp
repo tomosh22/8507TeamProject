@@ -1,8 +1,12 @@
 #include"Projectile.h"
 
-namespace NCL::CSC8503 {
+
+using namespace NCL;
+using namespace CSC8503;
 	
-	Projectile::Projectile(){
+
+Projectile::Projectile()
+{
 		setGunType(pistol);
 		aimingPitch = 0.0f;
 		aimingYaw = 0.0f;
@@ -11,8 +15,7 @@ namespace NCL::CSC8503 {
 		canFire = true;
 
 
-
-		}
+}
 
 
 	//Projectile::Projectile(gun GunToUse,vector<Projectile*>* parentVector,GameWorld* world) {
@@ -24,6 +27,8 @@ namespace NCL::CSC8503 {
 		aimingYaw = 0.0f;
 		//physicsProjectile = nullptr;
 		bulletDirectionVector = { 0,0,0 };
+
+		
 	}
 	
 
@@ -45,4 +50,3 @@ namespace NCL::CSC8503 {
 	}
 	
 
-}

@@ -47,6 +47,15 @@ namespace NCL {
 
 			void setEnemyGoat(GameObject* assignCharcter);
 
+			static TutorialGame* GetInstance()
+			{
+				if (_instance == nullptr)
+				{
+					_instance = new TutorialGame();
+				}
+				return _instance;
+			}
+
 		protected:
 			void InitialiseAssets();
 
@@ -113,10 +122,12 @@ namespace NCL {
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
 #else
+
 			GameTechRenderer* renderer;
 #endif
+
+			static TutorialGame* _instance;
 			PhysicsSystem*		physics;
-			GameWorld*			world;
 
 			bool useGravity;
 			bool inSelectionMode;
@@ -149,6 +160,7 @@ namespace NCL {
 			GameObject* lockedObject	= nullptr;
 			//Vector3 lockedOffset		= Vector3(0, 14, 20); - origonal
 			Vector3 lockedOffset = Vector3(0, 7, 20);
+
 			void LockCameraToObject(GameObject* o) {
 				lockedObject = o;
 			}

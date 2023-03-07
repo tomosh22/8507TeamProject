@@ -158,7 +158,7 @@ void NetworkedGame::HandlePlayerDisconnect(int pid) {
 		return;
 	}
 	//remove all objects of this server in the world
-	this->world->RemoveGameObject(it->second->GetObjectPointer(), true);
+	GameWorld::GetInstance()->RemoveGameObject(it->second->GetObjectPointer(), true);
 	serverPlayers.erase(it);
 }
 

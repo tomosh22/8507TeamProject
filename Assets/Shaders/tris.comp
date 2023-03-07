@@ -140,7 +140,7 @@ bool sphereTriangleIntersection(vec3 sphereCenter, float sphereRadius,
 bool EdgeIntersection(vec3 sphereCenter, float sphereRadius,
                                 vec3 v0, vec3 v1, vec3 v2,
                                 out vec3 intersectionPoint){
-    return true;
+    //return true;
     #ifdef IGNORE_EDGE
     return false;
     #endif
@@ -361,7 +361,7 @@ void main() {
     
     
     if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint) || EdgeIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
-        
+        imageStore(triDataTex,id,vec4(1,0,0,999));
         if(newMethod){
             triangleBoolSSBO[id] = true;
             NewMethod(triA,triB,triC,uvA,uvB,uvC,intersectionPoint, id);
@@ -371,7 +371,7 @@ void main() {
         //imageStore(outputTex,IMAGE_COORDS,vec4(1,1,1,1));
     }
     else{
-        //imageStore(triDataTex,id,vec4(1,0,0,-999));
+        imageStore(triDataTex,id,vec4(1,0,0,-999));
     }
    
     

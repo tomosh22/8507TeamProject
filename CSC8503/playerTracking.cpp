@@ -30,8 +30,13 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 {
 	Rotate();
 }
+
 void NCL::CSC8503::playerTracking::Rotate()
 {
+	float yaw = GameWorld::GetInstance()->GetMainCamera()->GetYaw();
+
+	Quaternion qua = Quaternion::EulerAnglesToQuaternion(0, yaw, 0);
+	transform.SetOrientation(qua);
 
 }
 

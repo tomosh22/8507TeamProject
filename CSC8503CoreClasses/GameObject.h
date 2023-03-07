@@ -31,7 +31,7 @@ namespace NCL::CSC8503 {
 		}
 		// end ignoring detection
 
-		void Update(float dt)
+		virtual void Update(float dt)
 		{
 
 		}

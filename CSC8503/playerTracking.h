@@ -5,7 +5,7 @@
 #include<vector>
 #include"Vector4.h"
 #include"ObjectPool.h"
-
+#include "GameWorld.h"
 namespace NCL {
 	namespace CSC8503 {
 

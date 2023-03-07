@@ -10,8 +10,6 @@
 #include <minmax.h>
 #include<cmath>
 
-#include "playerTracking.h"
-#include "Projectile.h"
 
 #include<iostream>
 
@@ -335,16 +333,13 @@ void TutorialGame::UpdateGame(float dt) {
 	}
 	if (lockedObject != nullptr) {
 
+		Matrix4 view = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
+		Matrix4 camWorld = view.Inverse();
+		Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
 		Vector3 objPos = lockedObject->GetTransform().GetPosition();
+
+		objPos += rightAxis *3.0;
 		Vector3 camPos = objPos + lockedOffset;
-
-		Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos, Vector3(0,1,0));
-
-		Matrix4 modelMat = temp.Inverse();
-
-		Vector3 rightAxis = Vector3(modelMat.GetColumn(0));
-
-		objPos += Vector3(3, 0, 0) * rightAxis;
 
 		GameWorld::GetInstance()->GetMainCamera()->SetTargetPosition(objPos);
 

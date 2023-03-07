@@ -6,6 +6,8 @@ layout(r8ui, binding = 0) uniform uimage2D maskTex;
 layout (binding = 1) uniform sampler2D baseTex;
 layout (binding = 2) uniform sampler2DShadow shadowTex;
 layout (binding = 3) uniform sampler2D bumpTex;
+layout (binding = 4) uniform sampler2D metallicTex;
+layout (binding = 5) uniform sampler2D roughnessTex;
 
 uniform vec3	lightPos;
 uniform float	lightRadius;
@@ -177,6 +179,45 @@ vec2 starNoise(in vec2 st) {
     return vec2(step(r + 0.1 * sin(8.0 * a), 0.7)) * vec2(r, r);
 }
 
+void point(inout vec4 finalColor, vec4 diffuse, vec3 bumpNormal, float metal, float rough, float reflectivity) {
+	vec3 lightDir = normalize(lightPos - IN.worldPos);
+	vec3 viewDir = normalize(cameraPos - IN.worldPos);
+	vec3 halfDir = normalize(lightDir + viewDir);
+
+	float normalDotLightDir = max(dot(bumpNormal, lightDir), 0.0001);
+	float normalDotViewDir = max(dot(bumpNormal, viewDir), 0.0001);
+	float normalDotHalfDir = max(dot(bumpNormal, halfDir), 0.0001);
+	float halfDirDotViewDir = max(dot(halfDir, viewDir), 0.0001);
+
+	float F = reflectivity + (1 - reflectivity) * pow((1-halfDirDotViewDir), 5);
+
+	F = 1 - F;
+	
+
+
+	float D = pow(rough, 2) / (3.14 * pow((pow(normalDotHalfDir, 2) * (pow(rough, 2) - 1) + 1), 2));
+
+	
+
+	float k = pow(rough + 1, 2) / 8;
+	float G = normalDotViewDir / (normalDotViewDir * (1 - k) + k);
+
+	float DFG = D * F * G;
+
+	vec4 surface = diffuse * vec4(lightColour.rgb, 1) * lightColour.a;
+	vec4 C = surface * (1 - metal);
+
+	vec4 BRDF = ((1 - F) * (C / 3.14)) + (DFG / (4 * normalDotLightDir * normalDotViewDir));
+
+	float dist = length(lightPos - IN.worldPos);
+	float atten = 1.0 - clamp(dist / lightRadius , 0.0, 1.0);
+
+	finalColor += BRDF * normalDotLightDir * atten;
+	//if(isnan(BRDF.x) || isnan(BRDF.y) || isnan(BRDF.z))finalColor = vec4(1,0,0,0);
+	//else finalColor = vec4(0,1,0,0);
+	finalColor.a = 1;
+}
+
 void main(void)
 {
 	int dataIndex = int(floor(IN.texCoord.y * height)) * width + int(floor(IN.texCoord.x * width));
@@ -227,6 +268,8 @@ void main(void)
 
 	if(length(color) > 0.95)return;
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
 	float shadow = 1.0; // New !
 	
 	if( IN . shadowProj . w > 0.0) { // New !
@@ -234,37 +277,18 @@ void main(void)
 	}
 
 	mat3 TBN = mat3(normalize(IN.tangent),normalize(IN.binormal),normalize(IN.normal));
-	vec3 bumpNormal = texture(bumpTex,IN.texCoord).rgb;
-	bumpNormal = normalize(TBN * normalize(bumpNormal*2-1));
+	vec3 bumpNormal = 2.0 * texture(bumpTex,IN.texCoord).rgb - 1.0;
+	bumpNormal = normalize(TBN * bumpNormal);
 
-	vec3  incident = normalize ( lightPos - IN.worldPos );
-	float lambert  = max (0.0 , dot ( incident , bumpNormal )) * 0.9; 
-	
-	vec3 viewDir = normalize ( cameraPos - IN . worldPos );
-	vec3 halfDir = normalize ( incident + viewDir );
+	vec4 diffuse = texture(baseTex,IN.texCoord);
+	vec4 metallic = texture(metallicTex,IN.texCoord);
+	vec4 roughness = texture(roughnessTex,IN.texCoord);
+	float reflectivity = 0.7;//change
 
-	float rFactor = max (0.0 , dot ( halfDir , bumpNormal ));
-	float sFactor = pow ( rFactor , 80.0 );
-	
-	vec4 albedo = IN.colour;
-	
-	if(hasTexture) {
-	 albedo *= texture(baseTex, IN.texCoord);
-	}
-	
-	albedo.rgb = pow(albedo.rgb, vec3(2.2));
-	
-	fragColor.rgb = albedo.rgb * 0.05f; //ambient
-	
-	fragColor.rgb += albedo.rgb * lightColour.rgb * lambert * shadow; //diffuse light
-	
-	fragColor.rgb += lightColour.rgb * sFactor * shadow; //specular light
-	
-	fragColor.rgb = pow(fragColor.rgb, vec3(1.0 / 2.2f));
-	
-	fragColor.a = albedo.a;
-
-	//fragColor = vec4(IN.texCoord,0,1);
-
+	fragColor = vec4(0,0,0,1);
+	point(fragColor,diffuse,bumpNormal,metallic.r,roughness.r,reflectivity);
+	fragColor.rgb *= shadow;
+	//fragColor = vec4(bumpNormal,1);
+	//fragColor = vec4(bumpNormal,1);
 }
 

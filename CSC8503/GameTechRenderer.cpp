@@ -44,7 +44,7 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	//Set up the light properties
 	lightColour = Vector4(0.8f, 0.8f, 0.5f, 1.0f);
 	lightRadius = 1000.0f;
-	lightPosition = Vector3(0.0f, 200.0f, 0.0f);
+	lightPosition = Vector3(0.0f, 100.0f, -50.0f);
 
 	//Skybox!
 	skyboxShader = new OGLShader("skybox.vert", "skybox.frag");
@@ -133,6 +133,7 @@ void GameTechRenderer::RenderFrame() {
 	glClearColor(0.1, 0.1, 0.1, 1);
 	BuildObjectList();
 	SortObjectList();
+	glDisable(GL_CULL_FACE);
 	RenderShadowMap();
 	RenderSkybox();
 	RenderCamera();
@@ -337,15 +338,18 @@ void GameTechRenderer::RenderCamera() {
 			glActiveTexture(GL_TEXTURE0);
 			glBindImageTexture(0, ((OGLTexture*)i->maskTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
 			glUniform1i(glGetUniformLocation(shader->GetProgramID(), "maskTex"),0);
-			glActiveTexture(GL_TEXTURE1);
 			BindTextureToShader((OGLTexture*)(*i).baseTex, "baseTex", 1);
 			BindTextureToShader((OGLTexture*)(*i).bumpTex, "bumpTex", 3);
+			BindTextureToShader((OGLTexture*)(*i).metallic, "metallicTex", 4);
+			BindTextureToShader((OGLTexture*)(*i).roughness, "roughnessTex", 5);
+			glUniform1i(hasTexLocation,1);
+
 		}
 		else {
 			glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
 		}
 		
-		glDisable(GL_CULL_FACE);//todo turn back on
+//		glDisable(GL_CULL_FACE);//todo turn back on
 		BindMesh((*i).GetMesh());
 		int layerCount = (*i).GetMesh()->GetSubMeshCount();
 		for (int i = 0; i < layerCount; ++i) {

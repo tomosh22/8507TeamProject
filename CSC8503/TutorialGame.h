@@ -250,6 +250,11 @@ namespace NCL {
 			//int currentTeamInt = 1;
 			
 			int highestTriCount = 0;
+
+			TextureBase* ironDiffuse = nullptr;
+			TextureBase* ironBump = nullptr;
+			TextureBase* ironMetallic = nullptr;
+			TextureBase* ironRoughness = nullptr;
 		};
 	}
 }

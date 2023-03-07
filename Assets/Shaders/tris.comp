@@ -273,8 +273,10 @@ void NewMethod(vec3 triA, vec3 triB, vec3 triC, vec2 uvA, vec2 uvB, vec2 uvC, ve
 
     triangleRasteriseSSBO[4 * id + 0] = texCoordWidth;
     triangleRasteriseSSBO[4 * id + 1] = texCoordHeight;
-    triangleRasteriseSSBO[4 * id + 2] = minTexCoordX;
-    triangleRasteriseSSBO[4 * id + 3] = minTexCoordY;
+    triangleRasteriseSSBO[4 * id + 2] = max(minTexCoordX,0);
+    triangleRasteriseSSBO[4 * id + 3] = max(minTexCoordY,0);
+
+    
 
     return;
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -360,7 +362,9 @@ void main() {
     
     
     
-    if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint) || EdgeIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)){
+    if(sphereTriangleIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)
+    || EdgeIntersection(sphereCenter,sphereRadius,triA,triB,triC,intersectionPoint)
+    || true){
         imageStore(triDataTex,id,vec4(1,0,0,999));
         if(newMethod){
             triangleBoolSSBO[id] = true;

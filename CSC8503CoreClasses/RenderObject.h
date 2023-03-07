@@ -57,6 +57,11 @@ namespace NCL {
 			Vector2 maskDimensions;
 			bool isComplex = false;
 
+			
+			TextureBase* bump = nullptr;
+			TextureBase* metallic = nullptr;
+			TextureBase* roughness = nullptr;
+
 		protected:
 			MeshGeometry*	mesh;
 			TextureBase*	texture;

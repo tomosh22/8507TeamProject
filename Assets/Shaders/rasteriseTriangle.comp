@@ -1,5 +1,5 @@
 #version 430 core
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;//todo change work groups
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;//todo change work groups
 layout(	rgba16f, binding = 0) uniform image1D triDataTex;
 layout(	r8ui, binding = 1) uniform uimage2D outputTex;
 
@@ -8,6 +8,9 @@ uniform float sphereRadius;
 
 uniform int textureWidth;
 uniform int textureHeight;
+
+uniform int chunkWidth;
+uniform int chunkHeight;
 
 uniform int teamID;
 
@@ -87,6 +90,10 @@ vec3 getPosition(int index0) {
 
 void main() {
     int invoc = int(gl_GlobalInvocationID.z);
+    int x = int(gl_GlobalInvocationID.x);
+    int y = int(gl_GlobalInvocationID.y);
+    if(x >= chunkWidth)return;
+    if(y >= chunkHeight)return;
     int id = int(triangleRasteriseSSBO[3 * invoc + 0]);
 	Triangle tri = triangles[id];
 
@@ -107,16 +114,16 @@ void main() {
     vec2 texCoordC = vec2(uvC * vec2(textureWidth, textureHeight));
     
     vec3 barycentric;
-    int x = int(gl_GlobalInvocationID.x);
-    int y = int(gl_GlobalInvocationID.y);
+    
 
     uvec2 topLeftCorner = uvec2(triangleRasteriseSSBO[3 * id + 1], triangleRasteriseSSBO[3 * id + 2]);
     imageStore(triDataTex,id,vec4(uvB,1,1));
     
     if((barycentric = pointInTriangle(texCoordA,texCoordB,texCoordC,topLeftCorner + uvec2(x,y))) != vec3(-1)){
                 
-                if(pointInSphere(triA,triB,triC,barycentric)){
-                    imageStore(outputTex,ivec2(topLeftCorner) + ivec2(x,y),uvec4(teamID,0,0,0));
+                if(pointInSphere(triA,triB,triC,barycentric) && x < textureWidth-1 && y < textureHeight-1){
+                    
+                    imageStore(outputTex,ivec2(topLeftCorner) + ivec2(x,y) + ivec2(1),uvec4(teamID,0,0,0));
                     imageStore(outputTex,ivec2(x,y),uvec4(teamID,0,0,0));
                 }
             }

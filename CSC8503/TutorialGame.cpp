@@ -131,7 +131,7 @@ void TutorialGame::InitQuadTexture() {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 	//todo maybe move this somewhere else? still somewhat related
-	maxSteps = 50;
+	maxSteps = 500;
 	hitDistance = 0.1;
 	noHitDistance = 1000;
 	debugValue = 1;
@@ -282,6 +282,12 @@ void TutorialGame::InitialiseAssets() {
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
 	metalTex = renderer->LoadTexture("metal.png");
 	testBumpTex = renderer->LoadTexture("testBump.jpg");
+
+
+	ironDiffuse = renderer->LoadTexture("PBR/rustediron2_basecolor.png");
+	ironBump = renderer->LoadTexture("PBR/rustediron2_normal.png");
+	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
+	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
 
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
@@ -791,8 +797,10 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
-	object->GetRenderObject()->baseTex = metalTex;
-	object->GetRenderObject()->bumpTex = testBumpTex;
+	object->GetRenderObject()->baseTex = ironDiffuse;
+	object->GetRenderObject()->bumpTex = ironBump;
+	object->GetRenderObject()->metallic = ironMetallic;
+	object->GetRenderObject()->roughness = ironRoughness;
 }
 /*
 
@@ -1611,7 +1619,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 		data[3 * i + 1] = std::get<0>(coords[i]);
 		data[3 * i + 2] = std::get<1>(coords[i]);
 	}
-
+	
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBOSecondShader);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, triangleRasteriseSSBOSecondShader);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER,0, sizeof(uint32_t) * numTrisHit * 3, data);
@@ -1623,6 +1631,8 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	textureHeightLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "textureHeight");
 	teamIDLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "teamID");
 	modelMatrixLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "modelMatrix");
+	int chunkWidthLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "chunkWidth");
+	int chunkHeightLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "chunkHeight");
 
 	glUniform1f(radiusLocation, sphereRadius);
 	glUniform3fv(centerLocation, 1, spherePosition.array);
@@ -1630,12 +1640,15 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
 	glUniform1i(teamIDLocation, teamID);
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
+	glUniform1i(chunkWidthLocation, maxWidth);
+	glUniform1i(chunkHeightLocation, maxHeight);
 
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "second");
-	triRasteriseShader->Execute(maxWidth,maxHeight,numTrisHit);
+	triRasteriseShader->Execute(maxWidth/8+1,maxHeight/8+1,numTrisHit);
 	glPopDebugGroup();
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	triRasteriseShader->Unbind();
+	delete[] data;
 	
 }
 

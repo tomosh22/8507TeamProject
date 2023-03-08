@@ -192,6 +192,8 @@ void GameTechRenderer::RenderShadowMap() {
 	shadowMatrix = biasMatrix * mvMatrix; //we'll use this one later on
 
 	for (const auto&i : activeObjects) {
+		GeometryPrimitive prevPrimitive = i->GetMesh()->GetPrimitiveType();
+		i->GetMesh()->SetPrimitiveType(GeometryPrimitive::Triangles);
 		Transform* tempTransform = (*i).GetTransform();
 		Transform newTransform;
 		memcpy(&newTransform, tempTransform,sizeof(Transform));
@@ -205,6 +207,7 @@ void GameTechRenderer::RenderShadowMap() {
 		for (int i = 0; i < layerCount; ++i) {
 			DrawBoundMesh(i);
 		}
+		i->GetMesh()->SetPrimitiveType(prevPrimitive);
 	}
 
 	glViewport(0, 0, windowWidth, windowHeight);

@@ -35,8 +35,15 @@ namespace NCL::Maths {
 			return normal * -distance;
 		}
 
+		void setMidpoint(Vector3 &vertex1, Vector3& vertex2, Vector3& vertex3);
+
 		Vector3 ProjectPointOntoPlane(const Vector3 &point) const;
 
+		Vector3 closestPointOnLine(const Vector3& pointNotLine, const Vector3& linePoint1, const Vector3& linePoint2);
+
+		Vector3 closestPointOnTriangleEdge(const Vector3& pNotLine, const Vector3& Point1, const Vector3& Point2, const Vector3& Point3);
+
+		Vector3 getClosestPointOnTriangle(const Vector3& pNLine, const Vector3& P1, const Vector3& P2, const Vector3& P3);
 
 		static Plane PlaneFromTri(const Vector3 &v0, const Vector3 &v1, const Vector3 &v2);
 
@@ -45,5 +52,7 @@ namespace NCL::Maths {
 		Vector3 normal;
 		//Distance from origin
 		float	distance;
+
+		Vector3 midPoint;
 	};
 }

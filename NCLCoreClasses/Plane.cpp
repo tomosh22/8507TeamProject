@@ -13,6 +13,7 @@ using namespace NCL::Maths;
 
 Plane::Plane(void) {
 	normal		= Vector3(0, 1, 0);
+	midPoint = Vector3(0,0,0);
 	distance	= 0.0f;
 };
 
@@ -66,4 +67,54 @@ Vector3 Plane::ProjectPointOntoPlane(const Vector3 &point) const {
 	float distance = DistanceFromPlane(point);
 
 	return point - (normal * distance);
+}
+
+void Plane::setMidpoint(Vector3& vertex1, Vector3& vertex2, Vector3& vertex3) {
+	Vector3 mid;
+	mid.x = (vertex1.x + vertex2.x + vertex3.x) / 3.0;
+	mid.y = (vertex1.y + vertex2.y + vertex3.y) / 3.0;
+	mid.z = (vertex1.z + vertex2.z + vertex3.z) / 3.0;
+	midPoint = mid;
+}
+
+Vector3 Plane::closestPointOnLine(const Vector3& pointNotLine, const Vector3& linePoint1, const Vector3& linePoint2) {
+	Vector3 closestPointOnLine = {};
+	Vector3 lineDirectionVector = linePoint2 - linePoint1;
+
+	
+	double t = (Vector3::Dot((pointNotLine - linePoint1),(lineDirectionVector))) / lineDirectionVector.LengthSquared();
+
+	closestPointOnLine = linePoint1 + (lineDirectionVector * t);
+
+	return closestPointOnLine;
+}
+
+
+Vector3 Plane::closestPointOnTriangleEdge(const Vector3& pNotLine, const Vector3& Point1, const Vector3& Point2, const Vector3& Point3) {
+	float distToPoint1 = closestPointOnLine(pNotLine,Point1,Point2).Length();
+	float distToPoint2 = closestPointOnLine(pNotLine,Point1,Point3 ).Length();
+	float distToPoint3 = closestPointOnLine(pNotLine,Point2,Point3 ).Length();
+	if (distToPoint1 <= distToPoint2 && distToPoint1 <= distToPoint3) {
+		return closestPointOnLine(pNotLine, Point1, Point2);
+	}
+	else if (distToPoint2 <= distToPoint1 && distToPoint2 <= distToPoint3) {
+		return closestPointOnLine(pNotLine, Point1, Point3);
+	}
+
+	else {
+		return closestPointOnLine(pNotLine, Point2, Point3);
+	}
+}
+
+Vector3 Plane::getClosestPointOnTriangle(const Vector3& pNLine, const Vector3& P1, const Vector3& P2, const Vector3& P3) {
+	Vector3 pointOnTriangleEdge = closestPointOnTriangleEdge(pNLine, P1, P2, P3);
+	Vector3 pointOnTrianglePlane = ProjectPointOntoPlane(pNLine);
+	if ((midPoint - pointOnTriangleEdge).Length() <= (midPoint - pointOnTrianglePlane).Length()) {
+		return pointOnTriangleEdge;
+	}
+	else
+	{
+		return pointOnTrianglePlane;
+	}
+
 }

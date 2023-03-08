@@ -92,7 +92,6 @@ set(Header_Files
     "GameWorld.h"
     "RenderObject.h"
     "Transform.h"
-    "Projectile.h"
 )
 source_group("Header Files" FILES ${Header_Files})
 
@@ -102,7 +101,6 @@ set(Source_Files
     "GameWorld.cpp"
     "RenderObject.cpp"
     "Transform.cpp"
-    "Projectile.cpp"
 )
 source_group("Source Files" FILES ${Source_Files})
 
@@ -205,6 +203,7 @@ set(ADDITIONAL_LIBRARY_DEPENDENCIES
 )
 
 include_directories("../NCLCoreClasses/")
+include_directories("../CSC8503/")
 include_directories("./")
 
 if(MSVC)

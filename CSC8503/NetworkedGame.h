@@ -24,8 +24,17 @@ namespace NCL {
 			void HandlePlayerDisconnect(int pid);
 			void HandleUpdateState(bool delta, int pid, GamePacket* payload);
 			void AddNewNetworkPlayerToWorld(int pid, NetworkState state);
-
+			static NetworkedGame* GetInstance()
+			{
+				if (_instance == nullptr)
+				{
+					_instance = new NetworkedGame();
+				}
+				return _instance;
+			}
 		protected:
+
+			static NetworkedGame* _instance;
 			void UpdateToServer(float dt);
 
 			void BroadcastSnapshot(bool deltaFrame);

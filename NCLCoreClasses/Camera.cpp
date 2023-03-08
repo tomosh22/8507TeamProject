@@ -2,6 +2,7 @@
 #include "Window.h"
 #include <algorithm>
 
+
 using namespace NCL;
 
 /*
@@ -25,9 +26,24 @@ void Camera::UpdateCamera(float dt) {
 		yaw -= 360.0f;
 	}
 
+
+
+	double pi = 3.14159265359;
+
+	forward.z = -cos(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
+	forward.y = sin(Maths::DegreesToRadians(pitch));
+	forward.x = -sin(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
+	forward = forward.Normalised();
+
+
+	if (targetPosition != Vector3(0, 0, 0))
+	{
+		position = targetPosition - forward * lockOffset.Length();
+	}
+
 	float frameSpeed = 100 * dt;
 
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
+	/*if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
@@ -39,7 +55,7 @@ void Camera::UpdateCamera(float dt) {
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
 		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
-	}
+	}*/
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT)) {
 		position.y += frameSpeed;

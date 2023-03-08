@@ -58,7 +58,18 @@ namespace NCL {
 				return worldStateCounter;
 			}
 
+			static GameWorld* GetInstance()
+			{
+				if (_instance == nullptr)
+				{
+					_instance = new GameWorld();
+				}
+				return _instance;
+			}
+
 		protected:
+			static GameWorld* _instance;
+
 			std::vector<GameObject*> gameObjects;
 			std::vector<Constraint*> constraints;
 

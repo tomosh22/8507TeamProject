@@ -25,6 +25,7 @@ Projectile::Projectile()
 
 	GetPhysicsObject()->SetInverseMass(1.0f);
 	GetPhysicsObject()->InitSphereInertia();
+	SetName("Bullet");
 	AffectedGravity = true;
 	GameWorld::GetInstance()->AddGameObject(this);
 }
@@ -79,5 +80,15 @@ void Projectile::setGunType(gun wepType) {
 			setAffectedByGravityFalse();
 		}
 	}
+
+void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
+{
+
+}
+
+void NCL::CSC8503::Projectile::OnCollisionEnd(GameObject* otherObject)
+{
+
+}
 	
 

@@ -50,6 +50,8 @@ namespace NCL {
 
 			void setEnemyGoat(GameObject* assignCharcter);
 
+			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius);
+
 			MeshGeometry* capsuleMesh = nullptr;
 			MeshGeometry* cubeMesh = nullptr;
 			MeshGeometry* sphereMesh = nullptr;
@@ -187,7 +189,7 @@ namespace NCL {
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object, bool rotated = false);
 
-			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius);
+		
 			GLuint triangleSSBO;
 			void SetUpTriangleSSBOAndDataTexture();
 			OGLComputeShader* triComputeShader;
@@ -201,12 +203,14 @@ namespace NCL {
 			float hitDistance;
 			float noHitDistance;
 			float debugValue;
+
 			class RayMarchSphere : public GameObject {
 			public:
 				Vector3 center;
 				float radius;
 				Vector3 color;
 			};
+
 			std::vector<GameObject*> spheres;
 			std::vector<RayMarchSphere*> rayMarchSpheres;
 			GLuint rayMarchSphereSSBO;

@@ -7,17 +7,17 @@
 #include "PositionConstraint.h"
 #include "OrientationConstraint.h"
 #include "StateGameObject.h"
-#include <minmax.h>
+
 #include<cmath>
 #include "Projectile.h"
 
 #include<iostream>
 
-using namespace std;
+
 using namespace NCL;
 using namespace CSC8503;
 
-#define TRI_DEBUG
+//#define TRI_DEBUG
 //#define OLD_PAINT
 
 TutorialGame::TutorialGame()	{
@@ -781,7 +781,6 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 		.SetScale(scale * 2)
 		.SetPosition(position);
 
-	
 	floor->isPaintable = true;
 	
 	srand(time(0));
@@ -817,6 +816,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 
 	GameWorld::GetInstance()->AddGameObject(floor);
 	worldFloor = floor;
+	floor->SetName("floor");
 	return floor;
 }
 
@@ -904,7 +904,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	InitPaintableTextureOnObject(cube);
 
 	GameWorld::GetInstance()->AddGameObject(cube);
-
+	cube->SetName("cube");
 	return cube;
 }
 
@@ -925,7 +925,7 @@ GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfH
 	InitPaintableTextureOnObject(capsule);
 
 	GameWorld::GetInstance()->AddGameObject(capsule);
-
+	capsule->SetName("capsule");
 	return capsule;
 
 }
@@ -1089,7 +1089,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	InitPaintableTextureOnObject(character);
 
 	GameWorld::GetInstance()->AddGameObject(character);
-
+	character->SetName("character");
 	return character;
 }
 
@@ -1103,34 +1103,34 @@ Projectile* TutorialGame::AddBulletToWorld(playerTracking* playableCharacter) {
 
 
 Projectile* TutorialGame::useNewBullet(playerTracking* passedPlayableCharacter) {
-	gun wepType = passedPlayableCharacter->getWeponType();
+	//gun wepType = passedPlayableCharacter->getWeponType();
 
-	Projectile* sphere = objectpool->GetObject2();
-	float bulletsInverseMass = sphere->getWeight();
-	float radius = sphere->getProjectileRadius();
-	//Vector3 playerDirectionVector = (Vector3::Cross((passedPlayableCharacter->GetTransform().GetOrientation().ToEuler()) , Vector3 {1,0,0})).Normalised();
-	Vector3 playerDirectionVector = (passedPlayableCharacter->GetTransform().GetOrientation() * Vector3 { 0, 0, -1 });
-	Vector3 sphereSize = { radius,radius,radius };
-	Vector3 position = passedPlayableCharacter->GetTransform().GetPosition();
-	SphereVolume* volume = new SphereVolume(radius);
-	sphere->setBulletDirectionVector(playerDirectionVector);
-	sphere->SetBoundingVolume((CollisionVolume*)volume);
-	sphere->GetTransform().SetScale(sphereSize);
-	sphere->GetTransform().SetPosition(position - Vector3{ 0,0,10 });
-	sphere->GetTransform().SetPosition((position)-(Vector3{ 0,0,10 }));
+	//Projectile* sphere = objectpool->GetObject2();
+	//float bulletsInverseMass = sphere->getWeight();
+	//float radius = sphere->getProjectileRadius();
+	////Vector3 playerDirectionVector = (Vector3::Cross((passedPlayableCharacter->GetTransform().GetOrientation().ToEuler()) , Vector3 {1,0,0})).Normalised();
+	//Vector3 playerDirectionVector = (passedPlayableCharacter->GetTransform().GetOrientation() * Vector3 { 0, 0, -1 });
+	//Vector3 sphereSize = { radius,radius,radius };
+	//Vector3 position = passedPlayableCharacter->GetTransform().GetPosition();
+	//SphereVolume* volume = new SphereVolume(radius);
+	//sphere->setBulletDirectionVector(playerDirectionVector);
+	//sphere->SetBoundingVolume((CollisionVolume*)volume);
+	//sphere->GetTransform().SetScale(sphereSize);
+	//sphere->GetTransform().SetPosition(position - Vector3{ 0,0,10 });
+	//sphere->GetTransform().SetPosition((position)-(Vector3{ 0,0,10 }));
 
-	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
-	sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
-	sphere->GetRenderObject()->SetColour(passedPlayableCharacter->getPaintColor());
-	PhysicsObject* physicsBullet = sphere->GetPhysicsObject();
-	if (!sphere->ProjectileAffectedByGravity() || true) {
-		physicsBullet->SetAffectedByGravityFalse();
-	}
-	sphere->GetPhysicsObject()->SetInverseMass(bulletsInverseMass);
-	sphere->GetPhysicsObject()->InitSphereInertia();
+	//sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
+	//sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
+	//sphere->GetRenderObject()->SetColour(passedPlayableCharacter->getPaintColor());
+	//PhysicsObject* physicsBullet = sphere->GetPhysicsObject();
+	//if (!sphere->ProjectileAffectedByGravity() || true) {
+	//	physicsBullet->SetAffectedByGravityFalse();
+	//}
+	//sphere->GetPhysicsObject()->SetInverseMass(bulletsInverseMass);
+	//sphere->GetPhysicsObject()->InitSphereInertia();
 
-	GameWorld::GetInstance()->AddGameObject(sphere);
-	return sphere;
+	//GameWorld::GetInstance()->AddGameObject(sphere);
+	return nullptr;
 
 }
 

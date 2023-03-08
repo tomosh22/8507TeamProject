@@ -40,6 +40,7 @@ namespace NCL {
 		class RenderObject;
 		class PhysicsObject;
 		class TutorialGame;
+		class CollisionInfo;
 		class Projectile :public GameObject {
 		public:
 
@@ -140,15 +141,11 @@ namespace NCL {
 				return rateOfFireTransferred;
 			}
 
-			void OnCollisionBegin(GameObject* otherObject)
-			{
+			void OnCollisionBegin(GameObject* otherObject);
 
-			}
 
-			void OnCollisionEnd(GameObject* otherObject)
-			{
+			void OnCollisionEnd(GameObject* otherObject);
 
-			}
 
 			float collisionInfo() override {
 				return this->getExplosionRadius();

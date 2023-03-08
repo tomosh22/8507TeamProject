@@ -25,7 +25,8 @@ playerTracking::playerTracking()
 		bulletsUsed = {};
 		bulletsUsedAndMoved = {};
 		
-
+		Projectile* newBullet = bulletPool->GetObject2();
+		ResetBullet(newBullet);
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
@@ -66,11 +67,10 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 
 void NCL::CSC8503::playerTracking::Shoot()
 {
-	if (Window::GetMouse()->ButtonDown(MouseButtons::LEFT))
+	if (Window::GetMouse()->DoubleClicked(MouseButtons::LEFT))
 	{
 		std::cout << "Shoot" << std:: endl;
-		Projectile *newBullet = bulletPool->GetObject2();
-		ResetBullet(newBullet);
+		
 	}
 }
 
@@ -117,15 +117,15 @@ void playerTracking::FireBullet()
 {		
 		//Projectile newBullet = *bulletPool->GetObject2();
 		//ResetBullet(newBullet);
-		////Projectile* loadedBullet = useNewBullet(selectedPlayerCharacter);
-		////selectedPlayerCharacter->addToBulletsUsed(loadedBullet);
+		//Projectile* loadedBullet = useNewBullet(selectedPlayerCharacter);
+		//selectedPlayerCharacter->addToBulletsUsed(loadedBullet);
 		//PhysicsObject* physicsShot = newBullet.GetPhysicsObject();
-		////physicsShot->SetLayerID(); // set Id so bullets cannot collied with each other and players.
-		////loadedBullet->GetTransform().setDestructable();
+		//physicsShot->SetLayerID(); // set Id so bullets cannot collied with each other and players.
+		//loadedBullet->GetTransform().setDestructable();
 		//physicsShot->SetLinearVelocity({ 0,0,0 });
 		//physicsShot->ClearForces();
 
-		////TODO::Force and firing direction should based on the character
+		//TODO::Force and firing direction should based on the character
 		//
 		//float const startingForce = newBullet.getPojectilePropultionForce();
 		//Vector3 firingDirectionVector = newBullet.getBulletDirectionVector();
@@ -134,9 +134,9 @@ void playerTracking::FireBullet()
 
 
 		//testing bullet vector removal
-		/*if (selectedPlayerCharacter->getBulletVectorSize() > 10) {
-			selectedPlayerCharacter->clearBulletsUsed();
-		}*/
+		///*if (selectedPlayerCharacter->getBulletVectorSize() > 10) {
+		//	selectedPlayerCharacter->clearBulletsUsed();
+		//}*/
 		//testing bullet vector removal
 		return;
 	}
@@ -147,7 +147,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	bullet->GetTransform()
 		.SetScale(Vector3(weaponType.ProjectileSize, weaponType.ProjectileSize, weaponType.ProjectileSize))
 		.SetPosition(transform.GetPosition()+forwad * fireOffset);
-	std::cout << "Bullet pos:"<< transform.GetPosition() + forwad * fireOffset << std::endl;
+	//std::cout << "Bullet pos:"<< transform.GetPosition() + forwad * fireOffset << std::endl;
 	bullet->GetPhysicsObject()->SetInverseMass(weaponType.weight);
 	bullet->GetPhysicsObject()->InitSphereInertia();
 }

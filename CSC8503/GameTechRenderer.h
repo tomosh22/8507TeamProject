@@ -49,6 +49,10 @@ namespace NCL {
 
 			bool renderFullScreenQuad = true;
 
+			Vector4		lightColour;
+			float		lightRadius;
+			Vector3		lightPosition;
+
 		protected:
 			void NewRenderLines();
 			void NewRenderText();
@@ -88,9 +92,7 @@ namespace NCL {
 			GLuint		shadowFBO;
 			Matrix4     shadowMatrix;
 
-			Vector4		lightColour;
-			float		lightRadius;
-			Vector3		lightPosition;
+			
 
 			//Debug data storage things
 			vector<Vector3> debugLineData;

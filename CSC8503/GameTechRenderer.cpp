@@ -11,7 +11,7 @@ using namespace NCL;
 using namespace Rendering;
 using namespace CSC8503;
 
-#define SHADOWSIZE 4096
+#define SHADOWSIZE 8192
 
 Matrix4 biasMatrix = Matrix4::Translation(Vector3(0.5f, 0.5f, 0.5f)) * Matrix4::Scale(Vector3(0.5f, 0.5f, 0.5f));
 
@@ -44,7 +44,7 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	//Set up the light properties
 	lightColour = Vector4(0.8f, 0.8f, 0.5f, 1.0f);
 	lightRadius = 1000.0f;
-	lightPosition = Vector3(0.0f, 100.0f, -50.0f);
+	lightPosition = Vector3(0.0f, 53, 160);
 
 	//Skybox!
 	skyboxShader = new OGLShader("skybox.vert", "skybox.frag");
@@ -134,7 +134,9 @@ void GameTechRenderer::RenderFrame() {
 	BuildObjectList();
 	SortObjectList();
 	glDisable(GL_CULL_FACE);
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "shadow");
 	RenderShadowMap();
+	glPopDebugGroup();
 	RenderSkybox();
 	RenderCamera();
 	glDepthMask(false);
@@ -190,7 +192,12 @@ void GameTechRenderer::RenderShadowMap() {
 	shadowMatrix = biasMatrix * mvMatrix; //we'll use this one later on
 
 	for (const auto&i : activeObjects) {
-		Matrix4 modelMatrix = (*i).GetTransform()->GetMatrix();
+		Transform* tempTransform = (*i).GetTransform();
+		Transform newTransform;
+		memcpy(&newTransform, tempTransform,sizeof(Transform));
+		Vector3 lightDir = (lightPosition - newTransform.GetPosition()).Normalised();
+		newTransform.SetPosition(newTransform.GetPosition() - lightDir);
+		Matrix4 modelMatrix = newTransform.GetMatrix();
 		Matrix4 mvpMatrix	= mvMatrix * modelMatrix;
 		glUniformMatrix4fv(mvpLocation, 1, false, (float*)&mvpMatrix);
 		BindMesh((*i).GetMesh());
@@ -573,6 +580,9 @@ void GameTechRenderer::ImGui() {
 
 		ImGui::TreePop();
 	}
+
+	ImGui::SliderFloat3("Light Position", lightPosition.array, -200, 200);
+
 	ImGui::End();
 	ImGui::EndFrame();
 	ImGui::Render();

@@ -21,6 +21,7 @@ using namespace CSC8503;
 
 #define TRI_DEBUG
 //#define OLD_PAINT
+//#define DEBUG_SHADOW
 
 TutorialGame::TutorialGame()	{
 	world		= new GameWorld();
@@ -331,6 +332,9 @@ TutorialGame::~TutorialGame()	{
 
 
 void TutorialGame::UpdateGame(float dt) {
+#ifdef DEBUG_SHADOW
+	renderer->lightPosition = world->GetMainCamera()->GetPosition();
+#endif
 	if (GAME_MODE_DEFAULT == gameMode) {
 		SelectMode();
 		renderer->Update(dt);

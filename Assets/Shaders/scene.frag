@@ -275,6 +275,7 @@ void main(void)
 	if( IN . shadowProj . w > 0.0) { // New !
 		shadow = textureProj ( shadowTex , IN . shadowProj ) * 0.5f;
 	}
+	shadow = max(shadow,0.2);
 
 	mat3 TBN = mat3(normalize(IN.tangent),normalize(IN.binormal),normalize(IN.normal));
 	vec3 bumpNormal = 2.0 * texture(bumpTex,IN.texCoord).rgb - 1.0;
@@ -288,6 +289,7 @@ void main(void)
 	fragColor = vec4(0,0,0,1);
 	point(fragColor,diffuse,bumpNormal,metallic.r,roughness.r,reflectivity);
 	fragColor.rgb *= shadow;
+	fragColor += diffuse * 0.05;
 	//fragColor = vec4(bumpNormal,1);
 	//fragColor = vec4(bumpNormal,1);
 }

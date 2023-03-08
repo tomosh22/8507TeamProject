@@ -255,6 +255,15 @@ namespace NCL {
 			TextureBase* ironBump = nullptr;
 			TextureBase* ironMetallic = nullptr;
 			TextureBase* ironRoughness = nullptr;
+
+			TextureBase* crystalDiffuse = nullptr;
+			TextureBase* crystalBump = nullptr;
+			TextureBase* crystalMetallic = nullptr;
+			TextureBase* crystalRoughness = nullptr;
+			TextureBase* crystalHeightMap = nullptr;
+			GameObject* testSphere = nullptr;
+
+			bool rayMarch = true;
 		};
 	}
 }

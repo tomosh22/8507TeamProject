@@ -87,6 +87,8 @@ TutorialGame::TutorialGame()	{
 	renderer->imguiptrs.noiseOffsetMultipler = &renderer->noiseOffsetMultipler;
 	renderer->imguiptrs.newMethod = &renderer->newMethod;
 
+	renderer->imguiptrs.rayMarchBool = &rayMarch;
+
 	glGenBuffers(1, &triangleBoolSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, highestTriCount * sizeof(int), NULL, GL_DYNAMIC_DRAW);
@@ -280,7 +282,8 @@ void TutorialGame::InitialiseAssets() {
 #pragma endregion
 
 	basicTex	= renderer->LoadTexture("checkerboard.png");
-	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
+	glPatchParameteri(GL_PATCH_VERTICES, 3);
+	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc","scene.tese");
 	metalTex = renderer->LoadTexture("metal.png");
 	testBumpTex = renderer->LoadTexture("testBump.jpg");
 
@@ -289,6 +292,12 @@ void TutorialGame::InitialiseAssets() {
 	ironBump = renderer->LoadTexture("PBR/rustediron2_normal.png");
 	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
 	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
+
+	crystalDiffuse = renderer->LoadTexture("PBR/crystal/violet_crystal_43_04_diffuse.jpg");
+	crystalBump = renderer->LoadTexture("PBR/crystal/violet_crystal_43_04_normal.jpg");
+	crystalMetallic = renderer->LoadTexture("PBR/crystal/violet_crystal_43_04_metallic.jpg");
+	crystalRoughness = renderer->LoadTexture("PBR/crystal/violet_crystal_43_04_roughness.jpg");
+	crystalHeightMap = renderer->LoadTexture("PBR/crystal/violet_crystal_43_04_height.jpg");
 
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
@@ -347,10 +356,10 @@ void TutorialGame::UpdateGame(float dt) {
 		//DispatchComputeShaderForEachTriangle(testCube);
 		//glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
-		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, Team::team1);
+		//DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, Team::team1);
 		glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius, Team::team1);
+		//DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius, Team::team1);
 		glPopDebugGroup();
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
 		//for (GameObject*& wall : walls) {
@@ -361,7 +370,7 @@ void TutorialGame::UpdateGame(float dt) {
 	
 	timePassed += dt;
 	
-	DispatchComputeShaderForEachPixel();
+	if(rayMarch)DispatchComputeShaderForEachPixel();
 	if(worldFloor != nullptr)
 	Debug::DrawAxisLines(worldFloor->GetTransform().GetMatrix());
 
@@ -433,7 +442,7 @@ void TutorialGame::UpdateGame(float dt) {
 	//timePassed = 0;
 
 	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
-    UpdateRayMarchSpheres();
+    //UpdateRayMarchSpheres();
 		SendRayMarchData();
 	}
 }
@@ -695,7 +704,8 @@ void TutorialGame::InitGraphicTest() {
 		AddSphereToWorld({ 0,0,0 }, 10, false,false);
 	}
 	
-
+	testSphere = AddSphereToWorld({50,50,50},10,true);
+	InitPaintableTextureOnObject(testSphere);
 	
 
 	//testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
@@ -722,6 +732,7 @@ void TutorialGame::InitGraphicTest() {
 		AddDebugTriangleInfoToObject(wall);
 	}
 #endif
+	floor->GetRenderObject()->useHeightMap = true;
 	return;
 }
 
@@ -801,10 +812,11 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
-	object->GetRenderObject()->baseTex = ironDiffuse;
-	object->GetRenderObject()->bumpTex = ironBump;
-	object->GetRenderObject()->metallic = ironMetallic;
-	object->GetRenderObject()->roughness = ironRoughness;
+	object->GetRenderObject()->baseTex = crystalDiffuse;
+	object->GetRenderObject()->bumpTex = crystalBump;
+	object->GetRenderObject()->metallic = crystalMetallic;
+	object->GetRenderObject()->roughness = crystalRoughness;
+	object->GetRenderObject()->heightMap = crystalHeightMap;
 }
 /*
 
@@ -848,7 +860,9 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 
 	
 	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), floorMesh, nullptr, basicShader));
+	
 	InitPaintableTextureOnObject(floor,rotated);
+	floor->GetRenderObject()->useHeightMap = true;
 
 	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 

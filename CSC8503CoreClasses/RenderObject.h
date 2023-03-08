@@ -61,6 +61,9 @@ namespace NCL {
 			TextureBase* bump = nullptr;
 			TextureBase* metallic = nullptr;
 			TextureBase* roughness = nullptr;
+			TextureBase* heightMap = nullptr;
+			bool useHeightMap = false;
+
 
 			bool onlyForShadows = false;
 

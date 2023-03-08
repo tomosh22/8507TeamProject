@@ -261,6 +261,9 @@ void GameTechRenderer::RenderCamera() {
 	//this was me
 	int widthLocation = 0;
 	int heightLocation = 0;
+	int scaleLocation = 0;
+
+	//int useHeightMapLocation = 0;
 
 	int lightPosLocation	= 0;
 	int lightColourLocation = 0;
@@ -292,6 +295,8 @@ void GameTechRenderer::RenderCamera() {
 			colourLocation  = glGetUniformLocation(shader->GetProgramID(), "objectColour");
 			hasVColLocation = glGetUniformLocation(shader->GetProgramID(), "hasVertexColours");
 			hasTexLocation  = glGetUniformLocation(shader->GetProgramID(), "hasTexture");
+			scaleLocation  = glGetUniformLocation(shader->GetProgramID(), "scale");
+			//useHeightMapLocation  = glGetUniformLocation(shader->GetProgramID(), "useHeightMap");
 			
 
 			//this was me
@@ -317,6 +322,10 @@ void GameTechRenderer::RenderCamera() {
 
 			int shadowTexLocation = glGetUniformLocation(shader->GetProgramID(), "shadowTex");
 			glUniform1i(shadowTexLocation, 2);
+
+			//glUniform1i(useHeightMapLocation, i->useHeightMap);
+
+			glUniform3fv(scaleLocation, 1, i->GetTransform()->GetScale().array);
 
 			activeShader = shader;
 		}
@@ -350,6 +359,7 @@ void GameTechRenderer::RenderCamera() {
 			BindTextureToShader((OGLTexture*)(*i).bumpTex, "bumpTex", 3);
 			BindTextureToShader((OGLTexture*)(*i).metallic, "metallicTex", 4);
 			BindTextureToShader((OGLTexture*)(*i).roughness, "roughnessTex", 5);
+			if((OGLTexture*)(*i).roughness != nullptr) BindTextureToShader((OGLTexture*)(*i).heightMap, "heightMap", 6);
 			glUniform1i(hasTexLocation,1);
 
 		}
@@ -382,7 +392,7 @@ void GameTechRenderer::RenderFullScreenQuad() {
 
 MeshGeometry* GameTechRenderer::LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes) {
 	OGLMesh* mesh = new OGLMesh(name);
-	mesh->SetPrimitiveType(GeometryPrimitive::Triangles);
+	mesh->SetPrimitiveType(GeometryPrimitive::Patches);
 	mesh->UploadToGPU();
 	if (meshes != nullptr)meshes->push_back(mesh);
 	return mesh;
@@ -485,6 +495,11 @@ ShaderBase* GameTechRenderer::LoadShader(const string& vertex, const string& fra
 	return new OGLShader(vertex, fragment);
 }
 
+ShaderBase* GameTechRenderer::LoadShader(const string& vertex, const string& fragment, const string& domain, const string& hull) {
+	return new OGLShader(vertex, fragment, "",domain,hull);
+}
+
+
 void GameTechRenderer::SetDebugStringBufferSizes(size_t newVertCount) {
 	if (newVertCount > textCount) {
 		textCount = newVertCount;
@@ -564,6 +579,7 @@ void GameTechRenderer::ImGui() {
 		+ std::to_string(camPos.y) + " " + std::to_string(camPos.z);
 	ImGui::Text(camPosStr.c_str());
 	if (ImGui::TreeNode("Ray Marching")) {
+		ImGui::Checkbox("Raymarch", imguiptrs.rayMarchBool);
 		ImGui::SliderInt("Max Steps", imguiptrs.rayMarchMaxSteps, 1, 1000);
 		ImGui::SliderFloat("Hit Distance", imguiptrs.rayMarchHitDistance, 0, 1);
 		ImGui::SliderFloat("No Hit Distance", imguiptrs.rayMarchNoHitDistance, 0, 1000);

@@ -26,6 +26,7 @@ namespace NCL {
 			MeshGeometry*	LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes = nullptr);
 			TextureBase*	LoadTexture(const string& name);
 			ShaderBase*		LoadShader(const string& vertex, const string& fragment);
+			ShaderBase*		LoadShader(const string& vertex, const string& fragment, const string& domain, const string& hull);
 
 			//this was me
 			RenderObject* quad;
@@ -40,6 +41,7 @@ namespace NCL {
 				float* noiseOffsetMultipler;
 				//int* currentTeamInt;
 				bool* newMethod;
+				bool* rayMarchBool;
 			};
 			ImGUIPtrs imguiptrs;
 

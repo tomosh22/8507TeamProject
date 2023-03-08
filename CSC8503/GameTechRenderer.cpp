@@ -362,6 +362,10 @@ void GameTechRenderer::RenderCamera() {
 			BindTextureToShader((OGLTexture*)(*i).bumpTex, "bumpTex", 3);
 			BindTextureToShader((OGLTexture*)(*i).metallic, "metallicTex", 4);
 			BindTextureToShader((OGLTexture*)(*i).roughness, "roughnessTex", 5);
+			BindTextureToShader((OGLTexture*)(*i).emission, "emissionTex", 7);
+			BindTextureToShader((OGLTexture*)(*i).ao, "AOTex", 8);
+			BindTextureToShader((OGLTexture*)(*i).opacity, "opacityTex", 9);
+			BindTextureToShader((OGLTexture*)(*i).gloss, "glossTex", 10);
 			if((OGLTexture*)(*i).roughness != nullptr) BindTextureToShader((OGLTexture*)(*i).heightMap, "heightMap", 6);
 			glUniform1i(hasTexLocation,1);
 

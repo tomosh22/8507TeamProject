@@ -293,11 +293,15 @@ void TutorialGame::InitialiseAssets() {
 	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
 	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
 
-	crystalDiffuse = renderer->LoadTexture("PBR/crystal/violet_crystal_43_04_diffuse.jpg");
-	crystalBump = renderer->LoadTexture("PBR/crystal/violet_crystal_43_04_normal.jpg");
-	crystalMetallic = renderer->LoadTexture("PBR/crystal/violet_crystal_43_04_metallic.jpg");
-	crystalRoughness = renderer->LoadTexture("PBR/crystal/violet_crystal_43_04_roughness.jpg");
-	crystalHeightMap = renderer->LoadTexture("PBR/crystal/violet_crystal_43_04_height.jpg");
+	crystalDiffuse = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_diffuse.jpg");
+	crystalBump = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_normal.jpg");
+	crystalMetallic = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_metallic.jpg");
+	crystalRoughness = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_roughness.jpg");
+	crystalHeightMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_height.jpg");
+	crystalEmissionMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_emissive.jpg");
+	crystalAOMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_ao.jpg");
+	crystalOpacityMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_opacity.jpg");
+	crystalGlossMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_glossiness.jpg");
 
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
@@ -817,6 +821,10 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated
 	object->GetRenderObject()->metallic = crystalMetallic;
 	object->GetRenderObject()->roughness = crystalRoughness;
 	object->GetRenderObject()->heightMap = crystalHeightMap;
+	object->GetRenderObject()->emission = crystalEmissionMap;
+	object->GetRenderObject()->ao = crystalAOMap;
+	object->GetRenderObject()->opacity = crystalOpacityMap;
+	object->GetRenderObject()->gloss = crystalGlossMap;
 }
 /*
 

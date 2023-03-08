@@ -62,6 +62,10 @@ namespace NCL {
 			TextureBase* metallic = nullptr;
 			TextureBase* roughness = nullptr;
 			TextureBase* heightMap = nullptr;
+			TextureBase* emission = nullptr;
+			TextureBase* ao = nullptr;
+			TextureBase* opacity = nullptr;
+			TextureBase* gloss = nullptr;
 			bool useHeightMap = false;
 
 

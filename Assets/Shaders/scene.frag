@@ -8,6 +8,10 @@ layout (binding = 2) uniform sampler2DShadow shadowTex;
 layout (binding = 3) uniform sampler2D bumpTex;
 layout (binding = 4) uniform sampler2D metallicTex;
 layout (binding = 5) uniform sampler2D roughnessTex;
+layout (binding = 7) uniform sampler2D emissionTex;
+layout (binding = 8) uniform sampler2D AOTex;
+layout (binding = 9) uniform sampler2D opacityTex;
+layout (binding = 10) uniform sampler2D glossTex;
 
 uniform vec3	lightPos;
 uniform float	lightRadius;
@@ -284,12 +288,17 @@ void main(void)
 	vec4 diffuse = texture(baseTex,IN.texCoord);
 	vec4 metallic = texture(metallicTex,IN.texCoord);
 	vec4 roughness = texture(roughnessTex,IN.texCoord);
-	float reflectivity = 0.7;//change
+	vec4 emission = texture(emissionTex, IN.texCoord);
+	float AO = texture(AOTex,IN.texCoord).r;
+	float opacity = texture(opacityTex,IN.texCoord).r;
+	float reflectivity = texture(glossTex,IN.texCoord).r;;
 
 	fragColor = vec4(0,0,0,1);
 	point(fragColor,diffuse,bumpNormal,metallic.r,roughness.r,reflectivity);
 	fragColor.rgb *= shadow;
-	fragColor += diffuse * 0.05;
+	fragColor += diffuse * 0.05 * AO;
+	fragColor.a = opacity;
+	fragColor += emission;
 	//fragColor = vec4(bumpNormal,1);
 	//fragColor = vec4(bumpNormal,1);
 }

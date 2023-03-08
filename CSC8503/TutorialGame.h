@@ -261,6 +261,12 @@ namespace NCL {
 			TextureBase* crystalMetallic = nullptr;
 			TextureBase* crystalRoughness = nullptr;
 			TextureBase* crystalHeightMap = nullptr;
+			TextureBase* crystalEmissionMap = nullptr;
+			TextureBase* crystalAOMap = nullptr;
+			TextureBase* crystalOpacityMap = nullptr;
+			TextureBase* crystalGlossMap = nullptr;
+			
+
 			GameObject* testSphere = nullptr;
 
 			bool rayMarch = true;

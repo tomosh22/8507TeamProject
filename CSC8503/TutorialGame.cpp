@@ -385,7 +385,13 @@ void TutorialGame::UpdateGame(float dt) {
 	world->UpdateWorld(dt);
 	renderer->Update(dt);
 	physics->Update(dt);
-
+	//testing 
+	/*if (physics->getCurrentCollisions().size() > 0) {
+		PhysicsSystem::collisionData tt = physics->getCurrentCollisions()[0];
+		DispatchComputeShaderForEachTriangle(tt.objectHit, tt.contactPosition, tt.paintRadius);
+		physics->clearCurrentCollisions();
+	}*/
+	//testing
 	renderer->Render();
 	Debug::UpdateRenderables(dt);
 

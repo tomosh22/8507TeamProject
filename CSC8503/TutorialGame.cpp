@@ -692,7 +692,7 @@ void TutorialGame::InitGraphicTest() {
 	//for raymarching
 	for (int i = 0; i < 10; i++)
 	{
-		AddSphereToWorld({ 0,0,0 }, 10, false);
+		AddSphereToWorld({ 0,0,0 }, 10, false,false);
 	}
 	
 
@@ -889,7 +889,7 @@ rigid body representation. This and the cube function will let you build a lot o
 physics worlds. You'll probably need another function for the creation of OBB cubes too.
 
 */
-GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass) {
+GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass, bool physics) {
 	RayMarchSphere* sphere = new RayMarchSphere();
 
 	Vector3 sphereSize = Vector3(radius, radius, radius);
@@ -900,11 +900,15 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 		.SetScale(sphereSize)
 		.SetPosition(position);
 
-	if(render)sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
-	sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
+	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
+	if (!render)sphere->GetRenderObject()->onlyForShadows = true;
+	
+	if (physics) {
+		sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
 
-	sphere->GetPhysicsObject()->SetInverseMass(inverseMass);
-	sphere->GetPhysicsObject()->InitSphereInertia();
+		sphere->GetPhysicsObject()->SetInverseMass(inverseMass);
+		sphere->GetPhysicsObject()->InitSphereInertia();
+	}
 
 	world->AddGameObject(sphere);
 

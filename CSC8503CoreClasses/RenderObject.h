@@ -62,6 +62,8 @@ namespace NCL {
 			TextureBase* metallic = nullptr;
 			TextureBase* roughness = nullptr;
 
+			bool onlyForShadows = false;
+
 		protected:
 			MeshGeometry*	mesh;
 			TextureBase*	texture;

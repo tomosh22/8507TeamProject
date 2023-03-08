@@ -278,6 +278,7 @@ void GameTechRenderer::RenderCamera() {
 	
 
 	for (const auto&i : activeObjects) {
+		if (i->onlyForShadows)continue;
 		OGLShader* shader = (OGLShader*)(*i).GetShader();
 		BindShader(shader);
 

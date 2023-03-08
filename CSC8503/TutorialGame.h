@@ -119,6 +119,8 @@ namespace NCL {
 			//this was me
 			GameObject* AddDebugTriangleToWorld(const Vector3& position);
 
+			void AddMapToWorld();
+
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
 #else

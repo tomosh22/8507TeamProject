@@ -4,8 +4,10 @@
 #include "GameTechVulkanRenderer.h"
 #endif
 #include "PhysicsSystem.h"
+
 #include"playerTracking.h"
-#include"Projectile.h"
+
+
 #include "StateGameObject.h"
 #include <array>
 #include"ObjectPool.h"
@@ -15,6 +17,7 @@ namespace NCL {
 		const int GAME_MODE_DEFAULT = 0;
 		const int GAME_MODE_GRAPHIC_TEST = 1;
 		const int GAME_MODE_PHISICAL_TEST = 2;
+		class Projectile;
 		class TutorialGame		{
 		public:
 			TutorialGame();
@@ -47,14 +50,26 @@ namespace NCL {
 
 			void setEnemyGoat(GameObject* assignCharcter);
 
-			static TutorialGame* GetInstance()
-			{
-				if (_instance == nullptr)
-				{
-					_instance = new TutorialGame();
-				}
-				return _instance;
-			}
+			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius);
+
+			MeshGeometry* capsuleMesh = nullptr;
+			MeshGeometry* cubeMesh = nullptr;
+			MeshGeometry* sphereMesh = nullptr;
+
+			//this was me
+			MeshGeometry* triangleMesh = nullptr;
+			MeshGeometry* monkeyMesh = nullptr;
+			MeshGeometry* floorMesh = nullptr;
+			MeshGeometry* maxMesh = nullptr;
+			MeshGeometry* basicWallMesh = nullptr;
+
+			TextureBase* basicTex = nullptr;
+			ShaderBase* basicShader = nullptr;
+
+			//Coursework Meshes
+			MeshGeometry* charMesh = nullptr;
+			MeshGeometry* enemyMesh = nullptr;
+			MeshGeometry* bonusMesh = nullptr;
 
 		protected:
 			void InitialiseAssets();
@@ -128,7 +143,6 @@ namespace NCL {
 			GameTechRenderer* renderer;
 #endif
 
-			static TutorialGame* _instance;
 			PhysicsSystem*		physics;
 
 			bool useGravity;
@@ -139,24 +153,7 @@ namespace NCL {
 			GameObject* selectionObject = nullptr;
 			GameObject* phantomCubeOutput = nullptr;
 
-			MeshGeometry*	capsuleMesh = nullptr;
-			MeshGeometry*	cubeMesh	= nullptr;
-			MeshGeometry*	sphereMesh	= nullptr;
 
-			//this was me
-			MeshGeometry* triangleMesh = nullptr;
-			MeshGeometry* monkeyMesh = nullptr;
-			MeshGeometry* floorMesh = nullptr;
-			MeshGeometry* maxMesh = nullptr;
-			MeshGeometry* basicWallMesh = nullptr;
-
-			TextureBase*	basicTex	= nullptr;
-			ShaderBase*		basicShader = nullptr;
-
-			//Coursework Meshes
-			MeshGeometry*	charMesh	= nullptr;
-			MeshGeometry*	enemyMesh	= nullptr;
-			MeshGeometry*	bonusMesh	= nullptr;
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;
@@ -194,7 +191,7 @@ namespace NCL {
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object, bool rotated = false);
 
-			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius);
+		
 			GLuint triangleSSBO;
 			void SetUpTriangleSSBOAndDataTexture();
 			OGLComputeShader* triComputeShader;
@@ -208,12 +205,14 @@ namespace NCL {
 			float hitDistance;
 			float noHitDistance;
 			float debugValue;
+
 			class RayMarchSphere : public GameObject {
 			public:
 				Vector3 center;
 				float radius;
 				Vector3 color;
 			};
+
 			std::vector<GameObject*> spheres;
 			std::vector<RayMarchSphere*> rayMarchSpheres;
 			GLuint rayMarchSphereSSBO;

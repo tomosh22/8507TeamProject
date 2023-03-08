@@ -7,6 +7,7 @@
 #define COLLISION_MSG 30
 #define NETWORK_ID_OFFSET 1000
 
+NetworkedGame* NetworkedGame::_instance = nullptr;
 NetworkedGame::NetworkedGame() {
 	client = nullptr;
 

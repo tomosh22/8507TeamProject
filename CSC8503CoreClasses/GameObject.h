@@ -14,6 +14,7 @@ namespace NCL::CSC8503 {
 	class RenderObject;
 	class PhysicsObject;
 	class AgentMovement;
+	class ContactPoint;
 	class GameObject	{
 	public:
 		GameObject(std::string name = "");
@@ -100,10 +101,9 @@ namespace NCL::CSC8503 {
 
 		
 			
-
 		}
 
-		virtual void OnCollisionEnd(GameObject* otherObject) 
+		virtual void OnCollisionEnd(GameObject* otherObject)
 		{
 			
 		}

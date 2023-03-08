@@ -7,13 +7,9 @@ template<class Object>
 class ObjectPool
 {
 public:
-	ObjectPool(size_t Size)
+	ObjectPool()
 	{
-		_nSize = Size;
-		for (size_t n = 0; n < _nSize; n++)
-		{
-			_mPool.push_back(new Object());
-		}
+		_nSize = 0;
 	}
 	virtual ~ObjectPool()
 	{

@@ -6,6 +6,7 @@
 #include"Vector4.h"
 #include"ObjectPool.h"
 #include "GameWorld.h"
+
 namespace NCL {
 	namespace CSC8503 {
 
@@ -27,6 +28,7 @@ namespace NCL {
 
 			void Move(float dt);
 			void Rotate();
+			void Shoot();
 			float SmoothDamp(float current, float target, float& currentVelocity, float smoothTime, float maxSpeed, float deltaTime);
 
 			void setplayerID(int assignedPlayerID) {
@@ -42,7 +44,7 @@ namespace NCL {
 			}
 
 			void setWeponType(gun newWeponType) {
-				type = newWeponType;
+				weaponType = newWeponType;
 			}
 
 			void setPaintColor(Vector4 newPaintColor) {
@@ -67,7 +69,7 @@ namespace NCL {
 			}
 
 			gun getWeponType() {
-				return type;
+				return weaponType;
 			}
 
 			/*void AssignPlayerWeapon(gun weponType) {
@@ -79,8 +81,8 @@ namespace NCL {
 			}
 
 			void FireBullet();
-			void ResetBullet(Projectile bullet);
-			void ReTurnBullet(Projectile bullet);
+			void ResetBullet(Projectile* bullet);
+			void ReTurnBullet(Projectile* bullet);
 
 
 		protected:
@@ -91,9 +93,13 @@ namespace NCL {
 			int teamID;
 			int IndividualplayerScore;
 			Projectile *playerProjectile;
-			gun type;
+			gun weaponType;
 			Vector4 paintColor;
+			
 
+			float fireOffset; //this is is offset of firing position
+			Vector3 forwad;
+			Vector3 right;
 			//This is me 
 			ObjectPool<Projectile> *bulletPool;
 

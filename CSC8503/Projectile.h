@@ -23,7 +23,7 @@ namespace NCL {
 			1000,
 			10.0f,
 			2.0f,
-			false,
+			true,
 		};
 
 		static gun rocket{
@@ -52,11 +52,13 @@ namespace NCL {
 
 			Projectile();
 			Projectile(gun GunToUse);
+			Projectile(Vector3& position);
 			//Projectile(gun GunToUse, vector<Projectile*>* parentVector, GameWorld* world) = 0;
 			~Projectile() {
 				//physicsProjectile;
 			}
 
+			void Update(float dt);
 			void setGunType(gun wepType);
 
 

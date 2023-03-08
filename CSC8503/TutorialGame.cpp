@@ -9,7 +9,7 @@
 #include "StateGameObject.h"
 #include <minmax.h>
 #include<cmath>
-
+#include "Projectile.h"
 
 #include<iostream>
 
@@ -19,8 +19,6 @@ using namespace CSC8503;
 
 #define TRI_DEBUG
 //#define OLD_PAINT
-
-TutorialGame* TutorialGame::_instance = nullptr;
 
 TutorialGame::TutorialGame()	{
 	
@@ -37,7 +35,7 @@ TutorialGame::TutorialGame()	{
 	inSelectionMode = false;
 	testStateObject = nullptr;
 
-	objectpool = new ObjectPool<Projectile>(100);
+	objectpool = new ObjectPool<Projectile>();
 
 	InitialiseAssets();
 

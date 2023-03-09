@@ -16,7 +16,7 @@ playerTracking::playerTracking()
 		teamID = 0;
 		IndividualplayerScore = 0;
 		weaponType = pistol;
-		
+		moveSpeed = 10;
 
 		fireOffset = 5;
 		bulletPool =new ObjectPool<Projectile>();
@@ -51,7 +51,7 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 	int s = Window::GetKeyboard()->KeyHeld(KeyboardKeys::S) ? 1 : 0;
 
 	int Dup = w - s;
-	int Dright = a - b;
+	int Dright = b - a;
 
 	Vector3 moveDir;
 
@@ -62,7 +62,10 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 	right = Vector3(camWorld.GetColumn(0));
 	forwad = Vector3::Cross(Vector3(0, 1, 0), right);
 
-
+	if(Dup!=0||Dright!=0)
+	{
+		transform.SetPosition(transform.GetPosition()+(forwad * Dup + right * Dright)*dt*moveSpeed);
+	}
 }
 
 void NCL::CSC8503::playerTracking::Shoot(float dt)
@@ -129,10 +132,12 @@ void playerTracking::ResetBullet(Projectile* bullet)
 {
 	bullet->GetTransform()
 		.SetScale(Vector3(weaponType.ProjectileSize, weaponType.ProjectileSize, weaponType.ProjectileSize))
-		.SetPosition(transform.GetPosition()+forwad * fireOffset);
+		.SetPosition(transform.GetPosition()+forwad * fireOffset + Vector3(0,1.8,0));
 	//std::cout << "Bullet pos:"<< transform.GetPosition() + forwad * fireOffset << std::endl;
 	bullet->GetPhysicsObject()->SetInverseMass(weaponType.weight);
 	bullet->GetPhysicsObject()->InitSphereInertia();
+	bullet->GetPhysicsObject()->AddForce(forwad * weaponType.projectileForce);
+
 }
 void playerTracking::ReTurnBullet(Projectile* bullet)
 {

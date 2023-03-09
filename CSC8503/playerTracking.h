@@ -72,6 +72,15 @@ namespace NCL {
 				return weaponType;
 			}
 
+			float GetSpeed()
+			{
+				return moveSpeed;
+			}
+			void SetSpeed(float speed)
+			{
+				moveSpeed = speed;
+			}
+
 			/*void AssignPlayerWeapon(gun weponType) {
 				playerProjectile->setGunType(weponType);
 			}*/
@@ -95,7 +104,7 @@ namespace NCL {
 			Projectile *playerProjectile;
 			gun weaponType;
 			Vector4 paintColor;
-			
+			float moveSpeed;
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;

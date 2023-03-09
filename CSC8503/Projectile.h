@@ -20,7 +20,7 @@ namespace NCL {
 		static gun pistol{
 			6.0f,
 			0.2f,
-			300,
+			100.0f,
 			10.0f,
 			1.0f,
 			true,
@@ -41,6 +41,7 @@ namespace NCL {
 		class PhysicsObject;
 		class TutorialGame;
 		class CollisionInfo;
+		class playerTracking;
 		class Projectile :public GameObject {
 		public:
 
@@ -151,7 +152,10 @@ namespace NCL {
 				return this->getExplosionRadius();
 			}
 
-
+			void SetPlayer(playerTracking* player)
+			{
+				this->player = player;
+			}
 
 		protected:
 			float explosionRadius;
@@ -168,6 +172,8 @@ namespace NCL {
 			//PhysicsObject* physicsProjectile;
 			Vector3 bulletDirectionVector;
 			vector<Projectile*>* parentVector;
+
+			playerTracking* player;
 			GameWorld* world;
 
 

@@ -83,50 +83,6 @@ void NCL::CSC8503::playerTracking::Shoot(float dt)
 }
 
 
-void playerTracking::clearBulletsUsed() 
-{
-		int numOfUsedBullets = bulletsUsedAndMoved.size();
-		if(numOfUsedBullets > 0){
-			for (int i = 0; i < 1; i++) {
-				delete (bulletsUsedAndMoved[numOfUsedBullets - 1]);
-			}
-		}
-		
-}
-
-
-	/*void playerTracking::updateBulletsUsed() {
-		if (getBulletVectorSize() > 1) {
-			for (int ix = 0; ix < getBulletVectorSize(); ix++) {
-				bulletsUsed[ix]->GetTransform().Remove();
-				bulletsUsedAndMoved.push_back(bulletsUsed[ix]);
-				bulletsUsed.erase(bulletsUsed.begin() + ix);
-				std::cout << bulletsUsedAndMoved.size() << std::endl;
-			}
-		}
-	}*/
-
-
-	
-
-	Projectile* playerTracking::reuseBullet() {
-		Projectile* reusedBullet = bulletsUsed.at(0);
-		reusedBullet->GetPhysicsObject()->SetLinearVelocity(Vector3{0,0,0});
-		reusedBullet->GetPhysicsObject()->ClearForces();
-		
-		reusedBullet->SetActive(true);
-		bulletsUsed.erase(bulletsUsed.begin(),bulletsUsed.begin()+1);
-		return reusedBullet;
-	}
-
-	// This is me 
-
-void playerTracking::FireBullet() 
-{		
-
-		return;
-}
-
 //Call this function to init a new Bullet
 void playerTracking::ResetBullet(Projectile* bullet)
 {
@@ -137,11 +93,15 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	bullet->GetPhysicsObject()->SetInverseMass(weaponType.weight);
 	bullet->GetPhysicsObject()->InitSphereInertia();
 	bullet->GetPhysicsObject()->AddForce(forwad * weaponType.projectileForce);
+	bullet->SetActive(true);
+	bullet->SetPlayer(this);
 
 }
 void playerTracking::ReTurnBullet(Projectile* bullet)
 {
-
+	bullet->SetActive(false);
+	bullet->GetPhysicsObject()->ClearForces();
+	bulletPool->ReturnObject(bullet);
 }
 
 

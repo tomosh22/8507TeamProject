@@ -22,9 +22,7 @@ namespace NCL {
 
 			}
 
-			
 			void Update(float dt);
-
 
 			void Move(float dt);
 			void Rotate();

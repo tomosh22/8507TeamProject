@@ -439,12 +439,19 @@ void TutorialGame::UpdateGame(float dt) {
 		Matrix4 camWorld = view.Inverse();
 		Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
 		Vector3 objPos = lockedObject->GetTransform().GetPosition();
-
-		objPos += rightAxis *3.0;
+		
+		//right Click to got to aim mode
+		if (Window::GetMouse()->ButtonPressed(MouseButtons::RIGHT))
+		{
+			objPos += rightAxis * 4.5 + Vector3(0, 1, 0) * 2;   //offset of the character
+		}
+		else
+		{
+			objPos += rightAxis * 3.5 + Vector3(0, 1, 0) * 1.5;   //offset of the character
+		}
 		Vector3 camPos = objPos + lockedOffset;
 
 		GameWorld::GetInstance()->GetMainCamera()->SetTargetPosition(objPos);
-
 	}
 
 	UpdateKeys();

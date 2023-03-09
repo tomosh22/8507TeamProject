@@ -6,6 +6,26 @@ layout(r8ui, binding = 0) uniform uimage2D maskTex;
 layout (binding = 1) uniform sampler2D baseTex;
 layout (binding = 2) uniform sampler2DShadow shadowTex;
 layout (binding = 3) uniform sampler2D bumpTex;
+layout (binding = 4) uniform sampler2D metallicTex;
+layout (binding = 5) uniform sampler2D roughnessTex;
+layout (binding = 7) uniform sampler2D emissionTex;
+layout (binding = 8) uniform sampler2D AOTex;
+layout (binding = 9) uniform sampler2D opacityTex;
+layout (binding = 10) uniform sampler2D glossTex;
+
+uniform bool useBumpMap;
+uniform bool useMetallicMap;
+uniform bool useRoughnessMap;
+uniform bool useHeightMap;
+uniform bool useEmissionMap;
+uniform bool useAOMap;
+uniform bool useOpacityMap;
+uniform bool useGlossMap;
+
+uniform float timePassed;
+uniform float timeScale;
+
+
 
 uniform vec3	lightPos;
 uniform float	lightRadius;
@@ -19,6 +39,11 @@ uniform bool isPaintable;
 
 uniform int width;
 uniform int height;
+
+uniform float noiseScale;
+uniform float noiseOffsetSize;
+uniform float noiseNormalStrength;
+uniform float noiseNormalNoiseMult;
 
 layout(std430, binding = 4) buffer PaintSSBO{
 	int paintData[];
@@ -117,42 +142,6 @@ float fbm(in vec2 st) {
 	return value;
 }
 
-vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
-vec2 fade(vec2 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}
-
-float cnoise(vec2 P){
-  vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
-  vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
-  Pi = mod(Pi, 289.0); // To avoid truncation effects in permutation
-  vec4 ix = Pi.xzxz;
-  vec4 iy = Pi.yyww;
-  vec4 fx = Pf.xzxz;
-  vec4 fy = Pf.yyww;
-  vec4 i = permute(permute(ix) + iy);
-  vec4 gx = 2.0 * fract(i * 0.0243902439) - 1.0; // 1/41 = 0.024...
-  vec4 gy = abs(gx) - 0.5;
-  vec4 tx = floor(gx + 0.5);
-  gx = gx - tx;
-  vec2 g00 = vec2(gx.x,gy.x);
-  vec2 g10 = vec2(gx.y,gy.y);
-  vec2 g01 = vec2(gx.z,gy.z);
-  vec2 g11 = vec2(gx.w,gy.w);
-  vec4 norm = 1.79284291400159 - 0.85373472095314 * 
-    vec4(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
-  g00 *= norm.x;
-  g01 *= norm.y;
-  g10 *= norm.z;
-  g11 *= norm.w;
-  float n00 = dot(g00, vec2(fx.x, fy.x));
-  float n10 = dot(g10, vec2(fx.y, fy.y));
-  float n01 = dot(g01, vec2(fx.z, fy.z));
-  float n11 = dot(g11, vec2(fx.w, fy.w));
-  vec2 fade_xy = fade(Pf.xy);
-  vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
-  float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
-  return 2.3 * n_xy;
-}
-
 vec3 hsv2rgb(vec3 c) {
 	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
 	vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
@@ -175,27 +164,117 @@ vec2 starNoise(in vec2 st) {
     return vec2(step(r + 0.1 * sin(8.0 * a), 0.7)) * vec2(r, r);
 }
 
-void main(void)
-{
-	int dataIndex = int(floor(IN.texCoord.y * height)) * width + int(floor(IN.texCoord.x * width));
+void point(inout vec4 finalColor, vec4 diffuse, vec3 bumpNormal, float metal, float rough, float reflectivity) {
+	vec3 lightDir = normalize(lightPos - IN.worldPos);
+	vec3 viewDir = normalize(cameraPos - IN.worldPos);
+	vec3 halfDir = normalize(lightDir + viewDir);
+
+	float normalDotLightDir = max(dot(bumpNormal, lightDir), 0.0001);
+	float normalDotViewDir = max(dot(bumpNormal, viewDir), 0.0001);
+	float normalDotHalfDir = max(dot(bumpNormal, halfDir), 0.0001);
+	float halfDirDotViewDir = max(dot(halfDir, viewDir), 0.0001);
+
+	float F = reflectivity + (1 - reflectivity) * pow((1-halfDirDotViewDir), 5);
+
+	F = 1 - F;
 	
-	
-	fragColor = vec4(0,0,0,1);
-	const float noiseScale = 10.0;
+
+
+	float D = pow(rough, 2) / (3.14 * pow((pow(normalDotHalfDir, 2) * (pow(rough, 2) - 1) + 1), 2));
 
 	
 
-	
+	float k = pow(rough + 1, 2) / 8;
+	float G = normalDotViewDir / (normalDotViewDir * (1 - k) + k);
 
+	float DFG = D * F * G;
 
-	
+	vec4 surface = diffuse * vec4(lightColour.rgb, 1) * lightColour.a;
+	vec4 C = surface * (1 - metal);
 
-	vec2 offset = vec2(fbm(IN.texCoord * noiseScale), 0);
-		offset.y = fbm((1.0 - IN.texCoord)  * noiseScale);
-	offset = 2.0 * offset + 1.0;
-	offset *= 0.00;
+	vec4 BRDF = ((1 - F) * (C / 3.14)) + (DFG / (4 * normalDotLightDir * normalDotViewDir));
 
-	vec2 realCoords = imageSize(maskTex) * (IN.texCoord + offset);
+	float dist = length(lightPos - IN.worldPos);
+	float atten = 1.0 - clamp(dist / lightRadius , 0.0, 1.0);
+
+	finalColor += BRDF * normalDotLightDir * atten;
+	//if(isnan(BRDF.x) || isnan(BRDF.y) || isnan(BRDF.z))finalColor = vec4(1,0,0,0);
+	//else finalColor = vec4(0,1,0,0);
+	finalColor.a = 1;
+}
+
+//Nosie taken from: https://github.com/ashima/webgl-noise/blob/master/src/noise2D.glsl
+vec3 mod289(vec3 x) {
+  return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+
+vec2 mod289(vec2 x) {
+  return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+
+vec3 permute(vec3 x) {
+  return mod289(((x*34.0)+10.0)*x);
+}
+
+float snoise(vec2 v)
+  {
+  const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
+                      0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
+                     -0.577350269189626,  // -1.0 + 2.0 * C.x
+                      0.024390243902439); // 1.0 / 41.0
+// First corner
+  vec2 i  = floor(v + dot(v, C.yy) );
+  vec2 x0 = v -   i + dot(i, C.xx);
+
+// Other corners
+  vec2 i1;
+  //i1.x = step( x0.y, x0.x ); // x0.x > x0.y ? 1.0 : 0.0
+  //i1.y = 1.0 - i1.x;
+  i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+  // x0 = x0 - 0.0 + 0.0 * C.xx ;
+  // x1 = x0 - i1 + 1.0 * C.xx ;
+  // x2 = x0 - 1.0 + 2.0 * C.xx ;
+  vec4 x12 = x0.xyxy + C.xxzz;
+  x12.xy -= i1;
+
+// Permutations
+  i = mod289(i); // Avoid truncation effects in permutation
+  vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+		+ i.x + vec3(0.0, i1.x, 1.0 ));
+
+  vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+  m = m*m ;
+  m = m*m ;
+
+// Gradients: 41 points uniformly over a line, mapped onto a diamond.
+// The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)
+
+  vec3 x = 2.0 * fract(p * C.www) - 1.0;
+  vec3 h = abs(x) - 0.5;
+  vec3 ox = floor(x + 0.5);
+  vec3 a0 = x - ox;
+
+// Normalise gradients implicitly by scaling m
+// Approximation of: m *= inversesqrt( a0*a0 + h*h );
+  m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+
+// Compute final noise value at P
+  vec3 g;
+  g.x  = a0.x  * x0.x  + h.x  * x0.y;
+  g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+  return 130.0 * dot(m, g);
+}
+
+vec2 bloodnoise(float scale) {
+	vec2 tex = IN.texCoord;
+	vec2 offset = vec2(snoise(tex * scale), 0.0);
+	offset.y += snoise((tex + vec2(0.18468, 0.7846984) + timePassed * timeScale) * scale - 0.1 * offset.x);
+	offset = 2.0 * offset - 1.0;
+	return offset;
+}
+
+vec3 sampleTeamColor(vec2 uv) {
+	vec2 realCoords = imageSize(maskTex) * uv;
 	vec2 iCoords = floor(realCoords);
 	vec2 fCoords = fract(realCoords);
 	
@@ -220,49 +299,73 @@ void main(void)
         (c - a) * u.y * (1.0 - u.x) +
         (d - b) * u.x * u.y;
 		
-	fragColor.rgb = color;
-	fragColor.a = 1;
+	return color;
+}
 
-	if(fragColor != vec4(0,0,0,1))return;
+void main(void)
+{
+	vec4 diffuse = texture(baseTex,IN.texCoord);
 
+	int dataIndex = int(floor(IN.texCoord.y * height)) * width + int(floor(IN.texCoord.x * width));
+	
+	
 	float shadow = 1.0; // New !
 	
-	if( IN . shadowProj . w > 0.0) { // New !
-		shadow = textureProj ( shadowTex , IN . shadowProj ) * 0.5f;
+	if( IN . shadowProj. w > 0.0) { // New !
+		shadow = textureProj ( shadowTex , IN . shadowProj );
 	}
+	shadow = max(shadow,0.2);
 
 	mat3 TBN = mat3(normalize(IN.tangent),normalize(IN.binormal),normalize(IN.normal));
-	vec3 bumpNormal = texture(bumpTex,IN.texCoord).rgb;
-	bumpNormal = normalize(TBN * normalize(bumpNormal*2-1));
 
-	vec3  incident = normalize ( lightPos - IN.worldPos );
-	float lambert  = max (0.0 , dot ( incident , bumpNormal )) * 0.9; 
+	vec3 bumpNormal = useBumpMap ? (2.0 * texture(bumpTex,IN.texCoord).rgb - 1.0) : IN.normal;
 	
-	vec3 viewDir = normalize ( cameraPos - IN . worldPos );
-	vec3 halfDir = normalize ( incident + viewDir );
+	{
+		
 
-	float rFactor = max (0.0 , dot ( halfDir , bumpNormal ));
-	float sFactor = pow ( rFactor , 80.0 );
-	
-	vec4 albedo = IN.colour;
-	
-	if(hasTexture) {
-	 albedo *= texture(baseTex, IN.texCoord);
+		vec2 tex = IN.texCoord;
+
+		vec2 offset = bloodnoise(noiseScale);
+		vec2 normalOffset = bloodnoise(noiseNormalNoiseMult * noiseScale);
+
+		vec3 maskAlbedo = sampleTeamColor(tex + offset * noiseOffsetSize);
+
+		vec3 normalSkew = noiseNormalStrength * vec3(normalOffset.x, 0, normalOffset.y);
+		normalSkew = TBN * normalSkew.xzy;
+		bumpNormal = TBN * bumpNormal;
+
+		float opacity = min(maskAlbedo.r + maskAlbedo.g + maskAlbedo.b, 1);
+		opacity = smoothstep(0.4, 0.5, opacity);
+
+		diffuse.rgb = mix(diffuse.rgb, maskAlbedo, opacity);
+		bumpNormal = mix(bumpNormal, bumpNormal + normalSkew, opacity);
+		bumpNormal = normalize(bumpNormal);
+
 	}
-	
-	albedo.rgb = pow(albedo.rgb, vec3(2.2));
-	
-	fragColor.rgb = albedo.rgb * 0.05f; //ambient
-	
-	fragColor.rgb += albedo.rgb * lightColour.rgb * lambert * shadow; //diffuse light
-	
-	fragColor.rgb += lightColour.rgb * sFactor * shadow; //specular light
-	
-	fragColor.rgb = pow(fragColor.rgb, vec3(1.0 / 2.2f));
-	
-	fragColor.a = albedo.a;
 
-	//fragColor = vec4(IN.texCoord,0,1);
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+	
+
+
+
+
+	vec4 metallic = useMetallicMap ? texture(metallicTex,IN.texCoord) : vec4(0);
+	vec4 roughness = useRoughnessMap ? texture(roughnessTex,IN.texCoord) : vec4(0);
+	vec4 emission = useEmissionMap ? texture(emissionTex, IN.texCoord) : vec4(0);
+	float AO = useAOMap ? texture(AOTex,IN.texCoord).r : 1;
+	float opacity = useOpacityMap ? texture(opacityTex,IN.texCoord).r : 1;
+	float reflectivity = useGlossMap ? texture(glossTex,IN.texCoord).r : 0.8;
+
+	fragColor = vec4(0,0,0,1);
+	point(fragColor,diffuse,bumpNormal,metallic.r,roughness.r,reflectivity);
+	fragColor.rgb *= shadow;
+	fragColor += diffuse * 0.05 * AO;
+	//fragColor.a = opacity;//todo add back in
+	fragColor += emission;
+	//fragColor = vec4(bumpNormal,1);
+	//fragColor = vec4(bumpNormal,1);
 }
 

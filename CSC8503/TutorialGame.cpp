@@ -83,11 +83,12 @@ TutorialGame::TutorialGame()	{
 	renderer->imguiptrs.testSphereCenter = &testSphereCenter;
 	renderer->imguiptrs.testSphereRadius = &testSphereRadius;
 
-	renderer->noiseOffsetMultipler = 0.04;
-	renderer->imguiptrs.noiseOffsetMultipler = &renderer->noiseOffsetMultipler;
+	
 	renderer->imguiptrs.newMethod = &renderer->newMethod;
 
 	renderer->imguiptrs.rayMarchBool = &rayMarch;
+
+	
 
 	glGenBuffers(1, &triangleBoolSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
@@ -245,7 +246,7 @@ void TutorialGame::InitialiseAssets() {
 	capsuleMesh = renderer->LoadMesh("capsule.msh", &meshes);
 	//this was me
 	triangleMesh = OGLMesh::GenerateTriangleWithIndices();
-	monkeyMesh = renderer->LoadMesh("monkey.msh", &meshes);
+	monkeyMesh = renderer->LoadMesh("newMonkey.msh", &meshes);
 	floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh", &meshes);
 	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh", &meshes);
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
@@ -393,6 +394,9 @@ void TutorialGame::UpdateGame(float dt) {
 #ifdef DEBUG_SHADOW
 	renderer->lightPosition = world->GetMainCamera()->GetPosition();
 #endif
+
+	renderer->timePassed += dt * renderer->timeScale;
+
 	if (GAME_MODE_DEFAULT == gameMode) {
 		SelectMode();
 		renderer->Update(dt);
@@ -405,10 +409,10 @@ void TutorialGame::UpdateGame(float dt) {
 		//DispatchComputeShaderForEachTriangle(testCube);
 		//glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
-		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, Team::team1);
+		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, Team::team2);
 		glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius, Team::team1);
+		DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius, Team::team2);
 		glPopDebugGroup();
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
 		//for (GameObject*& wall : walls) {
@@ -478,10 +482,13 @@ void TutorialGame::UpdateGame(float dt) {
 	MoveSelectedObject();
 	//movePlayer(goatCharacter);
 
+	
+
 	world->UpdateWorld(dt);
+
+	
 	renderer->Update(dt);
 	physics->Update(dt);
-
 	renderer->Render();
 	Debug::UpdateRenderables(dt);
 
@@ -756,22 +763,29 @@ void TutorialGame::InitGraphicTest() {
 	testSphere0 = AddSphereToWorld({50,50,50},10,true);
 	InitPaintableTextureOnObject(testSphere0);
 	testSphere0->GetRenderObject()->pbrTextures = crystalPBR;
+	testSphere0->GetRenderObject()->useHeightMap = true;
 
 	testSphere1 = AddSphereToWorld({ 50,50,100 }, 10, true);
 	InitPaintableTextureOnObject(testSphere1);
 	testSphere1->GetRenderObject()->pbrTextures = spaceShipPBR;
+	testSphere1->GetRenderObject()->useHeightMap = true;
 
 	testSphere2 = AddSphereToWorld({ 50,50,150 }, 10, true);
 	InitPaintableTextureOnObject(testSphere2);
 	testSphere2->GetRenderObject()->pbrTextures = rockPBR;
+	testSphere2->GetRenderObject()->useHeightMap = true;
 
 	testSphere3 = AddSphereToWorld({ 100,50,50 }, 10, true);
 	InitPaintableTextureOnObject(testSphere3);
 	testSphere3->GetRenderObject()->pbrTextures = grassWithWaterPBR;
+	testSphere3->GetRenderObject()->useHeightMap = true;
 
 	testSphere4 = AddSphereToWorld({ 100,50,100 }, 10, true);
 	InitPaintableTextureOnObject(testSphere4);
 	testSphere4->GetRenderObject()->pbrTextures = fencePBR;
+	testSphere4->GetRenderObject()->useHeightMap = true;
+
+	
 	
 
 	//testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
@@ -783,6 +797,7 @@ void TutorialGame::InitGraphicTest() {
 	monkey = AddMonkeyToWorld({ 0,20,100 }, { 5,5,5 });
 	monkey->SetName(std::string("monkey"));
 	monkey->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(0, 180, 0));
+	monkey->GetRenderObject()->useHeightMap = true;
 	walls.push_back(AddFloorToWorld({ 0,25,-20 }, {100,1,25},true));
 	walls.back()->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(90, 0, 0));
 	walls.back()->SetName(std::string("back"));

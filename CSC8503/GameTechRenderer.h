@@ -38,14 +38,18 @@ namespace NCL {
 				bool* depthTest;
 				Vector3* testSphereCenter;
 				float* testSphereRadius;
-				float* noiseOffsetMultipler;
 				//int* currentTeamInt;
 				bool* newMethod;
 				bool* rayMarchBool;
+
+				
 			};
 			ImGUIPtrs imguiptrs;
 
-			float noiseOffsetMultipler;
+			float noiseScale= 25.0;
+			float noiseOffsetSize = 0.017;
+			float noiseNormalStrength= 0.6;
+			float noiseNormalNoiseMult = 1.27;
 
 			bool newMethod = true;
 
@@ -54,6 +58,19 @@ namespace NCL {
 			Vector4		lightColour;
 			float		lightRadius;
 			Vector3		lightPosition;
+
+			float heightMapStrength = 1;
+			bool useBumpMap = true;
+			bool useMetallicMap = true;
+			bool useRoughnessMap = true;
+			bool useHeightMap = true;
+			bool useEmissionMap = true;
+			bool useAOMap = true;
+			bool useOpacityMap = true;
+			bool useGlossMap = true;
+
+			float timePassed = 0;
+			float timeScale = 0.06;
 
 		protected:
 			void NewRenderLines();

@@ -11,6 +11,9 @@ uniform mat4 projMatrix;
 uniform vec3 scale;
 
 uniform bool useHeightMap;
+uniform bool useHeightMapLocal;
+
+uniform float heightMapStrength;
 
 in Vertex { //Sent from the TCS
 	vec4 colour;
@@ -98,9 +101,9 @@ void main() {
 	
 	vec4 worldPos = modelMatrix * vec4(combinedPos , 1);
 	
-	if(useHeightMap || true){
+	if(useHeightMap && useHeightMapLocal){
 		float height = texture(heightMap , OUT.texCoord ).x;
-		worldPos.xyz += TriMixVec3(IN[0].normal, IN[1].normal, IN[2].normal) * height * 1;
+		worldPos.xyz += TriMixVec3(IN[0].normal, IN[1].normal, IN[2].normal) * height * heightMapStrength;
 	}
 	
 	gl_Position = projMatrix * viewMatrix * worldPos;

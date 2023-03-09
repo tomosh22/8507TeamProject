@@ -76,6 +76,8 @@ namespace NCL {
 
 			bool onlyForShadows = false;
 
+			
+
 		protected:
 			MeshGeometry*	mesh;
 			TextureBase*	texture;

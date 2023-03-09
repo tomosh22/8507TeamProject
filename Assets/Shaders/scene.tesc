@@ -21,12 +21,12 @@ out Vertex {
 	vec3 binormal; //To Evaluation Shader
 } OUT []; // Equal to the size of the layout vertex count
 void main() {
-	gl_TessLevelInner [0] = 32;
-	gl_TessLevelInner [1] = 32;
-	gl_TessLevelOuter [0] = 32;
-	gl_TessLevelOuter [1] = 32;
-	gl_TessLevelOuter [2] = 32;
-	gl_TessLevelOuter [3] = 32;
+	gl_TessLevelInner [0] = 8;
+	gl_TessLevelInner [1] = 8;
+	gl_TessLevelOuter [0] = 8;
+	gl_TessLevelOuter [1] = 8;
+	gl_TessLevelOuter [2] = 8;
+	gl_TessLevelOuter [3] = 8;
 
 	OUT[gl_InvocationID].texCoord = IN[gl_InvocationID].texCoord;
 	OUT[gl_InvocationID].shadowProj = IN[gl_InvocationID].shadowProj;

@@ -291,6 +291,9 @@ namespace NCL {
 			GameObject* testSphere4 = nullptr;
 
 			bool rayMarch = true;
+
+			
+
 		};
 	}
 }

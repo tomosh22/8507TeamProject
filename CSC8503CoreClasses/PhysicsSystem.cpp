@@ -168,10 +168,10 @@ void PhysicsSystem::UpdateCollisionList() {
 
 			
 			if (i->a->GetName() == "Bullet" && i->b->isPaintable)
-				NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(i->b,i->b->GetTransform().GetPosition() + i->point.localB, 10);
+				NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(i->b,i->b->GetTransform().GetPosition() + i->point.localB, 10,NetworkedGame::Team::team1);
 
 			if (i->b->GetName() == "Bullet" && i->a->isPaintable)
-				NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(i->a, i->a->GetTransform().GetPosition() + i->point.localA, 10);
+				NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(i->a, i->a->GetTransform().GetPosition() + i->point.localA, 10, NetworkedGame::Team::team1);
 
 			//
 		}

@@ -497,7 +497,7 @@ void TutorialGame::UpdateGame(float dt) {
 	//timePassed = 0;
 
 	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
-    //UpdateRayMarchSpheres();
+		UpdateRayMarchSpheres();
 		SendRayMarchData();
 	}
 }
@@ -756,30 +756,30 @@ void TutorialGame::InitGraphicTest() {
 	//for raymarching
 	for (int i = 0; i < 10; i++)
 	{
-		AddSphereToWorld({ 0,0,0 }, 10, false,false);
+		AddRayMarchSphereToWorld({ 0,0,0 }, 10);
 	}
 	
-	testSphere0 = AddSphereToWorld({50,50,50},10,true);
+	testSphere0 = AddSphereToWorld({50,50,50},10,true,false);
 	InitPaintableTextureOnObject(testSphere0);
 	testSphere0->GetRenderObject()->pbrTextures = crystalPBR;
 	testSphere0->GetRenderObject()->useHeightMap = true;
 
-	testSphere1 = AddSphereToWorld({ 50,50,100 }, 10, true);
+	testSphere1 = AddSphereToWorld({ 50,50,100 }, 10, true, false);
 	InitPaintableTextureOnObject(testSphere1);
 	testSphere1->GetRenderObject()->pbrTextures = spaceShipPBR;
 	testSphere1->GetRenderObject()->useHeightMap = true;
 
-	testSphere2 = AddSphereToWorld({ 50,50,150 }, 10, true);
+	testSphere2 = AddSphereToWorld({ 50,50,150 }, 10, true, false);
 	InitPaintableTextureOnObject(testSphere2);
 	testSphere2->GetRenderObject()->pbrTextures = rockPBR;
 	testSphere2->GetRenderObject()->useHeightMap = true;
 
-	testSphere3 = AddSphereToWorld({ 100,50,50 }, 10, true);
+	testSphere3 = AddSphereToWorld({ 100,50,50 }, 10, true, false);
 	InitPaintableTextureOnObject(testSphere3);
 	testSphere3->GetRenderObject()->pbrTextures = grassWithWaterPBR;
 	testSphere3->GetRenderObject()->useHeightMap = true;
 
-	testSphere4 = AddSphereToWorld({ 100,50,100 }, 10, true);
+	testSphere4 = AddSphereToWorld({ 100,50,100 }, 10, true, false);
 	InitPaintableTextureOnObject(testSphere4);
 	testSphere4->GetRenderObject()->pbrTextures = fencePBR;
 	testSphere4->GetRenderObject()->useHeightMap = true;
@@ -793,11 +793,11 @@ void TutorialGame::InitGraphicTest() {
 
 	//testTriangle = AddDebugTriangleToWorld({ 0,200,0 });
 
-	monkey = AddMonkeyToWorld({ 0,20,100 }, { 5,5,5 });
+	monkey = AddMonkeyToWorld({ 0,20,100 }, { 5,5,5 },false);
 	monkey->SetName(std::string("monkey"));
 	monkey->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(0, 180, 0));
 	monkey->GetRenderObject()->useHeightMap = true;
-	walls.push_back(AddFloorToWorld({ 0,25,-20 }, {100,1,25},true));
+	walls.push_back(AddFloorToWorld({ 0,25,-50 }, {100,1,25},true));
 	walls.back()->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(90, 0, 0));
 	walls.back()->SetName(std::string("back"));
 
@@ -1015,7 +1015,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	sphere->color = { 1,0,0 };
 	sphere->radius = radius;
 	sphere->center = position;
-	rayMarchSpheres.push_back(sphere);
+	//rayMarchSpheres.push_back(sphere);
 	spheres.push_back(sphere);
 	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
@@ -1027,6 +1027,31 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	return sphere;
 }
 
+GameObject* TutorialGame::AddRayMarchSphereToWorld(const Vector3& position, float radius) {
+	RayMarchSphere* sphere = new RayMarchSphere();
+
+	Vector3 sphereSize = Vector3(radius, radius, radius);
+	SphereVolume* volume = new SphereVolume(radius);
+	sphere->SetBoundingVolume((CollisionVolume*)volume);
+
+	sphere->GetTransform()
+		.SetScale(sphereSize)
+		.SetPosition(position);
+	
+
+	sphere->color = { 1,0,0 };
+	sphere->radius = radius;
+	sphere->center = position;
+	rayMarchSpheres.push_back(sphere);
+	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2*sizeof(float), sizeof(float), &(position.z));
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3*sizeof(float), sizeof(float), &(radius));
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
+	return sphere;
+}
 
 
 
@@ -1074,7 +1099,7 @@ GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfH
 
 }
 
-GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, bool physics) {
 	GameObject* monkey = new GameObject();
 	
 
@@ -1086,10 +1111,12 @@ GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dime
 		.SetScale(dimensions * 2);
 
 	monkey->SetRenderObject(new RenderObject(&monkey->GetTransform(), monkeyMesh, nullptr, basicShader));
-	monkey->SetPhysicsObject(new PhysicsObject(&monkey->GetTransform(), monkey->GetBoundingVolume()));
+	if (physics) {
+		monkey->SetPhysicsObject(new PhysicsObject(&monkey->GetTransform(), monkey->GetBoundingVolume()));
 
-	monkey->GetPhysicsObject()->SetInverseMass(inverseMass);
-	monkey->GetPhysicsObject()->InitCubeInertia();
+		monkey->GetPhysicsObject()->SetInverseMass(inverseMass);
+		monkey->GetPhysicsObject()->InitCubeInertia();
+	}
 
 	monkey->GetRenderObject()->isComplex = true;
 

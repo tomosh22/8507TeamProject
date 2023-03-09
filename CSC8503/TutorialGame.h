@@ -52,7 +52,7 @@ namespace NCL {
 			void setEnemyGoat(GameObject* assignCharcter);
 
 
-			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius);
+			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID);
 
 			MeshGeometry* capsuleMesh = nullptr;
 			MeshGeometry* cubeMesh = nullptr;
@@ -73,6 +73,17 @@ namespace NCL {
 			MeshGeometry* enemyMesh = nullptr;
 			MeshGeometry* bonusMesh = nullptr;
 
+			enum Team {
+				teamNull,
+				team1,
+				team2,
+				team3,
+				team4,
+				team5,
+				team6,
+				team7,
+				team8,
+			};
 
 		protected:
 			void InitialiseAssets();
@@ -108,9 +119,16 @@ namespace NCL {
 			void movePlayer(playerTracking* unitGoat);
 			void setLockedObject(GameObject* goatPlayer);
 
+			class RayMarchSphere : public GameObject {
+			public:
+				Vector3 center;
+				float radius;
+				Vector3 color;
+			};
 
 			GameObject* AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated = false);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass = 10.0f, bool physics = true);
+			GameObject* AddRayMarchSphereToWorld(const Vector3& position, float radius);
 			
 
 			
@@ -125,7 +143,7 @@ namespace NCL {
 			GameObject* AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inversMass = 1.0f);
 			
 
-			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 
@@ -193,7 +211,7 @@ namespace NCL {
 			void InitPaintableTextureOnObject(GameObject* object, bool rotated = false);
 
 
-			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID);
+			
 
 			GLuint triangleSSBO;
 			GLuint debugTriangleSSBO;
@@ -213,12 +231,7 @@ namespace NCL {
 			float noHitDistance;
 			float debugValue;
 
-			class RayMarchSphere : public GameObject {
-			public:
-				Vector3 center;
-				float radius;
-				Vector3 color;
-			};
+			
 
 			std::vector<GameObject*> spheres;
 			std::vector<RayMarchSphere*> rayMarchSpheres;
@@ -249,17 +262,7 @@ namespace NCL {
 
 			GLuint tempSSBO;
 
-			enum Team {
-				teamNull,
-				team1,
-				team2,
-				team3,
-				team4,
-				team5,
-				team6,
-				team7,
-				team8,
-			};
+			
 			//Team currentTeam = Team::team2;
 			//int currentTeamInt = 1;
 			

@@ -7,38 +7,36 @@
 #include "PositionConstraint.h"
 #include "OrientationConstraint.h"
 #include "StateGameObject.h"
-#include <minmax.h>
-#include<cmath>
 
-#include "playerTracking.h"
-#include"Projectile.h"
+#include<cmath>
+#include "Projectile.h"
 
 #include<iostream>
 
-using namespace std;
+
 using namespace NCL;
 using namespace CSC8503;
 
-#define TRI_DEBUG
+//#define TRI_DEBUG
 //#define OLD_PAINT
 //#define DEBUG_SHADOW
 
 TutorialGame::TutorialGame()	{
-	world		= new GameWorld();
+	
 #ifdef USEVULKAN
 	renderer	= new GameTechVulkanRenderer(*world);
 #else 
-	renderer = new GameTechRenderer(*world);
+	renderer = new GameTechRenderer(*GameWorld::GetInstance());
 #endif
 
-	physics		= new PhysicsSystem(*world);
+	physics		= new PhysicsSystem(*GameWorld::GetInstance());
 
 	forceMagnitude	= 10.0f;
 	useGravity		= false;
 	inSelectionMode = false;
 	testStateObject = nullptr;
 
-	objectpool = new ObjectPool<Projectile>(100);
+	objectpool = new ObjectPool<Projectile>();
 
 	InitialiseAssets();
 
@@ -135,8 +133,12 @@ void TutorialGame::InitQuadTexture() {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 	//todo maybe move this somewhere else? still somewhat related
+
+	//may need to adjust if fps tanks
 	maxSteps = 500;
-	hitDistance = 0.1;
+	hitDistance = 0.001;
+
+
 	noHitDistance = 1000;
 	debugValue = 1;
 	rayMarchDepthTest = true;
@@ -157,12 +159,12 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	rayMarchComputeShader->Bind();
 
 	float screenAspect = (float)width / (float)height;
-	//world->GetMainCamera()->SetFieldOfVision(90);
+	//GameWorld::GetInstance()->GetMainCamera()->SetFieldOfVision(90);
 
-	Matrix4 viewMatrix = world->GetMainCamera()->BuildViewMatrix();
+	Matrix4 viewMatrix = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
 	//std::cout << viewMatrix << '\n';
-	Matrix4 projMatrix = world->GetMainCamera()->BuildProjectionMatrix(screenAspect);
-	Vector3 cameraPos = world->GetMainCamera()->GetPosition();
+	Matrix4 projMatrix = GameWorld::GetInstance()->GetMainCamera()->BuildProjectionMatrix(screenAspect);
+	Vector3 cameraPos = GameWorld::GetInstance()->GetMainCamera()->GetPosition();
 	
 	std::vector<float> buffer;
 	buffer.resize(width * height);
@@ -204,8 +206,8 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	glUniform1i(viewportWidthLocation, width);
 	glUniform1i(viewportHeightLocation, height);
 	glUniform1i(numSpheresLocation, rayMarchSpheres.size()+2);//one for debug sphere
-	glUniform1f(nearPlaneLocation, world->GetMainCamera()->GetNearPlane());
-	glUniform1f(farPlaneLocation, world->GetMainCamera()->GetFarPlane());
+	glUniform1f(nearPlaneLocation, GameWorld::GetInstance()->GetMainCamera()->GetNearPlane());
+	glUniform1f(farPlaneLocation, GameWorld::GetInstance()->GetMainCamera()->GetFarPlane());
 	glUniform1f(debugValueLocation, debugValue);
 	glUniform1i(depthTestValueLocation, rayMarchDepthTest);
 
@@ -364,6 +366,7 @@ void TutorialGame::InitialiseAssets() {
 	InitCamera();
 	InitWorld();
 
+	//InitMixedGridWorldtest(1, 1, 1, 1);
 	/*AddFloorToWorld({ 0, 0, 0 });
 	AddPlayerToWorld({ 0, 1, 0 });*/
 }
@@ -380,7 +383,7 @@ TutorialGame::~TutorialGame()	{
 
 	delete physics;
 	delete renderer;
-	delete world;
+	
 
 	delete objectpool;
 
@@ -428,22 +431,20 @@ void TutorialGame::UpdateGame(float dt) {
 	Debug::DrawAxisLines(worldFloor->GetTransform().GetMatrix());
 
 	if (!inSelectionMode) {
-		world->GetMainCamera()->UpdateCamera(dt);
+		GameWorld::GetInstance()->GetMainCamera()->UpdateCamera(dt);
 	}
 	if (lockedObject != nullptr) {
+
+		Matrix4 view = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
+		Matrix4 camWorld = view.Inverse();
+		Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
 		Vector3 objPos = lockedObject->GetTransform().GetPosition();
+
+		objPos += rightAxis *3.0;
 		Vector3 camPos = objPos + lockedOffset;
 
-		Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos, Vector3(0,1,0));
+		GameWorld::GetInstance()->GetMainCamera()->SetTargetPosition(objPos);
 
-		Matrix4 modelMat = temp.Inverse();
-
-		Quaternion q(modelMat);
-		Vector3 angles = q.ToEuler(); //nearly there now!
-
-		world->GetMainCamera()->SetPosition(camPos);
-		world->GetMainCamera()->SetPitch(angles.x);
-		world->GetMainCamera()->SetYaw(angles.y);
 	}
 
 	UpdateKeys();
@@ -466,7 +467,7 @@ void TutorialGame::UpdateGame(float dt) {
 
 		Ray r = Ray(rayPos, rayDir);
 
-		if (world->Raycast(r, closestCollision, true, selectionObject)) {
+		if (GameWorld::GetInstance()->Raycast(r, closestCollision, true, selectionObject)) {
 			if (objClosest) {
 				objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
 			}
@@ -482,11 +483,9 @@ void TutorialGame::UpdateGame(float dt) {
 	MoveSelectedObject();
 	//movePlayer(goatCharacter);
 
-	
 
-	world->UpdateWorld(dt);
+	GameWorld::GetInstance()->UpdateWorld(dt);
 
-	
 	renderer->Update(dt);
 	physics->Update(dt);
 	renderer->Render();
@@ -615,17 +614,17 @@ void TutorialGame::UpdateKeys() {
 	//allowing the other one to stretch too much etc. Shuffling the order so that it
 	//is random every frame can help reduce such bias.
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F9)) {
-		world->ShuffleConstraints(true);
+		GameWorld::GetInstance()->ShuffleConstraints(true);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) {
-		world->ShuffleConstraints(false);
+		GameWorld::GetInstance()->ShuffleConstraints(false);
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
-		world->ShuffleObjects(true);
+		GameWorld::GetInstance()->ShuffleObjects(true);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
-		world->ShuffleObjects(false);
+		GameWorld::GetInstance()->ShuffleObjects(false);
 	}
 
 	if (lockedObject) {
@@ -667,7 +666,7 @@ void TutorialGame::UpdateKeys() {
 }
 
 void TutorialGame::LockedObjectMovement() {
-	Matrix4 view		= world->GetMainCamera()->BuildViewMatrix();
+	Matrix4 view		= GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
 	Matrix4 camWorld	= view.Inverse();
 
 	Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
@@ -733,22 +732,22 @@ void TutorialGame::DebugObjectMovement() {
 }
 
 void TutorialGame::InitCamera() {
-	world->GetMainCamera()->SetNearPlane(0.1f);
-	world->GetMainCamera()->SetFarPlane(500.0f);
-	world->GetMainCamera()->SetPitch(-15.0f);
-	world->GetMainCamera()->SetYaw(315.0f);
-	world->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
+	GameWorld::GetInstance()->GetMainCamera()->SetNearPlane(0.1f);
+	GameWorld::GetInstance()->GetMainCamera()->SetFarPlane(500.0f);
+	GameWorld::GetInstance()->GetMainCamera()->SetPitch(-15.0f);
+	GameWorld::GetInstance()->GetMainCamera()->SetYaw(315.0f);
+	GameWorld::GetInstance()->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
 	lockedObject = nullptr;
 }
 
 void TutorialGame::InitWorld() {
-	world->ClearAndErase();
+	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 	gameMode = GAME_MODE_DEFAULT;
 }
 
 void TutorialGame::InitGraphicTest() {
-	world->ClearAndErase();
+	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 
 	//InitDefaultFloor();
@@ -818,12 +817,19 @@ void TutorialGame::InitGraphicTest() {
 }
 
 void TutorialGame::InitPhysicalTest() {
+	GameWorld::GetInstance()->ClearAndErase();
+	physics->Clear();
+
 	InitGameExamples();
-	InitDefaultFloor();
+	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	InitPaintableTextureOnObject(floor);
+#ifdef TRI_DEBUG
+	AddDebugTriangleInfoToObject(floor);
+#endif
 }
 
 void TutorialGame::InitWorldtest2() {
-	world->ClearAndErase();
+	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 	
 
@@ -913,7 +919,6 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 		.SetScale(scale * 2)
 		.SetPosition(position);
 
-	
 	floor->isPaintable = true;
 	
 	srand(time(0));
@@ -949,8 +954,9 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
 
-	world->AddGameObject(floor);
+	GameWorld::GetInstance()->AddGameObject(floor);
 	worldFloor = floor;
+	floor->SetName("floor");
 	return floor;
 }
 
@@ -970,7 +976,7 @@ GameObject* TutorialGame::AddRunwayToWorld(const Vector3& position) {
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
 
-	world->AddGameObject(floor);
+	GameWorld::GetInstance()->AddGameObject(floor);
 
 	return floor;
 }
@@ -1004,7 +1010,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 		sphere->GetPhysicsObject()->InitSphereInertia();
 	}
 
-	world->AddGameObject(sphere);
+	GameWorld::GetInstance()->AddGameObject(sphere);
 
 	sphere->color = { 1,0,0 };
 	sphere->radius = radius;
@@ -1041,8 +1047,8 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 
 	InitPaintableTextureOnObject(cube);
 
-	world->AddGameObject(cube);
-
+	GameWorld::GetInstance()->AddGameObject(cube);
+	cube->SetName("cube");
 	return cube;
 }
 
@@ -1060,8 +1066,10 @@ GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfH
 	capsule->GetPhysicsObject()->SetInverseMass(inverseMass);
 	capsule->GetPhysicsObject()->InitCubeInertia();
 
-	world->AddGameObject(capsule);
+	InitPaintableTextureOnObject(capsule);
 
+	GameWorld::GetInstance()->AddGameObject(capsule);
+	capsule->SetName("capsule");
 	return capsule;
 
 }
@@ -1087,7 +1095,7 @@ GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dime
 
 	InitPaintableTextureOnObject(monkey);
 
-	world->AddGameObject(monkey);
+	GameWorld::GetInstance()->AddGameObject(monkey);
 
 	return monkey;
 }
@@ -1110,7 +1118,7 @@ GameObject* TutorialGame::AddWallToWorld(const Vector3& position, Vector3 dimens
 
 	InitPaintableTextureOnObject(wall);
 
-	world->AddGameObject(wall);
+	GameWorld::GetInstance()->AddGameObject(wall);
 
 	return wall;
 }
@@ -1133,7 +1141,7 @@ GameObject* TutorialGame::AddMaxToWorld(const Vector3& position, Vector3 dimensi
 
 	InitPaintableTextureOnObject(max);
 
-	world->AddGameObject(max);
+	GameWorld::GetInstance()->AddGameObject(max);
 
 	return max;
 }
@@ -1162,7 +1170,7 @@ GameObject* TutorialGame::AddEnemyGoatToWorld(const Vector3& position) {
 	BadGoat->GetPhysicsObject()->setCoeficient(0.55f);
 	BadGoat->GetPhysicsObject()->InitSphereInertia();
 	TutorialGame::setEnemyGoat(BadGoat);
-	world->AddGameObject(BadGoat);
+	GameWorld::GetInstance()->AddGameObject(BadGoat);
 
 	return BadGoat;
 }
@@ -1186,7 +1194,7 @@ GameObject* TutorialGame::AddEnemyGoatToWorld(const Vector3& position) {
 //	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 //	character->GetPhysicsObject()->InitSphereInertia();
 //
-//	world->AddGameObject(character);
+//	GameWorld::GetInstance()->AddGameObject(character);
 //
 //	return character;
 //}
@@ -1197,7 +1205,7 @@ GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	triangle->GetTransform().SetPosition(position);
 
 	triangle->SetRenderObject(new RenderObject(&triangle->GetTransform(), triangleMesh, testCollisionTex, basicShader));
-	world->AddGameObject(triangle);
+	GameWorld::GetInstance()->AddGameObject(triangle);
 	return triangle;
 }
 
@@ -1222,8 +1230,10 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	character->GetPhysicsObject()->setCoeficient(0.55f);
 	character->GetPhysicsObject()->InitSphereInertia();
 	setGoatCharacter(character);
-	world->AddGameObject(character);
+	InitPaintableTextureOnObject(character);
 
+	GameWorld::GetInstance()->AddGameObject(character);
+	character->SetName("character");
 	return character;
 }
 
@@ -1237,34 +1247,34 @@ Projectile* TutorialGame::AddBulletToWorld(playerTracking* playableCharacter) {
 
 
 Projectile* TutorialGame::useNewBullet(playerTracking* passedPlayableCharacter) {
-	gun wepType = passedPlayableCharacter->getWeponType();
+	//gun wepType = passedPlayableCharacter->getWeponType();
 
-	Projectile* sphere = objectpool->GetObjectW();
-	float bulletsInverseMass = sphere->getWeight();
-	float radius = sphere->getProjectileRadius();
-	//Vector3 playerDirectionVector = (Vector3::Cross((passedPlayableCharacter->GetTransform().GetOrientation().ToEuler()) , Vector3 {1,0,0})).Normalised();
-	Vector3 playerDirectionVector = (passedPlayableCharacter->GetTransform().GetOrientation() * Vector3 { 0, 0, -1 });
-	Vector3 sphereSize = { radius,radius,radius };
-	Vector3 position = passedPlayableCharacter->GetTransform().GetPosition();
-	SphereVolume* volume = new SphereVolume(radius);
-	sphere->setBulletDirectionVector(playerDirectionVector);
-	sphere->SetBoundingVolume((CollisionVolume*)volume);
-	sphere->GetTransform().SetScale(sphereSize);
-	sphere->GetTransform().SetPosition(position - Vector3{ 0,0,10 });
-	sphere->GetTransform().SetPosition((position)-(Vector3{ 0,0,10 }));
+	//Projectile* sphere = objectpool->GetObject2();
+	//float bulletsInverseMass = sphere->getWeight();
+	//float radius = sphere->getProjectileRadius();
+	////Vector3 playerDirectionVector = (Vector3::Cross((passedPlayableCharacter->GetTransform().GetOrientation().ToEuler()) , Vector3 {1,0,0})).Normalised();
+	//Vector3 playerDirectionVector = (passedPlayableCharacter->GetTransform().GetOrientation() * Vector3 { 0, 0, -1 });
+	//Vector3 sphereSize = { radius,radius,radius };
+	//Vector3 position = passedPlayableCharacter->GetTransform().GetPosition();
+	//SphereVolume* volume = new SphereVolume(radius);
+	//sphere->setBulletDirectionVector(playerDirectionVector);
+	//sphere->SetBoundingVolume((CollisionVolume*)volume);
+	//sphere->GetTransform().SetScale(sphereSize);
+	//sphere->GetTransform().SetPosition(position - Vector3{ 0,0,10 });
+	//sphere->GetTransform().SetPosition((position)-(Vector3{ 0,0,10 }));
 
-	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
-	sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
-	sphere->GetRenderObject()->SetColour(passedPlayableCharacter->getPaintColor());
-	PhysicsObject* physicsBullet = sphere->GetPhysicsObject();
-	if (!sphere->ProjectileAffectedByGravity() || true) {
-		physicsBullet->SetAffectedByGravityFalse();
-	}
-	sphere->GetPhysicsObject()->SetInverseMass(bulletsInverseMass);
-	sphere->GetPhysicsObject()->InitSphereInertia();
+	//sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
+	//sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
+	//sphere->GetRenderObject()->SetColour(passedPlayableCharacter->getPaintColor());
+	//PhysicsObject* physicsBullet = sphere->GetPhysicsObject();
+	//if (!sphere->ProjectileAffectedByGravity() || true) {
+	//	physicsBullet->SetAffectedByGravityFalse();
+	//}
+	//sphere->GetPhysicsObject()->SetInverseMass(bulletsInverseMass);
+	//sphere->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(sphere);
-	return sphere;
+	//GameWorld::GetInstance()->AddGameObject(sphere);
+	return nullptr;
 
 }
 
@@ -1314,7 +1324,7 @@ void TutorialGame::movePlayer(playerTracking* unitGoat) {
 	Ray r = Ray(rayPos, rayDir);
 
 	RayCollision grounded;
-	if (world->Raycast(r, grounded, true)) {
+	if (GameWorld::GetInstance()->Raycast(r, grounded, true)) {
 		/*if (objClosest) {
 			objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
 		}*/
@@ -1384,7 +1394,7 @@ GameObject* TutorialGame::AddEnemyToWorld(const Vector3& position) {
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(character);
+	GameWorld::GetInstance()->AddGameObject(character);
 
 	return character;
 }
@@ -1404,7 +1414,7 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 	apple->GetPhysicsObject()->SetInverseMass(1.0f);
 	apple->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(apple);
+	GameWorld::GetInstance()->AddGameObject(apple);
 
 	return apple;
 }
@@ -1420,11 +1430,13 @@ void TutorialGame::InitDefaultFloorRunway() {
 }
 
 void TutorialGame::InitGameExamples() {
-	AddCubeToWorld(Vector3(0.0f, 15.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
-	AddCapsuleToWorld(Vector3(0.0f, 15.0f, 5.0f), 2.5, 2.5);
-	//auto q = Quaternion();
-	////TODO
-	//selectionObject = AddPlayerToWorld(Vector3(0, 5, 0), q);
+	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
+	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 2.5, 2.5);
+	
+	//TODO
+	auto q = Quaternion();
+	lockedObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+
 	//AddEnemyToWorld(Vector3(5, 5, 0));
 	//AddBonusToWorld(Vector3(10, 5, 0));
 }
@@ -1516,10 +1528,10 @@ bool TutorialGame::SelectObject() {
 				selectionObject = nullptr;
 			}
 
-			Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
+			Ray ray = CollisionDetection::BuildRayFromMouse(*GameWorld::GetInstance()->GetMainCamera());
 
 			RayCollision closestCollision;
-			if (world->Raycast(ray, closestCollision, true)) {
+			if (GameWorld::GetInstance()->Raycast(ray, closestCollision, true)) {
 				selectionObject = (GameObject*)closestCollision.node;
 
 				if(selectionObject->GetRenderObject() != nullptr)selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
@@ -1562,10 +1574,10 @@ void TutorialGame::MoveSelectedObject() {
 	}
 	//Push the selected object!
 	if (Window::GetMouse()->ButtonPressed(NCL::MouseButtons::RIGHT)) {
-		Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
+		Ray ray = CollisionDetection::BuildRayFromMouse(*GameWorld::GetInstance()->GetMainCamera());
 
 		RayCollision closestCollision;
-		if (world->Raycast(ray, closestCollision, true)) {
+		if (GameWorld::GetInstance()->Raycast(ray, closestCollision, true)) {
 			if (closestCollision.node == selectionObject) {
 				selectionObject->GetPhysicsObject()->AddForceAtPosition(ray.GetDirection() * forceMagnitude, closestCollision.collidedAt);
 			}
@@ -1592,7 +1604,7 @@ StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 	object->GetPhysicsObject()->SetInverseMass(1.0f);
 	object->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(object);
+	GameWorld::GetInstance()->AddGameObject(object);
 
 	return object;
 

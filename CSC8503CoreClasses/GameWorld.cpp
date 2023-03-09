@@ -8,6 +8,8 @@
 using namespace NCL;
 using namespace NCL::CSC8503;
 
+GameWorld* GameWorld::_instance = nullptr;
+
 GameWorld::GameWorld()	{
 	mainCamera = new Camera();
 
@@ -78,6 +80,10 @@ void GameWorld::UpdateWorld(float dt) {
 	if (shuffleConstraints) {
 		std::shuffle(constraints.begin(), constraints.end(), e);
 	}
+	for (int i = 0; i < gameObjects.size(); ++i) {
+		gameObjects[i]->Update(dt);
+	}
+
 }
 
 bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObject, GameObject* ignoreThis) const {

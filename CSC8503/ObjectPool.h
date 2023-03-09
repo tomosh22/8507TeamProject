@@ -7,13 +7,9 @@ template<class Object>
 class ObjectPool
 {
 public:
-	ObjectPool(size_t Size)
+	ObjectPool()
 	{
-		_nSize = Size;
-		for (size_t n = 0; n < _nSize; n++)
-		{
-			_mPool.push_back(new Object());
-		}
+		_nSize = 0;
 	}
 	virtual ~ObjectPool()
 	{
@@ -26,7 +22,7 @@ public:
 		_nSize = 0;
 	}
 
-	Object* GetObject()
+	Object* GetObject2()
 	{
 		Object* pObj = NULL;
 		if (_nSize == 0)
@@ -44,8 +40,14 @@ public:
 
 	void ReturnObject(Object* pObj)
 	{
+		returnObj(pObj);
 		_mPool.push_back(pObj);
 		++_nSize;
+	}
+
+	std::list<Object*> ReturnList()
+	{
+		return _mPool;
 	}
 
 private:

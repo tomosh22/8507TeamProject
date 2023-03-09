@@ -436,7 +436,9 @@ void GameTechRenderer::RenderCamera() {
 
 		}
 		else {
-			glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+			if ((OGLTexture*)i->GetDefaultTexture()) {
+				glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+			}
 		}
 		
 //		glDisable(GL_CULL_FACE);//todo turn back on

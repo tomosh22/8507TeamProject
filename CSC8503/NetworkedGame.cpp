@@ -7,6 +7,7 @@
 #define COLLISION_MSG 30
 #define NETWORK_ID_OFFSET 1000
 
+NetworkedGame* NetworkedGame::_instance = nullptr;
 NetworkedGame::NetworkedGame() {
 	client = nullptr;
 
@@ -158,7 +159,7 @@ void NetworkedGame::HandlePlayerDisconnect(int pid) {
 		return;
 	}
 	//remove all objects of this server in the world
-	this->world->RemoveGameObject(it->second->GetObjectPointer(), true);
+	GameWorld::GetInstance()->RemoveGameObject(it->second->GetObjectPointer(), true);
 	serverPlayers.erase(it);
 }
 

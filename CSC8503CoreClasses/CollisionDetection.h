@@ -48,6 +48,7 @@ namespace NCL {
 			Vector3 normal;
 			float	penetration;
 		};
+
 		struct CollisionInfo {
 			GameObject* a;
 			GameObject* b;

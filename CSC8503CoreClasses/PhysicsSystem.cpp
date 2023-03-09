@@ -9,15 +9,15 @@
 #include "Debug.h"
 #include "Window.h"
 #include <functional>
-#include <cmath>
 #include<algorithm>
 #include"Projectile.h"
+#include"NetworkedGame.h"
 
 using namespace NCL;
 using namespace CSC8503;
 
 PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g)	{
-	applyGravity	= false;
+	applyGravity	= true;
 	useBroadPhase	= false;	
 	dTOffset		= 0.0f;
 	globalDamping	= 0.995f;
@@ -43,6 +43,7 @@ any collisions they are in.
 */
 void PhysicsSystem::Clear() {
 	allCollisions.clear();
+
 }
 
 /*
@@ -164,6 +165,15 @@ void PhysicsSystem::UpdateCollisionList() {
 		if ((*i).framesLeft == numCollisionFrames) {
 			i->a->OnCollisionBegin(i->b);
 			i->b->OnCollisionBegin(i->a);
+
+			
+			if (i->a->GetName() == "Bullet" && i->b->isPaintable)
+				NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(i->b,i->b->GetTransform().GetPosition() + i->point.localB, 10);
+
+			if (i->b->GetName() == "Bullet" && i->a->isPaintable)
+				NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(i->a, i->a->GetTransform().GetPosition() + i->point.localA, 10);
+
+			//
 		}
 
 		CollisionDetection::CollisionInfo& in = const_cast<CollisionDetection::CollisionInfo&>(*i);
@@ -437,8 +447,9 @@ void PhysicsSystem::BroadPhase() {
 				for (auto j = std::next(i); j != data.end(); ++j) {
 					//is this pair of items allready in the collision set
 					// if the same pair is in another quadtree node together ect
-					info.a = std::min((*i).object, (*j).object);
-					info.b = std::max((*i).object, (*j).object);
+
+					info.a = min((*i).object, (*j).object);
+					info.b = max((*i).object, (*j).object);
 					broadphaseCollisions.insert(info);
 
 				}
@@ -540,7 +551,7 @@ void PhysicsSystem::IntegrateVelocity(float dt) {
 		Transform& transform = (*i)->GetTransform();
 		float df = object->GetInverseMass();
 		//std::cout << std::pow(transform.GetScale().Length(),1.0/3.0) << std::endl;
-		float scaleOb = std::sqrt(1.0 / (1.0 + std::max(std::pow(transform.GetScale().Length(), 1.0 / 4.0) - 1.5, 0.0)));
+		float scaleOb = std::sqrt(1.0 / (1.0 + max(std::pow(transform.GetScale().Length(), 1.0 / 4.0) - 1.5, 0.0)));
 		float scaleObCast = ((scaleOb) * (dt * 60));
 		float frameLinearDamping = (scaleObCast < 0000.1) ? (scaleObCast) : 1 - (0.4 * dt);
 		/*	float scaleOb = (object->GetLinearVelocity()).LengthSquared();

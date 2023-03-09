@@ -4,88 +4,121 @@
 #include"Projectile.h"
 #include<vector>
 #include"Vector4.h"
+#include"ObjectPool.h"
+#include "GameWorld.h"
+
+namespace NCL {
+	namespace CSC8503 {
+
+		class playerTracking :public GameObject {
+		public:
+
+			playerTracking();
+
+			~playerTracking() {
+				delete playerProjectile;
+				bulletsUsed.clear();
+				bulletsUsedAndMoved.clear();
+
+			}
+
+			
+			void Update(float dt);
 
 
-namespace NCL::CSC8503 {
+			void Move(float dt);
+			void Rotate();
+			void Shoot(float dt);
+			float SmoothDamp(float current, float target, float& currentVelocity, float smoothTime, float maxSpeed, float deltaTime);
 
-	class playerTracking :public GameObject {
-	public:
+			void setplayerID(int assignedPlayerID) {
+				playerID = assignedPlayerID;
+			}
 
-		playerTracking();
+			void setTeamID(int assignedTeamID) {
+				playerID = assignedTeamID;
+			}
 
-		~playerTracking() {
-			delete playerProjectile;
-			bulletsUsed.clear();
-			bulletsUsedAndMoved.clear();
+			void resetPlayerProjectile() {
+				playerProjectile = nullptr;
+			}
 
-		}
+			void setWeponType(gun newWeponType) {
+				weaponType = newWeponType;
+			}
 
-		void setplayerID(int assignedPlayerID) {
-			playerID = assignedPlayerID;
-		}
+			void setPaintColor(Vector4 newPaintColor) {
+				paintColor = newPaintColor;
+			}
 
-		void setTeamID(int assignedTeamID) {
-			playerID = assignedTeamID;
-		}
+			void addToBulletsUsed(Projectile* bulletToAdd) {
+				bulletsUsed.push_back(bulletToAdd);
+			}
 
-		void resetPlayerProjectile() {
-			playerProjectile = nullptr;
-		}
-
-		void setWeponType(gun newWeponType) {
-			type = newWeponType;
-		}
-
-		void setPaintColor(Vector4 newPaintColor) {
-			paintColor = newPaintColor;
-		}
-
-		void addToBulletsUsed(Projectile* bulletToAdd) {
-			bulletsUsed.push_back(bulletToAdd);
-		}
-
-		void clearBulletsUsed();
+			void clearBulletsUsed();
 
 
-		 int getBulletVectorSize() {
-			return bulletsUsed.size();
-		}
+			int getBulletVectorSize() {
+				return bulletsUsed.size();
+			}
 
-		 Projectile* reuseBullet();
+			Projectile* reuseBullet();
 
-		Vector4 getPaintColor() {
-			return paintColor;
-		}
+			Vector4 getPaintColor() {
+				return paintColor;
+			}
 
-		gun getWeponType() {
-			return type;
-		}
+			gun getWeponType() {
+				return weaponType;
+			}
 
-		/*void AssignPlayerWeapon(gun weponType) {
-			playerProjectile->setGunType(weponType);
-		}*/
+			float GetSpeed()
+			{
+				return moveSpeed;
+			}
+			void SetSpeed(float speed)
+			{
+				moveSpeed = speed;
+			}
 
-		Projectile* getPlayerProjectile() {
-			return playerProjectile;
-		}
-        
+			/*void AssignPlayerWeapon(gun weponType) {
+				playerProjectile->setGunType(weponType);
+			}*/
 
-	protected:
-		 
-		 float playerYawOrientation;
-		 float playerPitchOrientation;
-		 int playerID;
-		 int teamID;
-		 int IndividualplayerScore;
-		 Projectile* playerProjectile;
-		 gun type;
-		 Vector4 paintColor;
-		 vector<Projectile*> bulletsUsed;
-		 vector<Projectile*> bulletsUsedAndMoved;
-	};
+			Projectile* getPlayerProjectile() {
+				return playerProjectile;
+			}
+
+			void FireBullet();
+			void ResetBullet(Projectile* bullet);
+			void ReTurnBullet(Projectile* bullet);
 
 
+		protected:
+
+			float playerYawOrientation;
+			float playerPitchOrientation;
+			int playerID;
+			int teamID;
+			int IndividualplayerScore;
+			Projectile *playerProjectile;
+			gun weaponType;
+			Vector4 paintColor;
+			float moveSpeed;
+
+			float fireOffset; //this is is offset of firing position
+			Vector3 forwad;
+			Vector3 right;
+			//This is me 
+			ObjectPool<Projectile> *bulletPool;
+			float coolDownTimer;   //this is timer of firing
+
+			vector<Projectile*> bulletsUsed;
+			vector<Projectile*> bulletsUsedAndMoved;
+		};
 
 
 
+
+	}
 }

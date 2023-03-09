@@ -405,10 +405,10 @@ void TutorialGame::UpdateGame(float dt) {
 		//DispatchComputeShaderForEachTriangle(testCube);
 		//glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
-		//DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, Team::team1);
+		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, Team::team1);
 		glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		//DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius, Team::team1);
+		DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius, Team::team1);
 		glPopDebugGroup();
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
 		//for (GameObject*& wall : walls) {

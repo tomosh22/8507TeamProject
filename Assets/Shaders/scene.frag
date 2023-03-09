@@ -224,6 +224,7 @@ void point(inout vec4 finalColor, vec4 diffuse, vec3 bumpNormal, float metal, fl
 
 void main(void)
 {
+	vec4 diffuse = vec4(1);
 	int dataIndex = int(floor(IN.texCoord.y * height)) * width + int(floor(IN.texCoord.x * width));
 	
 	
@@ -267,10 +268,10 @@ void main(void)
         (c - a) * u.y * (1.0 - u.x) +
         (d - b) * u.x * u.y;
 		
-	fragColor.rgb = color;
-	fragColor.a = 1;
+	diffuse.rgb = color;
+	diffuse.a = 1;
 
-	if(length(color) > 0.95)return;
+	
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -285,7 +286,7 @@ void main(void)
 	vec3 bumpNormal = 2.0 * texture(bumpTex,IN.texCoord).rgb - 1.0;
 	bumpNormal = normalize(TBN * bumpNormal);
 
-	vec4 diffuse = texture(baseTex,IN.texCoord);
+	if(length(diffuse.rgb) < 0.95) diffuse = texture(baseTex,IN.texCoord);
 	vec4 metallic = texture(metallicTex,IN.texCoord);
 	vec4 roughness = texture(roughnessTex,IN.texCoord);
 	vec4 emission = texture(emissionTex, IN.texCoord);

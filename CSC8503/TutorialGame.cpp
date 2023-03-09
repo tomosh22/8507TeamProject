@@ -1642,7 +1642,7 @@ StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 }
 
 
-void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID) {
+void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID, bool clearMask) {
 
 	Matrix4 modelMatrix = object->GetTransform().GetMatrix();
 	
@@ -1661,7 +1661,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	Vector2 maskDims = object->GetRenderObject()->maskDimensions;
 	
 	
-	glClearTexImage((((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()), 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, 0);
+	if(clearMask)glClearTexImage((((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()), 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, 0);
 	
 	
 #ifdef TRI_DEBUG

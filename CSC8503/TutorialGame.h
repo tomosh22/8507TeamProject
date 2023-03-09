@@ -52,7 +52,7 @@ namespace NCL {
 			void setEnemyGoat(GameObject* assignCharcter);
 
 
-			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID);
+			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID, bool clearMask = false);
 
 			MeshGeometry* capsuleMesh = nullptr;
 			MeshGeometry* cubeMesh = nullptr;

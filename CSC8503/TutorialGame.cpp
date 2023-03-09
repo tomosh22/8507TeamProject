@@ -109,6 +109,10 @@ TutorialGame::TutorialGame()	{
 		zeros[i] = 0;
 	}
 	glGenBuffers(1, &(tempSSBO));
+
+
+	renderer->crosshair = new RenderObject(nullptr, OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
+
 	return;
 
 	
@@ -354,6 +358,7 @@ void TutorialGame::InitialiseAssets() {
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
 	quadShader = new OGLShader("quad.vert", "quad.frag");
+	renderer->quadShader = quadShader;
 
 	triComputeShader = new OGLComputeShader("tris.comp");
 	triRasteriseShader = new OGLComputeShader("rasteriseTriangle.comp");
@@ -754,6 +759,7 @@ void TutorialGame::InitWorld() {
 }
 
 void TutorialGame::InitGraphicTest() {
+	renderer->drawCrosshair = true;
 	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 
@@ -824,6 +830,7 @@ void TutorialGame::InitGraphicTest() {
 }
 
 void TutorialGame::InitPhysicalTest() {
+	renderer->drawCrosshair = true;
 	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 

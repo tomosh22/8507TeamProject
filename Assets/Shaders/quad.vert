@@ -26,6 +26,7 @@ out Vertex
 void main(void)
 {
 	OUT.texCoord = texCoord;
+	OUT.colour = colour;
 	mat4 mvp 		  = (projMatrix * viewMatrix * modelMatrix);
 	gl_Position		= vec4(position, 1.0);
 }

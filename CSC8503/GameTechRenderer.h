@@ -30,6 +30,8 @@ namespace NCL {
 
 			//this was me
 			RenderObject* quad;
+			RenderObject* crosshair;
+
 			struct ImGUIPtrs {
 				int* rayMarchMaxSteps;
 				float* rayMarchHitDistance;
@@ -72,6 +74,11 @@ namespace NCL {
 			float timePassed = 0;
 			float timeScale = 0.06;
 
+			OGLShader* debugShader;
+			OGLShader* quadShader;
+
+			bool drawCrosshair = false;
+
 		protected:
 			void NewRenderLines();
 			void NewRenderText();
@@ -100,7 +107,7 @@ namespace NCL {
 			vector<const RenderObject*> activeObjects;
 			
 
-			OGLShader*  debugShader;
+			
 			OGLShader*  skyboxShader;
 			OGLMesh*	skyboxMesh;
 			GLuint		skyboxTex;
@@ -129,6 +136,8 @@ namespace NCL {
 			GLuint textColourVBO;
 			GLuint textTexVBO;
 			size_t textCount;
+
+			void DrawCrossHair();
 		};
 	}
 }

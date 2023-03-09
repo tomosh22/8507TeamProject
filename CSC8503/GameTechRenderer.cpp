@@ -358,15 +358,23 @@ void GameTechRenderer::RenderCamera() {
 			glActiveTexture(GL_TEXTURE0);
 			glBindImageTexture(0, ((OGLTexture*)i->maskTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
 			glUniform1i(glGetUniformLocation(shader->GetProgramID(), "maskTex"),0);
-			BindTextureToShader((OGLTexture*)(*i).baseTex, "baseTex", 1);
-			BindTextureToShader((OGLTexture*)(*i).bumpTex, "bumpTex", 3);
-			BindTextureToShader((OGLTexture*)(*i).metallic, "metallicTex", 4);
-			BindTextureToShader((OGLTexture*)(*i).roughness, "roughnessTex", 5);
-			BindTextureToShader((OGLTexture*)(*i).emission, "emissionTex", 7);
-			BindTextureToShader((OGLTexture*)(*i).ao, "AOTex", 8);
-			BindTextureToShader((OGLTexture*)(*i).opacity, "opacityTex", 9);
-			BindTextureToShader((OGLTexture*)(*i).gloss, "glossTex", 10);
-			if((OGLTexture*)(*i).roughness != nullptr) BindTextureToShader((OGLTexture*)(*i).heightMap, "heightMap", 6);
+			if (i->pbrTextures != nullptr) {
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->base, "baseTex", 1);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->bump, "bumpTex", 3);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->metallic, "metallicTex", 4);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->roughness, "roughnessTex", 5);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->heightMap, "heightMap", 6);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->emission, "emissionTex", 7);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->ao, "AOTex", 8);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->opacity, "opacityTex", 9);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->gloss, "glossTex", 10);
+			}
+			else {
+				BindTextureToShader((OGLTexture*)(*i).baseTex, "baseTex", 1);
+				BindTextureToShader((OGLTexture*)(*i).bumpTex, "bumpTex", 3);
+			}
+			
+			
 			glUniform1i(hasTexLocation,1);
 
 		}

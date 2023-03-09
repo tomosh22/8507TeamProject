@@ -12,6 +12,18 @@ namespace NCL {
 		class Transform;
 		using namespace Maths;
 
+		struct PBRTextures {
+			TextureBase* base = nullptr;
+			TextureBase* bump = nullptr;
+			TextureBase* metallic = nullptr;
+			TextureBase* roughness = nullptr;
+			TextureBase* heightMap = nullptr;
+			TextureBase* emission = nullptr;
+			TextureBase* ao = nullptr;
+			TextureBase* opacity = nullptr;
+			TextureBase* gloss = nullptr;
+		};
+
 		class RenderObject
 		{
 		public:
@@ -57,15 +69,8 @@ namespace NCL {
 			Vector2 maskDimensions;
 			bool isComplex = false;
 
+			PBRTextures* pbrTextures = nullptr;
 			
-			TextureBase* bump = nullptr;
-			TextureBase* metallic = nullptr;
-			TextureBase* roughness = nullptr;
-			TextureBase* heightMap = nullptr;
-			TextureBase* emission = nullptr;
-			TextureBase* ao = nullptr;
-			TextureBase* opacity = nullptr;
-			TextureBase* gloss = nullptr;
 			bool useHeightMap = false;
 
 

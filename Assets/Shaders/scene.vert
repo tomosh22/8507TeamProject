@@ -39,7 +39,7 @@ void main(void)
 	OUT.normal = wNormal;
 	OUT.tangent = wTangent;
 	OUT.binormal = cross(wTangent,wNormal) * tangent.w;
-	OUT.texCoord = texCoord;
+	OUT.texCoord = texCoord / 1;
 	OUT.colour = objectColour;
 
 	if(hasVertexColours) {

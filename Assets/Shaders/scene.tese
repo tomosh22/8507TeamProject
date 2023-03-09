@@ -100,7 +100,7 @@ void main() {
 	
 	if(useHeightMap || true){
 		float height = texture(heightMap , OUT.texCoord ).x;
-		worldPos.xyz += TriMixVec3(IN[0].normal, IN[1].normal, IN[2].normal) * height * 10;
+		worldPos.xyz += TriMixVec3(IN[0].normal, IN[1].normal, IN[2].normal) * height * 1;
 	}
 	
 	gl_Position = projMatrix * viewMatrix * worldPos;

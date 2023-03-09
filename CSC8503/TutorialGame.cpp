@@ -293,16 +293,61 @@ void TutorialGame::InitialiseAssets() {
 	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
 	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
 
-	crystalDiffuse = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_diffuse.jpg");
-	crystalBump = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_normal.jpg");
-	crystalMetallic = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_metallic.jpg");
-	crystalRoughness = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_roughness.jpg");
-	crystalHeightMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_height.jpg");
-	crystalEmissionMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_emissive.jpg");
-	crystalAOMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_ao.jpg");
-	crystalOpacityMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_opacity.jpg");
-	crystalGlossMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_glossiness.jpg");
+	crystalPBR = new PBRTextures();
+	crystalPBR->base = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_diffuse.jpg");
+	crystalPBR->bump = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_normal.jpg");
+	crystalPBR->metallic = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_metallic.jpg");
+	crystalPBR->roughness = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_roughness.jpg");
+	crystalPBR->heightMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_height.jpg");
+	crystalPBR->emission = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_emissive.jpg");
+	crystalPBR->ao = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_ao.jpg");
+	crystalPBR->opacity = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_opacity.jpg");
+	crystalPBR->gloss = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_glossiness.jpg");
 
+	spaceShipPBR = new PBRTextures();
+	spaceShipPBR->base = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_diffuse.jpg");
+	spaceShipPBR->bump = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_normal.jpg");
+	spaceShipPBR->metallic = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_metalness.jpg");
+	spaceShipPBR->roughness = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_roughness.jpg");
+	spaceShipPBR->heightMap = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_height.jpg");
+	spaceShipPBR->emission = nullptr;
+	spaceShipPBR->ao = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_ao.jpg");
+	spaceShipPBR->opacity = nullptr;
+	spaceShipPBR->gloss = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_glossiness.jpg");
+
+	rockPBR = new PBRTextures();
+	rockPBR->base = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_diffuse.jpg");
+	rockPBR->bump = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_normal.jpg");
+	rockPBR->metallic = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_metallic.jpg");
+	rockPBR->roughness = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_roughness.jpg");
+	rockPBR->heightMap = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_height.jpg");
+	rockPBR->emission = nullptr;
+	rockPBR->ao = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_ao.jpg");
+	rockPBR->opacity = nullptr;
+	rockPBR->gloss = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_glossiness.jpg");
+
+	grassWithWaterPBR = new PBRTextures();
+	grassWithWaterPBR->base = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_diffuse.jpg");
+	grassWithWaterPBR->bump = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_normal.jpg");
+	grassWithWaterPBR->metallic = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_metallic.jpg");
+	grassWithWaterPBR->roughness = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_roughness.jpg");
+	grassWithWaterPBR->heightMap = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_height.jpg");
+	grassWithWaterPBR->emission = nullptr;
+	grassWithWaterPBR->ao = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_ao.jpg");
+	grassWithWaterPBR->opacity = nullptr;
+	grassWithWaterPBR->gloss = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_glossiness.jpg");
+
+	fencePBR = new PBRTextures();
+	fencePBR->base = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_diffuse.jpg");
+	fencePBR->bump = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_normal.jpg");
+	fencePBR->metallic = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_metallic.jpg");
+	fencePBR->roughness = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_roughness.jpg");
+	fencePBR->heightMap = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_height.jpg");
+	fencePBR->emission = nullptr;
+	fencePBR->ao = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_ao.jpg");
+	fencePBR->opacity = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_opacity.jpg");
+	fencePBR->gloss = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_glossiness.jpg");
+	
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
 	quadShader = new OGLShader("quad.vert", "quad.frag");
@@ -708,8 +753,25 @@ void TutorialGame::InitGraphicTest() {
 		AddSphereToWorld({ 0,0,0 }, 10, false,false);
 	}
 	
-	testSphere = AddSphereToWorld({50,50,50},10,true);
-	InitPaintableTextureOnObject(testSphere);
+	testSphere0 = AddSphereToWorld({50,50,50},10,true);
+	InitPaintableTextureOnObject(testSphere0);
+	testSphere0->GetRenderObject()->pbrTextures = crystalPBR;
+
+	testSphere1 = AddSphereToWorld({ 50,50,100 }, 10, true);
+	InitPaintableTextureOnObject(testSphere1);
+	testSphere1->GetRenderObject()->pbrTextures = spaceShipPBR;
+
+	testSphere2 = AddSphereToWorld({ 50,50,150 }, 10, true);
+	InitPaintableTextureOnObject(testSphere2);
+	testSphere2->GetRenderObject()->pbrTextures = rockPBR;
+
+	testSphere3 = AddSphereToWorld({ 100,50,50 }, 10, true);
+	InitPaintableTextureOnObject(testSphere3);
+	testSphere3->GetRenderObject()->pbrTextures = grassWithWaterPBR;
+
+	testSphere4 = AddSphereToWorld({ 100,50,100 }, 10, true);
+	InitPaintableTextureOnObject(testSphere4);
+	testSphere4->GetRenderObject()->pbrTextures = fencePBR;
 	
 
 	//testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
@@ -816,15 +878,10 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
-	object->GetRenderObject()->baseTex = crystalDiffuse;
-	object->GetRenderObject()->bumpTex = crystalBump;
-	object->GetRenderObject()->metallic = crystalMetallic;
-	object->GetRenderObject()->roughness = crystalRoughness;
-	object->GetRenderObject()->heightMap = crystalHeightMap;
-	object->GetRenderObject()->emission = crystalEmissionMap;
-	object->GetRenderObject()->ao = crystalAOMap;
-	object->GetRenderObject()->opacity = crystalOpacityMap;
-	object->GetRenderObject()->gloss = crystalGlossMap;
+	object->GetRenderObject()->baseTex = spaceShipDiffuse;
+	object->GetRenderObject()->bumpTex = spaceShipBump;
+	
+	object->GetRenderObject()->pbrTextures = spaceShipPBR;
 }
 /*
 

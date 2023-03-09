@@ -9,6 +9,7 @@
 #include"Projectile.h"
 #include <array>
 #include"ObjectPool.h"
+#include "RenderObject.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -265,9 +266,29 @@ namespace NCL {
 			TextureBase* crystalAOMap = nullptr;
 			TextureBase* crystalOpacityMap = nullptr;
 			TextureBase* crystalGlossMap = nullptr;
+
+			TextureBase* spaceShipDiffuse = nullptr;
+			TextureBase* spaceShipBump = nullptr;
+			TextureBase* spaceShipMetallic = nullptr;
+			TextureBase* spaceShipRoughness = nullptr;
+			TextureBase* spaceShipHeightMap = nullptr;
+			TextureBase* spaceShipEmissionMap = nullptr;
+			TextureBase* spaceShipAOMap = nullptr;
+			TextureBase* spaceShipOpacityMap = nullptr;
+			TextureBase* spaceShipGlossMap = nullptr;
+
+			PBRTextures* crystalPBR;
+			PBRTextures* spaceShipPBR;
+			PBRTextures* rockPBR;
+			PBRTextures* grassWithWaterPBR;
+			PBRTextures* fencePBR;
 			
 
-			GameObject* testSphere = nullptr;
+			GameObject* testSphere0 = nullptr;
+			GameObject* testSphere1 = nullptr;
+			GameObject* testSphere2 = nullptr;
+			GameObject* testSphere3 = nullptr;
+			GameObject* testSphere4 = nullptr;
 
 			bool rayMarch = true;
 		};

@@ -28,7 +28,7 @@ namespace NCL {
 
 			void Move(float dt);
 			void Rotate();
-			void Shoot();
+			void Shoot(float dt);
 			float SmoothDamp(float current, float target, float& currentVelocity, float smoothTime, float maxSpeed, float deltaTime);
 
 			void setplayerID(int assignedPlayerID) {
@@ -102,6 +102,7 @@ namespace NCL {
 			Vector3 right;
 			//This is me 
 			ObjectPool<Projectile> *bulletPool;
+			float coolDownTimer;   //this is timer of firing
 
 			vector<Projectile*> bulletsUsed;
 			vector<Projectile*> bulletsUsedAndMoved;

@@ -20,19 +20,17 @@ playerTracking::playerTracking()
 
 		fireOffset = 5;
 		bulletPool =new ObjectPool<Projectile>();
-
+		coolDownTimer = 0;
 		paintColor = { 1,1,0,1 };
 		bulletsUsed = {};
 		bulletsUsedAndMoved = {};
-		
-		Projectile* newBullet = bulletPool->GetObject2();
-		ResetBullet(newBullet);
+
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
 {
 	Rotate();
-	Shoot();
+	Shoot(dt);
 	Move(dt);
 }
 
@@ -63,14 +61,21 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 
 	right = Vector3(camWorld.GetColumn(0));
 	forwad = Vector3::Cross(Vector3(0, 1, 0), right);
+
+
 }
 
-void NCL::CSC8503::playerTracking::Shoot()
+void NCL::CSC8503::playerTracking::Shoot(float dt)
 {
-	if (Window::GetMouse()->DoubleClicked(MouseButtons::LEFT))
+	if (Window::GetMouse()->DoubleClicked(MouseButtons::LEFT)&&coolDownTimer<=0)
 	{
-		std::cout << "Shoot" << std:: endl;
-		
+		Projectile* newBullet = bulletPool->GetObject2();
+		ResetBullet(newBullet);
+		coolDownTimer = weaponType.rateOfFire;
+	}
+	else if (coolDownTimer > 0)
+	{
+		coolDownTimer -= dt;
 	}
 }
 
@@ -115,31 +120,9 @@ void playerTracking::clearBulletsUsed()
 
 void playerTracking::FireBullet() 
 {		
-		//Projectile newBullet = *bulletPool->GetObject2();
-		//ResetBullet(newBullet);
-		//Projectile* loadedBullet = useNewBullet(selectedPlayerCharacter);
-		//selectedPlayerCharacter->addToBulletsUsed(loadedBullet);
-		//PhysicsObject* physicsShot = newBullet.GetPhysicsObject();
-		//physicsShot->SetLayerID(); // set Id so bullets cannot collied with each other and players.
-		//loadedBullet->GetTransform().setDestructable();
-		//physicsShot->SetLinearVelocity({ 0,0,0 });
-		//physicsShot->ClearForces();
 
-		//TODO::Force and firing direction should based on the character
-		//
-		//float const startingForce = newBullet.getPojectilePropultionForce();
-		//Vector3 firingDirectionVector = newBullet.getBulletDirectionVector();
-		//Vector3 firingDirectionVectorWithForce = firingDirectionVector * startingForce;
-		//physicsShot->AddForce(firingDirectionVectorWithForce);
-
-
-		//testing bullet vector removal
-		///*if (selectedPlayerCharacter->getBulletVectorSize() > 10) {
-		//	selectedPlayerCharacter->clearBulletsUsed();
-		//}*/
-		//testing bullet vector removal
 		return;
-	}
+}
 
 //Call this function to init a new Bullet
 void playerTracking::ResetBullet(Projectile* bullet)

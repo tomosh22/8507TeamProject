@@ -152,6 +152,7 @@ void GameTechRenderer::RenderFrame() {
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	ImGui();
+	if(drawCrosshair)DrawCrossHair();
 }
 
 void GameTechRenderer::BuildObjectList() {
@@ -459,6 +460,7 @@ void GameTechRenderer::RenderFullScreenQuad() {
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE); //todo reverse winding order
 	BindShader(quad->GetShader());
+	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "hasTexture"), true);
 	BindTextureToShader((OGLTexture*)quad->GetDefaultTexture(), "mainTex", 0);
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -694,4 +696,18 @@ void GameTechRenderer::ImGui() {
 	ImGui::EndFrame();
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void GameTechRenderer::DrawCrossHair() {
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE); //todo reverse winding order
+	BindShader(quadShader);
+	glUniform1i(glGetUniformLocation(quadShader->GetProgramID(), "hasTexture"), false);
+	BindTextureToShader((OGLTexture*)quad->GetDefaultTexture(), "mainTex", 0);
+	BindMesh(crosshair->GetMesh());
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 9, "crosshair");
+	glDrawArrays(GL_LINES, 0, 4);
+	glPopDebugGroup();
 }

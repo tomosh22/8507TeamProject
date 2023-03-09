@@ -224,6 +224,7 @@ OGLMesh* OGLMesh::GenerateTriangleWithIndices() {
 	vertices.push_back({ 0.0f, .5f, 0.0f });
 	vertices.push_back({ 0.5f, -.5f, 0.0f });
 	vertices.push_back({ -.5f, -.5f, 0.0f });
+	vertices.push_back({ -.5f, -.5f, 0.0f });
 	m->SetVertexPositions(vertices);
 	
 	std::vector<Vector2> texCoords;
@@ -247,3 +248,29 @@ OGLMesh* OGLMesh::GenerateTriangleWithIndices() {
 	return m;
 }
 
+OGLMesh* OGLMesh::GenerateCrossHair() {
+	OGLMesh* m = new OGLMesh();
+
+	std::vector<Vector3> vertices;
+	vertices.push_back({ 0.0f, -0.1f, 0.0f });
+	vertices.push_back({ 0.0f, 0.1f, 0.0f });
+
+	vertices.push_back({ -0.1f, 0.0f, 0.0f });
+	vertices.push_back({ 0.1f, 0.0f, 0.0f });
+	m->SetVertexPositions(vertices);
+
+
+	std::vector<Vector4> colours;
+	for (int i = 0; i < 4; i++)
+	{
+		colours.push_back(Vector4(1, 0, 0, 1));
+	}
+	m->SetVertexColours(colours);
+
+	m->SetDebugName("crosshair");
+	m->SetPrimitiveType(GeometryPrimitive::Lines);
+
+
+	m->UploadToGPU();
+	return m;
+}

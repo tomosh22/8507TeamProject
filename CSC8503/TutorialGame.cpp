@@ -902,7 +902,7 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated
 	object->GetRenderObject()->baseTex = spaceShipDiffuse;
 	object->GetRenderObject()->bumpTex = spaceShipBump;
 	
-	object->GetRenderObject()->pbrTextures = spaceShipPBR;
+	object->GetRenderObject()->pbrTextures = crystalPBR;
 }
 /*
 
@@ -1037,11 +1037,14 @@ GameObject* TutorialGame::AddRayMarchSphereToWorld(const Vector3& position, floa
 	sphere->GetTransform()
 		.SetScale(sphereSize)
 		.SetPosition(position);
-	
+
+	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
+	sphere->GetRenderObject()->onlyForShadows = true;
 
 	sphere->color = { 1,0,0 };
 	sphere->radius = radius;
 	sphere->center = position;
+	GameWorld::GetInstance()->AddGameObject(sphere);
 	rayMarchSpheres.push_back(sphere);
 	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);

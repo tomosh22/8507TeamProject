@@ -109,6 +109,10 @@ TutorialGame::TutorialGame()	{
 		zeros[i] = 0;
 	}
 	glGenBuffers(1, &(tempSSBO));
+
+
+	renderer->crosshair = new RenderObject(nullptr, OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
+
 	return;
 
 	
@@ -308,52 +312,53 @@ void TutorialGame::InitialiseAssets() {
 	crystalPBR->gloss = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_glossiness.jpg");
 
 	spaceShipPBR = new PBRTextures();
-	spaceShipPBR->base = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_diffuse.jpg");
-	spaceShipPBR->bump = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_normal.jpg");
-	spaceShipPBR->metallic = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_metalness.jpg");
-	spaceShipPBR->roughness = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_roughness.jpg");
-	spaceShipPBR->heightMap = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_height.jpg");
+	spaceShipPBR->base = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_diffuse.jpg");
+	spaceShipPBR->bump = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_normal.jpg");
+	spaceShipPBR->metallic = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_metalness.jpg");
+	spaceShipPBR->roughness = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_roughness.jpg");
+	spaceShipPBR->heightMap = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_height.jpg");
 	spaceShipPBR->emission = nullptr;
-	spaceShipPBR->ao = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_ao.jpg");
+	spaceShipPBR->ao = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_ao.jpg");
 	spaceShipPBR->opacity = nullptr;
-	spaceShipPBR->gloss = renderer->LoadTexture("PBR/spaceShip2k/white_space_ship_wall_28_66_glossiness.jpg");
+	spaceShipPBR->gloss = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_glossiness.jpg");
 
 	rockPBR = new PBRTextures();
-	rockPBR->base = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_diffuse.jpg");
-	rockPBR->bump = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_normal.jpg");
-	rockPBR->metallic = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_metallic.jpg");
-	rockPBR->roughness = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_roughness.jpg");
-	rockPBR->heightMap = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_height.jpg");
+	rockPBR->base = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_diffuse.jpg");
+	rockPBR->bump = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_normal.jpg");
+	rockPBR->metallic = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_metallic.jpg");
+	rockPBR->roughness = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_roughness.jpg");
+	rockPBR->heightMap = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_height.jpg");
 	rockPBR->emission = nullptr;
-	rockPBR->ao = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_ao.jpg");
+	rockPBR->ao = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_ao.jpg");
 	rockPBR->opacity = nullptr;
-	rockPBR->gloss = renderer->LoadTexture("PBR/rock2k/dirt_with_large_rocks_38_46_glossiness.jpg");
+	rockPBR->gloss = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_glossiness.jpg");
 
 	grassWithWaterPBR = new PBRTextures();
-	grassWithWaterPBR->base = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_diffuse.jpg");
-	grassWithWaterPBR->bump = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_normal.jpg");
-	grassWithWaterPBR->metallic = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_metallic.jpg");
-	grassWithWaterPBR->roughness = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_roughness.jpg");
-	grassWithWaterPBR->heightMap = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_height.jpg");
+	grassWithWaterPBR->base = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_diffuse.jpg");
+	grassWithWaterPBR->bump = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_normal.jpg");
+	grassWithWaterPBR->metallic = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_metallic.jpg");
+	grassWithWaterPBR->roughness = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_roughness.jpg");
+	grassWithWaterPBR->heightMap = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_height.jpg");
 	grassWithWaterPBR->emission = nullptr;
-	grassWithWaterPBR->ao = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_ao.jpg");
+	grassWithWaterPBR->ao = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_ao.jpg");
 	grassWithWaterPBR->opacity = nullptr;
-	grassWithWaterPBR->gloss = renderer->LoadTexture("PBR/grassWithWater2k/grass_with_water_39_67_glossiness.jpg");
+	grassWithWaterPBR->gloss = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_glossiness.jpg");
 
 	fencePBR = new PBRTextures();
-	fencePBR->base = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_diffuse.jpg");
-	fencePBR->bump = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_normal.jpg");
-	fencePBR->metallic = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_metallic.jpg");
-	fencePBR->roughness = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_roughness.jpg");
-	fencePBR->heightMap = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_height.jpg");
+	fencePBR->base = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_diffuse.jpg");
+	fencePBR->bump = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_normal.jpg");
+	fencePBR->metallic = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_metallic.jpg");
+	fencePBR->roughness = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_roughness.jpg");
+	fencePBR->heightMap = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_height.jpg");
 	fencePBR->emission = nullptr;
-	fencePBR->ao = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_ao.jpg");
-	fencePBR->opacity = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_opacity.jpg");
-	fencePBR->gloss = renderer->LoadTexture("PBR/fence2k/small_old_wooden_fence_47_66_glossiness.jpg");
+	fencePBR->ao = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_ao.jpg");
+	fencePBR->opacity = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg");
+	fencePBR->gloss = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg");
 	
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
 	quadShader = new OGLShader("quad.vert", "quad.frag");
+	renderer->quadShader = quadShader;
 
 	triComputeShader = new OGLComputeShader("tris.comp");
 	triRasteriseShader = new OGLComputeShader("rasteriseTriangle.comp");
@@ -754,6 +759,7 @@ void TutorialGame::InitWorld() {
 }
 
 void TutorialGame::InitGraphicTest() {
+	renderer->drawCrosshair = true;
 	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 
@@ -824,6 +830,7 @@ void TutorialGame::InitGraphicTest() {
 }
 
 void TutorialGame::InitPhysicalTest() {
+	renderer->drawCrosshair = true;
 	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 

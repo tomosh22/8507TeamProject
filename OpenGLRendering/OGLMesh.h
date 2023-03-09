@@ -29,6 +29,7 @@ namespace NCL {
 
 			static OGLMesh* GenerateQuadWithIndices();
 			static OGLMesh* GenerateTriangleWithIndices();
+			static OGLMesh* GenerateCrossHair();
 
 			GLuint vao;
 			GLuint oglType;

@@ -76,7 +76,9 @@ HitInformation SDF(vec3 from) {
 	{
 		Sphere sphere = sphereData[i];
 		vec3 sphereCenter = vec3(sphere.x,sphere.y,sphere.z);
+		
 		float sphereRadius = sphere.radius;
+		if(sphereCenter == vec3(0) && sphereRadius == 0)continue;
 		vec3 nextCol = vec3(sphere.r,sphere.g,sphere.b);
 		float newDistance = length(from - sphereCenter) - (sphereRadius);
 		vec4 result = Blend(hit.closestDistance,newDistance,hit.color,nextCol,10);

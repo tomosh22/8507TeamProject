@@ -111,7 +111,7 @@ TutorialGame::TutorialGame()	{
 	glGenBuffers(1, &(tempSSBO));
 
 
-	renderer->crosshair = new RenderObject(nullptr, OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
+	renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
 
 	return;
 
@@ -448,10 +448,12 @@ void TutorialGame::UpdateGame(float dt) {
 		//right Click to got to aim mode
 		if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT))
 		{
+			renderer->drawCrosshair = true;
 			objPos += rightAxis * 4.5 + Vector3(0, 1, 0) * 2;   //offset of the character
 		}
 		else
 		{
+			renderer->drawCrosshair = false;
 			objPos += rightAxis * 3.5 + Vector3(0, 1, 0) * 1.5;   //offset of the character
 		}
 		Vector3 camPos = objPos + lockedOffset;
@@ -830,7 +832,7 @@ void TutorialGame::InitGraphicTest() {
 }
 
 void TutorialGame::InitPhysicalTest() {
-	renderer->drawCrosshair = true;
+	renderer->drawCrosshair = false;
 	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 

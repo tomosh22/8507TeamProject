@@ -1264,6 +1264,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 
 	GameWorld::GetInstance()->AddGameObject(character);
 	character->SetName("character");
+	character->SetTeamId(Team::team1);
 	return character;
 }
 

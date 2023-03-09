@@ -21,7 +21,6 @@ playerTracking::playerTracking()
 		fireOffset = 5;
 		bulletPool =new ObjectPool<Projectile>();
 		coolDownTimer = 0;
-		paintColor = { 1,1,0,1 };
 		bulletsUsed = {};
 		bulletsUsedAndMoved = {};
 
@@ -93,6 +92,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	bullet->GetPhysicsObject()->SetInverseMass(weaponType.weight);
 	bullet->GetPhysicsObject()->InitSphereInertia();
 	bullet->GetPhysicsObject()->AddForce(forwad * weaponType.projectileForce);
+	bullet->SetTeamID(teamID);
 	bullet->SetActive(true);
 	bullet->SetPlayer(this);
 

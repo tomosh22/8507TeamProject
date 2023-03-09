@@ -87,7 +87,7 @@ void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 	if (otherObject->isPaintable)
 	{
 
-		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(), 10, teamID);
+		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(),explosionRadius, teamID);
 		//Bullet Recycle
 		if (player!=nullptr)
 		{

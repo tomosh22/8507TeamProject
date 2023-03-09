@@ -93,9 +93,9 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	bullet->GetPhysicsObject()->InitSphereInertia();
 	bullet->GetPhysicsObject()->AddForce(forwad * weaponType.projectileForce);
 	bullet->SetTeamID(teamID);
-	bullet->SetActive(true);
 	bullet->SetPlayer(this);
-
+	bullet->setExplosionRadius(weaponType.radius);
+	bullet->SetActive(true);
 }
 void playerTracking::ReTurnBullet(Projectile* bullet)
 {

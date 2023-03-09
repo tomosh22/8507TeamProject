@@ -9,16 +9,16 @@
 namespace NCL {
 	namespace CSC8503 {
 		struct gun {
-			float radius;
-			float ProjectileSize;
-			float projectileForce;
+			float radius;  //exlopsion radius 
+			float ProjectileSize; // size of bullet
+			float projectileForce; // Fire force
 			float weight;// keep a >0 weight on instances. Otherwise applied forces will have no effect
 			float rateOfFire; // time in seconds between consecuative bullets shot
 			bool affectedByGravity;
 		};
 
 		static gun pistol{
-			6.0f,
+			3.0f,
 			0.2f,
 			100.0f,
 			10.0f,
@@ -27,7 +27,7 @@ namespace NCL {
 		};
 
 		static gun rocket{
-			20.0f,
+			6.0f,
 			0.5f,
 			20.0f,
 			5.0f,

@@ -33,16 +33,17 @@ void main(void)
 
 	OUT.shadowProj 	=  shadowMatrix * vec4 ( position,1);
 	OUT.worldPos 	= ( modelMatrix * vec4 ( position ,1)). xyz ;
-	vec3 wNormal = normalize ( normalMatrix * normalize ( normal ));
-	OUT.normal 		= wNormal;
-	vec3 wTangent = normalize(normalMatrix * normalize(tangent.xyz));
+
+	vec3 wNormal = normalize(normalMatrix * normal);
+	vec3 wTangent = normalize(normalMatrix * tangent.xyz);
+	OUT.normal = wNormal;
 	OUT.tangent = wTangent;
 	OUT.binormal = cross(wTangent,wNormal) * tangent.w;
-	OUT.texCoord	= texCoord;
-	OUT.colour		= objectColour;
+	OUT.texCoord = texCoord / 1;
+	OUT.colour = objectColour;
 
 	if(hasVertexColours) {
 		OUT.colour		= objectColour * colour;
 	}
-	gl_Position		= mvp * vec4(position, 1.0);
+	gl_Position		= vec4(position, 1.0);
 }

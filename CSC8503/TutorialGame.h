@@ -11,6 +11,7 @@
 #include "StateGameObject.h"
 #include <array>
 #include"ObjectPool.h"
+#include "RenderObject.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -50,6 +51,7 @@ namespace NCL {
 
 			void setEnemyGoat(GameObject* assignCharcter);
 
+
 			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius);
 
 			MeshGeometry* capsuleMesh = nullptr;
@@ -70,6 +72,7 @@ namespace NCL {
 			MeshGeometry* charMesh = nullptr;
 			MeshGeometry* enemyMesh = nullptr;
 			MeshGeometry* bonusMesh = nullptr;
+
 
 		protected:
 			void InitialiseAssets();
@@ -107,7 +110,7 @@ namespace NCL {
 
 
 			GameObject* AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated = false);
-			GameObject* AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass = 10.0f);
+			GameObject* AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass = 10.0f, bool physics = true);
 			
 
 			
@@ -189,12 +192,18 @@ namespace NCL {
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object, bool rotated = false);
 
-		
+
+			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID);
+
 			GLuint triangleSSBO;
+			GLuint debugTriangleSSBO;
 			void SetUpTriangleSSBOAndDataTexture();
 			OGLComputeShader* triComputeShader;
+			OGLComputeShader* triRasteriseShader;
 			//OGLTexture* triDataTex;//1d texture
-			//GLuint triangleBoolSSBO;
+			GLuint triangleBoolSSBO;
+			GLuint triangleRasteriseSSBO;
+			GLuint triangleRasteriseSSBOSecondShader;
 			bool SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint);
 
 			void DispatchComputeShaderForEachPixel();
@@ -227,6 +236,7 @@ namespace NCL {
 			GameObject* testTriangle;
 			GameObject* monkey;
 			void AddDebugTriangleInfoToObject(GameObject* object);
+			
 			TextureBase* metalTex;
 			TextureBase* testBumpTex;
 			void SendRayMarchData();
@@ -236,6 +246,67 @@ namespace NCL {
 			void UpdateRayMarchSpheres();
 
 			int gameMode = GAME_MODE_DEFAULT;
+
+			GLuint tempSSBO;
+
+			enum Team {
+				teamNull,
+				team1,
+				team2,
+				team3,
+				team4,
+				team5,
+				team6,
+				team7,
+				team8,
+			};
+			//Team currentTeam = Team::team2;
+			//int currentTeamInt = 1;
+			
+			int highestTriCount = 0;
+
+			TextureBase* ironDiffuse = nullptr;
+			TextureBase* ironBump = nullptr;
+			TextureBase* ironMetallic = nullptr;
+			TextureBase* ironRoughness = nullptr;
+
+			TextureBase* crystalDiffuse = nullptr;
+			TextureBase* crystalBump = nullptr;
+			TextureBase* crystalMetallic = nullptr;
+			TextureBase* crystalRoughness = nullptr;
+			TextureBase* crystalHeightMap = nullptr;
+			TextureBase* crystalEmissionMap = nullptr;
+			TextureBase* crystalAOMap = nullptr;
+			TextureBase* crystalOpacityMap = nullptr;
+			TextureBase* crystalGlossMap = nullptr;
+
+			TextureBase* spaceShipDiffuse = nullptr;
+			TextureBase* spaceShipBump = nullptr;
+			TextureBase* spaceShipMetallic = nullptr;
+			TextureBase* spaceShipRoughness = nullptr;
+			TextureBase* spaceShipHeightMap = nullptr;
+			TextureBase* spaceShipEmissionMap = nullptr;
+			TextureBase* spaceShipAOMap = nullptr;
+			TextureBase* spaceShipOpacityMap = nullptr;
+			TextureBase* spaceShipGlossMap = nullptr;
+
+			PBRTextures* crystalPBR;
+			PBRTextures* spaceShipPBR;
+			PBRTextures* rockPBR;
+			PBRTextures* grassWithWaterPBR;
+			PBRTextures* fencePBR;
+			
+
+			GameObject* testSphere0 = nullptr;
+			GameObject* testSphere1 = nullptr;
+			GameObject* testSphere2 = nullptr;
+			GameObject* testSphere3 = nullptr;
+			GameObject* testSphere4 = nullptr;
+
+			bool rayMarch = true;
+
+			
+
 		};
 	}
 }

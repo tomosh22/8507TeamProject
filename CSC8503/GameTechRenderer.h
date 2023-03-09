@@ -23,9 +23,10 @@ namespace NCL {
 			GameTechRenderer(GameWorld& world);
 			~GameTechRenderer();
 
-			MeshGeometry*	LoadMesh(const string& name);
+			MeshGeometry*	LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes = nullptr);
 			TextureBase*	LoadTexture(const string& name);
 			ShaderBase*		LoadShader(const string& vertex, const string& fragment);
+			ShaderBase*		LoadShader(const string& vertex, const string& fragment, const string& domain, const string& hull);
 
 			//this was me
 			RenderObject* quad;
@@ -37,10 +38,39 @@ namespace NCL {
 				bool* depthTest;
 				Vector3* testSphereCenter;
 				float* testSphereRadius;
+				//int* currentTeamInt;
+				bool* newMethod;
+				bool* rayMarchBool;
+
+				
 			};
 			ImGUIPtrs imguiptrs;
 
+			float noiseScale= 25.0;
+			float noiseOffsetSize = 0.017;
+			float noiseNormalStrength= 0.6;
+			float noiseNormalNoiseMult = 1.27;
+
+			bool newMethod = true;
+
 			bool renderFullScreenQuad = true;
+
+			Vector4		lightColour;
+			float		lightRadius;
+			Vector3		lightPosition;
+
+			float heightMapStrength = 1;
+			bool useBumpMap = true;
+			bool useMetallicMap = true;
+			bool useRoughnessMap = true;
+			bool useHeightMap = true;
+			bool useEmissionMap = true;
+			bool useAOMap = true;
+			bool useOpacityMap = true;
+			bool useGlossMap = true;
+
+			float timePassed = 0;
+			float timeScale = 0.06;
 
 		protected:
 			void NewRenderLines();
@@ -81,9 +111,7 @@ namespace NCL {
 			GLuint		shadowFBO;
 			Matrix4     shadowMatrix;
 
-			Vector4		lightColour;
-			float		lightRadius;
-			Vector3		lightPosition;
+			
 
 			//Debug data storage things
 			vector<Vector3> debugLineData;

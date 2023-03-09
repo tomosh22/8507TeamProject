@@ -11,7 +11,7 @@ using namespace NCL;
 using namespace Rendering;
 using namespace CSC8503;
 
-#define SHADOWSIZE 4096
+#define SHADOWSIZE 8192
 
 Matrix4 biasMatrix = Matrix4::Translation(Vector3(0.5f, 0.5f, 0.5f)) * Matrix4::Scale(Vector3(0.5f, 0.5f, 0.5f));
 
@@ -44,7 +44,7 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	//Set up the light properties
 	lightColour = Vector4(0.8f, 0.8f, 0.5f, 1.0f);
 	lightRadius = 1000.0f;
-	lightPosition = Vector3(0.0f, 200.0f, 0.0f);
+	lightPosition = Vector3(0.0f, 53, 160);
 
 	//Skybox!
 	skyboxShader = new OGLShader("skybox.vert", "skybox.frag");
@@ -133,7 +133,10 @@ void GameTechRenderer::RenderFrame() {
 	glClearColor(0.1, 0.1, 0.1, 1);
 	BuildObjectList();
 	SortObjectList();
+	glDisable(GL_CULL_FACE);
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "shadow");
 	RenderShadowMap();
+	glPopDebugGroup();
 	RenderSkybox();
 	RenderCamera();
 	glDepthMask(false);
@@ -189,7 +192,18 @@ void GameTechRenderer::RenderShadowMap() {
 	shadowMatrix = biasMatrix * mvMatrix; //we'll use this one later on
 
 	for (const auto&i : activeObjects) {
-		Matrix4 modelMatrix = (*i).GetTransform()->GetMatrix();
+
+		//moving vertices slightly to combat shadow acne
+		GeometryPrimitive prevPrimitive = i->GetMesh()->GetPrimitiveType();
+		i->GetMesh()->SetPrimitiveType(GeometryPrimitive::Triangles);
+		Transform* tempTransform = (*i).GetTransform();
+		Transform newTransform;
+		memcpy(&newTransform, tempTransform,sizeof(Transform));
+		Vector3 lightDir = (lightPosition - newTransform.GetPosition()).Normalised();
+		newTransform.SetPosition(newTransform.GetPosition() - lightDir);
+		Matrix4 modelMatrix = newTransform.GetMatrix();
+
+
 		Matrix4 mvpMatrix	= mvMatrix * modelMatrix;
 		glUniformMatrix4fv(mvpLocation, 1, false, (float*)&mvpMatrix);
 		BindMesh((*i).GetMesh());
@@ -197,6 +211,7 @@ void GameTechRenderer::RenderShadowMap() {
 		for (int i = 0; i < layerCount; ++i) {
 			DrawBoundMesh(i);
 		}
+		i->GetMesh()->SetPrimitiveType(prevPrimitive);//dont forget this
 	}
 
 	glViewport(0, 0, windowWidth, windowHeight);
@@ -253,12 +268,33 @@ void GameTechRenderer::RenderCamera() {
 	//this was me
 	int widthLocation = 0;
 	int heightLocation = 0;
+	int scaleLocation = 0;
+
+	int useHeightMapLocalLocation = 0;
 
 	int lightPosLocation	= 0;
 	int lightColourLocation = 0;
 	int lightRadiusLocation = 0;
 
+	int noiseScaleLocation = 0;
+	int noiseOffsetSizeLocation = 0;
+	int noiseNormalStrengthLocation = 0;
+	int noisenormalNoiseMultLocation = 0;
+
 	int cameraLocation = 0;
+
+	int heightMapStrengthLocation = 0;
+	int useBumpMapLocation = 0;
+	int useMetallicMapLocation = 0;
+	int useRoughnessMapLocation = 0;
+	int useHeightMapLocation = 0;
+	int useEmissionMapLocation = 0;
+	int useAOMapLocation = 0;
+	int useOpacityMapLocation = 0;
+	int useGlossMapLocation = 0;
+
+	int timePassedLocation = 0;
+	int timeScaleLocation = 0;
 
 	//TODO - PUT IN FUNCTION
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 3, "123");
@@ -269,6 +305,7 @@ void GameTechRenderer::RenderCamera() {
 	
 
 	for (const auto&i : activeObjects) {
+		if (i->onlyForShadows)continue;
 		OGLShader* shader = (OGLShader*)(*i).GetShader();
 		BindShader(shader);
 
@@ -282,16 +319,37 @@ void GameTechRenderer::RenderCamera() {
 			colourLocation  = glGetUniformLocation(shader->GetProgramID(), "objectColour");
 			hasVColLocation = glGetUniformLocation(shader->GetProgramID(), "hasVertexColours");
 			hasTexLocation  = glGetUniformLocation(shader->GetProgramID(), "hasTexture");
+			scaleLocation  = glGetUniformLocation(shader->GetProgramID(), "scale");
+			useHeightMapLocalLocation  = glGetUniformLocation(shader->GetProgramID(), "useHeightMapLocal");
+			
 
 			//this was me
 			widthLocation = glGetUniformLocation(shader->GetProgramID(), "width");
 			heightLocation = glGetUniformLocation(shader->GetProgramID(), "height");
+
+			noiseScaleLocation = glGetUniformLocation(shader->GetProgramID(), "noiseScale");
+			noiseOffsetSizeLocation = glGetUniformLocation(shader->GetProgramID(), "noiseOffsetSize");
+			noiseNormalStrengthLocation = glGetUniformLocation(shader->GetProgramID(), "noiseNormalStrength");
+			noisenormalNoiseMultLocation = glGetUniformLocation(shader->GetProgramID(), "noiseNormalNoiseMult");
+
+			timePassedLocation = glGetUniformLocation(shader->GetProgramID(), "timePassed");
+			timeScaleLocation = glGetUniformLocation(shader->GetProgramID(), "timeScale");
 
 			lightPosLocation	= glGetUniformLocation(shader->GetProgramID(), "lightPos");
 			lightColourLocation = glGetUniformLocation(shader->GetProgramID(), "lightColour");
 			lightRadiusLocation = glGetUniformLocation(shader->GetProgramID(), "lightRadius");
 
 			cameraLocation = glGetUniformLocation(shader->GetProgramID(), "cameraPos");
+
+			heightMapStrengthLocation = glGetUniformLocation(shader->GetProgramID(), "heightMapStrength");
+			useBumpMapLocation = glGetUniformLocation(shader->GetProgramID(), "useBumpMap");
+			useMetallicMapLocation = glGetUniformLocation(shader->GetProgramID(), "useMetallicMap");
+			useRoughnessMapLocation = glGetUniformLocation(shader->GetProgramID(), "useRoughnessMap");
+			useHeightMapLocation = glGetUniformLocation(shader->GetProgramID(), "useHeightMap");
+			useEmissionMapLocation = glGetUniformLocation(shader->GetProgramID(), "useEmissionMap");
+			useAOMapLocation = glGetUniformLocation(shader->GetProgramID(), "useAOMap");
+			useOpacityMapLocation = glGetUniformLocation(shader->GetProgramID(), "useOpacityMap");
+			useGlossMapLocation = glGetUniformLocation(shader->GetProgramID(), "useGlossMap");
 
 			Vector3 camPos = gameWorld.GetMainCamera()->GetPosition();
 			glUniform3fv(cameraLocation, 1, camPos.array);
@@ -305,6 +363,10 @@ void GameTechRenderer::RenderCamera() {
 
 			int shadowTexLocation = glGetUniformLocation(shader->GetProgramID(), "shadowTex");
 			glUniform1i(shadowTexLocation, 2);
+
+			
+
+			glUniform3fv(scaleLocation, 1, i->GetTransform()->GetScale().array);
 
 			activeShader = shader;
 		}
@@ -327,15 +389,51 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(widthLocation, maskDims.x);
 		glUniform1i(heightLocation, maskDims.y);
 
+		glUniform1f(noiseScaleLocation, noiseScale);
+		glUniform1f(noiseOffsetSizeLocation, noiseOffsetSize);
+		glUniform1f(noiseNormalStrengthLocation, noiseNormalStrength);
+		glUniform1f(noisenormalNoiseMultLocation, noiseNormalNoiseMult);
+
+		glUniform1f(timePassedLocation, timePassed);
+		glUniform1f(timeScaleLocation, timeScale);
+
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
 		if (i->isPaintable) {
+
+			glUniform1f(heightMapStrengthLocation, heightMapStrength);
+			glUniform1i(useBumpMapLocation, useBumpMap);
+			glUniform1i(useMetallicMapLocation, useMetallicMap);
+			glUniform1i(useRoughnessMapLocation, useRoughnessMap);
+			glUniform1i(useHeightMapLocation, useHeightMap);
+			glUniform1i(useEmissionMapLocation, useEmissionMap);
+			glUniform1i(useAOMapLocation, useAOMap);
+			glUniform1i(useOpacityMapLocation, useOpacityMap);
+			glUniform1i(useGlossMapLocation, useGlossMap);
+
+			glUniform1i(useHeightMapLocalLocation, i->useHeightMap);
 			glActiveTexture(GL_TEXTURE0);
 			glBindImageTexture(0, ((OGLTexture*)i->maskTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
 			glUniform1i(glGetUniformLocation(shader->GetProgramID(), "maskTex"),0);
-			glActiveTexture(GL_TEXTURE1);
-			BindTextureToShader((OGLTexture*)(*i).baseTex, "baseTex", 1);
-			BindTextureToShader((OGLTexture*)(*i).bumpTex, "bumpTex", 3);
+			if (i->pbrTextures != nullptr) {
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->base, "baseTex", 1);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->bump, "bumpTex", 3);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->metallic, "metallicTex", 4);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->roughness, "roughnessTex", 5);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->heightMap, "heightMap", 6);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->emission, "emissionTex", 7);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->ao, "AOTex", 8);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->opacity, "opacityTex", 9);
+				BindTextureToShader((OGLTexture*)(*i).pbrTextures->gloss, "glossTex", 10);
+			}
+			else {
+				BindTextureToShader((OGLTexture*)(*i).baseTex, "baseTex", 1);
+				BindTextureToShader((OGLTexture*)(*i).bumpTex, "bumpTex", 3);
+			}
+			
+			
+			glUniform1i(hasTexLocation,1);
+
 		}
 		else {
 			if ((OGLTexture*)i->GetDefaultTexture()) {
@@ -343,7 +441,7 @@ void GameTechRenderer::RenderCamera() {
 			}
 		}
 		
-		glDisable(GL_CULL_FACE);//todo turn back on
+//		glDisable(GL_CULL_FACE);//todo turn back on
 		BindMesh((*i).GetMesh());
 		int layerCount = (*i).GetMesh()->GetSubMeshCount();
 		for (int i = 0; i < layerCount; ++i) {
@@ -366,10 +464,11 @@ void GameTechRenderer::RenderFullScreenQuad() {
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-MeshGeometry* GameTechRenderer::LoadMesh(const string& name) {
+MeshGeometry* GameTechRenderer::LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes) {
 	OGLMesh* mesh = new OGLMesh(name);
-	mesh->SetPrimitiveType(GeometryPrimitive::Triangles);
+	mesh->SetPrimitiveType(GeometryPrimitive::Patches);
 	mesh->UploadToGPU();
+	if (meshes != nullptr)meshes->push_back(mesh);
 	return mesh;
 }
 
@@ -470,6 +569,11 @@ ShaderBase* GameTechRenderer::LoadShader(const string& vertex, const string& fra
 	return new OGLShader(vertex, fragment);
 }
 
+ShaderBase* GameTechRenderer::LoadShader(const string& vertex, const string& fragment, const string& domain, const string& hull) {
+	return new OGLShader(vertex, fragment, "",domain,hull);
+}
+
+
 void GameTechRenderer::SetDebugStringBufferSizes(size_t newVertCount) {
 	if (newVertCount > textCount) {
 		textCount = newVertCount;
@@ -549,6 +653,7 @@ void GameTechRenderer::ImGui() {
 		+ std::to_string(camPos.y) + " " + std::to_string(camPos.z);
 	ImGui::Text(camPosStr.c_str());
 	if (ImGui::TreeNode("Ray Marching")) {
+		ImGui::Checkbox("Raymarch", imguiptrs.rayMarchBool);
 		ImGui::SliderInt("Max Steps", imguiptrs.rayMarchMaxSteps, 1, 1000);
 		ImGui::SliderFloat("Hit Distance", imguiptrs.rayMarchHitDistance, 0, 1);
 		ImGui::SliderFloat("No Hit Distance", imguiptrs.rayMarchNoHitDistance, 0, 1000);
@@ -556,13 +661,35 @@ void GameTechRenderer::ImGui() {
 		ImGui::Checkbox("Depth Test", imguiptrs.depthTest);
 		ImGui::TreePop();
 	}
-	if (ImGui::TreeNode("World to UV Space Testing")) {
+	if (ImGui::TreeNode("Paint Testing")) {
 		ImGui::SliderFloat3("Position", imguiptrs.testSphereCenter->array, -200, 500);
 		ImGui::SliderFloat("Sphere Radius", imguiptrs.testSphereRadius, 0, 2000);
-		if (ImGui::Button("Move to Center")) { *(imguiptrs.testSphereCenter) = Vector3(10, -20, -10); }
+		ImGui::Checkbox("New Method", imguiptrs.newMethod);
+		ImGui::SliderFloat("Noise Scale", &noiseScale,0,1000);
+		ImGui::SliderFloat("Noise Offset Size", &noiseOffsetSize,0,1);
+		ImGui::SliderFloat("Noise Normal Strength", &noiseNormalStrength,0,10);
+		ImGui::SliderFloat("Noise Normal Multiplier", &noiseNormalNoiseMult,0,2);
+		ImGui::SliderFloat("Time Scale", &timeScale,0,1);
+		if (ImGui::Button("Move to Center")) { *(imguiptrs.testSphereCenter) = Vector3(0, 0, 0); }
 
 		ImGui::TreePop();
 	}
+	if (ImGui::TreeNode("PBR")) {
+		ImGui::Checkbox("Bump Map", &useBumpMap);
+		ImGui::Checkbox("Metallic Map", &useMetallicMap);
+		ImGui::Checkbox("Roughness Map", &useRoughnessMap);
+		ImGui::Checkbox("Height Map", &useHeightMap);
+		ImGui::Checkbox("Emission Map", &useEmissionMap);
+		ImGui::Checkbox("AO Map", &useAOMap);
+		ImGui::Checkbox("Opacity Map", &useOpacityMap);
+		ImGui::Checkbox("Gloss Map", &useGlossMap);
+		ImGui::SliderFloat("Heightmap Strength", &heightMapStrength, 0, 10);
+
+		ImGui::TreePop();
+	}
+
+	ImGui::SliderFloat3("Light Position", lightPosition.array, -200, 200);
+
 	ImGui::End();
 	ImGui::EndFrame();
 	ImGui::Render();

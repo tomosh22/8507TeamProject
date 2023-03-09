@@ -441,7 +441,7 @@ void TutorialGame::UpdateGame(float dt) {
 		Vector3 objPos = lockedObject->GetTransform().GetPosition();
 		
 		//right Click to got to aim mode
-		if (Window::GetMouse()->ButtonPressed(MouseButtons::RIGHT))
+		if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT))
 		{
 			objPos += rightAxis * 4.5 + Vector3(0, 1, 0) * 2;   //offset of the character
 		}

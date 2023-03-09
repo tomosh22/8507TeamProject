@@ -18,7 +18,7 @@ namespace NCL {
 		};
 
 		static gun pistol{
-			3.0f,
+			5.0f,
 			0.2f,
 			100.0f,
 			10.0f,

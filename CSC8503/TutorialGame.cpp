@@ -380,7 +380,7 @@ void TutorialGame::UpdateGame(float dt) {
 
 	SelectObject();
 	MoveSelectedObject();
-	//movePlayer(goatCharacter);
+	movePlayer(goatCharacter);
 
 	world->UpdateWorld(dt);
 	renderer->Update(dt);
@@ -391,6 +391,15 @@ void TutorialGame::UpdateGame(float dt) {
 		DispatchComputeShaderForEachTriangle(tt.objectHit, tt.contactPosition, tt.paintRadius);
 		physics->clearCurrentCollisions();
 	}*/
+
+		TutorialGame::addToRunningBulletTime(dt);
+	if (TutorialGame::runningBulletTimeLimitTest(goatCharacter->getPlayerProjectile()->GetRateOfFireTransferred()) && (!goatCharacter->getPlayerProjectile()->GetCanFire())) {
+		goatCharacter->getPlayerProjectile()->toggleCanFire();
+		//goatCharacter->updateBulletsUsed();
+		//unsigned int numObjects =
+		//world->RemoveGameObject();
+
+	}
 	//testing
 	renderer->Render();
 	Debug::UpdateRenderables(dt);
@@ -655,6 +664,7 @@ void TutorialGame::InitGraphicTest() {
 	physics->Clear();
 
 	//InitDefaultFloor();
+	InitDefaultFloor();
 
 	//position is irrelevant at this point in testing as im overriding position later
 	//for raymarching
@@ -1126,11 +1136,11 @@ Projectile* TutorialGame::useNewBullet(playerTracking* passedPlayableCharacter) 
 	Vector3 sphereSize = { radius,radius,radius };
 	Vector3 position = passedPlayableCharacter->GetTransform().GetPosition();
 	SphereVolume* volume = new SphereVolume(radius);
-	sphere->setBulletDirectionVector(playerDirectionVector);
+	sphere->setBulletDirectionVector(Vector3{ playerDirectionVector.x,world->GetMainCamera()->GetPitch(),playerDirectionVector.z });
+	cout << world->GetMainCamera()->GetPitch() << endl;
 	sphere->SetBoundingVolume((CollisionVolume*)volume);
 	sphere->GetTransform().SetScale(sphereSize);
-	sphere->GetTransform().SetPosition(position - Vector3{ 0,0,10 });
-	sphere->GetTransform().SetPosition((position)-(Vector3{ 0,0,10 }));
+	sphere->GetTransform().SetPosition(position - (passedPlayableCharacter->GetTransform().GetOrientation().Normalised() * Vector3 { 0, 0, 10 }));
 
 	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
 	sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
@@ -1182,6 +1192,19 @@ void TutorialGame::setEnemyGoat(GameObject* assignCharcter) {
 
 void TutorialGame::movePlayer(playerTracking* unitGoat) {
 	unitGoat->GetRenderObject()->SetColour(Vector4(0.1f, 0.2f, 0.4f, 1));
+	float yaw = world->GetMainCamera()->GetYaw();
+	Vector3 cameraOffset = ((unitGoat->GetTransform().GetOrientation()).Normalised()) * Vector3{ 0,11,15 };
+	world->GetMainCamera()->SetPosition(unitGoat->GetTransform().GetPosition() + cameraOffset);
+	yaw -= (Window::GetMouse()->GetRelativePosition().x);
+
+	if (yaw < 0) {
+		yaw += 360.0f;
+	}
+	if (yaw > 360.0f) {
+		yaw -= 360.0f;
+	}
+	unitGoat->GetTransform().SetOrientation(Quaternion::AxisAngleToQuaterion(Vector3(0, 1, 0), yaw));
+	world->GetMainCamera()->SetYaw(unitGoat->GetTransform().GetOrientation().ToEuler().y);
 	PhysicsObject* goatPhysicsObject = unitGoat->GetPhysicsObject();
 	Transform* goatTransform = &(unitGoat->GetTransform());
 	//jumping raycast test
@@ -1220,7 +1243,14 @@ void TutorialGame::movePlayer(playerTracking* unitGoat) {
 		cout<< "current player action = " << a->getCurrentPlayerAction()<< endl;*/
 	};
 
-	if ((Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::F))) {
+	/*if ((Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::F))) {
+		if (unitGoat->getPlayerProjectile()->GetCanFire()) {
+			FireBullet(unitGoat);
+			unitGoat->getPlayerProjectile()->toggleCanFire();
+		};
+	};*/
+
+	if ((Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT))) {
 		if (unitGoat->getPlayerProjectile()->GetCanFire()) {
 			FireBullet(unitGoat);
 			unitGoat->getPlayerProjectile()->toggleCanFire();

@@ -22,6 +22,7 @@ PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g)	{
 	dTOffset		= 0.0f;
 	globalDamping	= 0.995f;
 	SetGravity(Vector3(0.0f, -9.8f, 0.0f));
+	currentCollisions = {};
 }
 
 PhysicsSystem::~PhysicsSystem()	{
@@ -106,7 +107,7 @@ void PhysicsSystem::Update(float dt) {
 			/*std::cout << BasicCollisionDetection().contactPosition << std::endl;
 			std::cout << BasicCollisionDetection().paintRadius << std::endl;*/
 		}
-
+		//std::cout << getCurrentCollisions().size() << std::endl;
 		//This is our simple iterative solver - 
 		//we just run things multiple times, slowly moving things forward
 		//and then rechecking that the constraints have been met		
@@ -208,7 +209,7 @@ to the collision set for later processing. The set will guarantee that
 a particular pair will only be added once, so objects colliding for
 multiple frames won't flood the set with duplicates.
 */
-PhysicsSystem::collisionData PhysicsSystem::BasicCollisionDetection() {
+void PhysicsSystem::BasicCollisionDetection() {
 	std::vector<GameObject*>::const_iterator first;
 	std::vector<GameObject*>::const_iterator last;
 	gameWorld.GetObjectIterators(first, last);
@@ -227,15 +228,15 @@ PhysicsSystem::collisionData PhysicsSystem::BasicCollisionDetection() {
 				info.framesLeft = numCollisionFrames;
 				allCollisions.insert(info);
 				if ((info.a)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
-					return collisionData{ (info.a)->collisionInfo(),(info.a)->GetTransform().GetPosition() };
+					AddToCurrentCollision({ (info.a)->collisionInfo(), (info.a)->GetTransform().GetPosition(), (info.b) });
 				}
 				if ((info.b)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
-					return collisionData{ (info.b)->collisionInfo(),(info.b)->GetTransform().GetPosition() };
+					AddToCurrentCollision({ (info.b)->collisionInfo(), (info.b)->GetTransform().GetPosition(), (info.a) });
 				}
 			}
 		}
 	}
-	return collisionData{ 0,{} };
+	
 }
 
 /*

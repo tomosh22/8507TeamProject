@@ -44,16 +44,17 @@ void NCL::CSC8503::playerTracking::Rotate()
 
 void NCL::CSC8503::playerTracking::Move(float dt)
 {
-	int a = Window::GetKeyboard()->KeyHeld(KeyboardKeys::A) ? 1 : 0;
-	int b = Window::GetKeyboard()->KeyHeld(KeyboardKeys::D) ? 1 : 0;
-	int w = Window::GetKeyboard()->KeyHeld(KeyboardKeys::W) ? 1 : 0;
-	int s = Window::GetKeyboard()->KeyHeld(KeyboardKeys::S) ? 1 : 0;
+	int a = Window::GetKeyboard()->KeyDown(KeyboardKeys::A) ? 1 : 0;
+	int b = Window::GetKeyboard()->KeyDown(KeyboardKeys::D) ? 1 : 0;
+	int w = Window::GetKeyboard()->KeyDown(KeyboardKeys::W) ? 1 : 0;
+	int s = Window::GetKeyboard()->KeyDown(KeyboardKeys::S) ? 1 : 0;
 
 	int Dup = w - s;
 	int Dright = b - a;
 
 	Vector3 moveDir;
 
+	//std::cout << "up:" << Dup << " Dright:" << Dright << std::endl;
 
 	Matrix4 view = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
 	Matrix4 camWorld = view.Inverse();
@@ -61,10 +62,9 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 	right = Vector3(camWorld.GetColumn(0));
 	forwad = Vector3::Cross(Vector3(0, 1, 0), right);
 
-	if(Dup!=0||Dright!=0)
-	{
-		transform.SetPosition(transform.GetPosition()+(forwad * Dup + right * Dright)*dt*moveSpeed);
-	}
+
+	transform.SetPosition(transform.GetPosition()+(forwad * Dup + right * Dright)*dt*moveSpeed);
+
 }
 
 void NCL::CSC8503::playerTracking::Shoot(float dt)
@@ -105,6 +105,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	Vector3 fireDir = (aimDir - bullet->GetTransform().GetPosition()).Normalised();
 	std::cout << "FireDir is :" << fireDir << std::endl;
 	bullet->GetPhysicsObject()->AddForce(fireDir*weaponType.projectileForce);
+	Debug::DrawLine(transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0), fireDir * 10 + transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0), Vector4(1, 0, 1, 1), 100.f);
 }
 void playerTracking::ReTurnBullet(Projectile* bullet)
 {

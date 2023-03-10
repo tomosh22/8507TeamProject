@@ -12,7 +12,7 @@
 #include "Projectile.h"
 
 #include<iostream>
-
+#include"PropSystem.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -844,6 +844,9 @@ void TutorialGame::InitPhysicalTest() {
 	InitGameExamples();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
+
+	PropSystem::GetInstance()->SpawnItem();
+
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
 #endif
@@ -1680,7 +1683,7 @@ void TutorialGame::MoveSelectedObject() {
 		return;//we haven't selected anything!
 	}
 	//Push the selected object!
-	if (Window::GetMouse()->ButtonPressed(NCL::MouseButtons::RIGHT)) {
+	/*if (Window::GetMouse()->ButtonPressed(NCL::MouseButtons::RIGHT)) {
 		Ray ray = CollisionDetection::BuildRayFromMouse(*GameWorld::GetInstance()->GetMainCamera());
 
 		RayCollision closestCollision;
@@ -1689,7 +1692,7 @@ void TutorialGame::MoveSelectedObject() {
 				selectionObject->GetPhysicsObject()->AddForceAtPosition(ray.GetDirection() * forceMagnitude, closestCollision.collidedAt);
 			}
 		}
-	}
+	}*/
 }
 
 

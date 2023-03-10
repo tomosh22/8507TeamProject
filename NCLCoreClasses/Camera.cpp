@@ -12,23 +12,24 @@ last frame (default value is for simplicities sake...)
 */
 void Camera::UpdateCamera(float dt) {
 	//Update the mouse by how much
-	pitch -= (Window::GetMouse()->GetRelativePosition().y);
-	yaw -= (Window::GetMouse()->GetRelativePosition().x);
+	pitch	-= (Window::GetMouse()->GetRelativePosition().y);
+	yaw		-= (Window::GetMouse()->GetRelativePosition().x);
 
 	//Bounds check the pitch, to be between straight up and straight down ;)
 	pitch = std::min(pitch, 90.0f);
 	pitch = std::max(pitch, -90.0f);
 
-	if (yaw < 0) {
+	if (yaw <0) {
 		yaw += 360.0f;
 	}
 	if (yaw > 360.0f) {
 		yaw -= 360.0f;
 	}
 
+	//std::cout << "yaw:" << yaw << " pitch:" << pitch<< std::endl;
+
 	if (lockMode)
 	{
-
 		double pi = 3.14159265359;
 
 		forward.z = -cos(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
@@ -41,10 +42,9 @@ void Camera::UpdateCamera(float dt) {
 		{
 			position = targetPosition - forward * lockOffset.Length();
 		}
+
+		
 	}
-
-
-
 	float frameSpeed = 100 * dt;
 
 	//fire a Ray to get a contact point as the aiming point
@@ -76,7 +76,6 @@ void Camera::UpdateCamera(float dt) {
 Generates a view matrix for the camera's viewpoint. This matrix can be sent
 straight to the shader...it's already an 'inverse camera' matrix.
 */
-
 Matrix4 Camera::BuildViewMatrix() const {
 	//Why do a complicated matrix inversion, when we can just generate the matrix
 	//using the negative values ;). The matrix multiplication order is important!

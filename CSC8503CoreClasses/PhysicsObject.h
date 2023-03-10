@@ -116,6 +116,10 @@ namespace NCL {
 				angularVelocity = v;
 			}
 
+			void SetAffectedByGravity(bool applyGravity) {
+				AffectedByGravity = applyGravity;
+			}
+
 			void SetAffectedByGravityFalse() {
 				AffectedByGravity = false;
 			}

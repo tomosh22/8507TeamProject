@@ -42,5 +42,37 @@ namespace NCL {
 
 		};
 
+		class SpeedUpItem :public PowerUpItem {
+		public:
+			SpeedUpItem(const Vector3 pos);
+			~SpeedUpItem() {}
+			void Trigger(GameObject* character) override {
+				std::cout << "Speed Up" << std::endl;
+			}
+		protected:
+
+		};
+
+		class ShieldItem :public PowerUpItem {
+		public:
+			ShieldItem(const Vector3 pos);
+			~ShieldItem() {}
+			void Trigger(GameObject* character) override {
+				std::cout << "Shield" << std::endl;
+			}
+		protected:
+
+		};
+
+		class HealItem :public PowerUpItem {
+		public:
+			HealItem(const Vector3 pos);
+			~HealItem() {}
+			void Trigger(GameObject* character) override {
+				std::cout << "Shield" << std::endl;
+			}
+		protected:
+
+		};
 	}
 }

@@ -46,17 +46,17 @@ void Camera::UpdateCamera(float dt) {
 	//fire a Ray to get a contact point as the aiming point
 
 
-	/*if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM8)) {
 		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
 	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM2)) {
 		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
 	}
 
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM4)) {
 		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
 	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM6)) {
 		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
 	}
 
@@ -72,7 +72,7 @@ void Camera::UpdateCamera(float dt) {
 Generates a view matrix for the camera's viewpoint. This matrix can be sent
 straight to the shader...it's already an 'inverse camera' matrix.
 */
-}
+
 Matrix4 Camera::BuildViewMatrix() const {
 	//Why do a complicated matrix inversion, when we can just generate the matrix
 	//using the negative values ;). The matrix multiplication order is important!

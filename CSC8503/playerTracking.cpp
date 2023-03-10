@@ -18,7 +18,7 @@ playerTracking::playerTracking()
 		weaponType = pistol;
 		moveSpeed = 10;
 
-		fireOffset = 5;
+		fireOffset = 10;
 		bulletPool =new ObjectPool<Projectile>();
 		coolDownTimer = 0;
 		bulletsUsed = {};
@@ -103,8 +103,9 @@ void playerTracking::ResetBullet(Projectile* bullet)
 {
 	bullet->GetTransform()
 		.SetScale(Vector3(weaponType.ProjectileSize, weaponType.ProjectileSize, weaponType.ProjectileSize))
-		.SetPosition(aimDir);
+		.SetPosition(transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0));
 	//std::cout << "Bullet pos:"<< transform.GetPosition() + forwad * fireOffset << std::endl;
+
 	bullet->GetPhysicsObject()->SetInverseMass(weaponType.weight);
 	bullet->GetPhysicsObject()->InitSphereInertia();
 	bullet->SetTeamID(teamID);
@@ -116,7 +117,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	std::cout << "FireDir is :" << fireDir << std::endl;
 
 
-
+	bullet->GetPhysicsObject()->ClearForces();
 	bullet->GetPhysicsObject()->AddForce(fireDir*weaponType.projectileForce);
 	//Debug::DrawLine(transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0), fireDir * 30 + transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0), Vector4(1, 0, 1, 1), 100.f);
 }

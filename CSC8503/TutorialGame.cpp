@@ -842,8 +842,9 @@ void TutorialGame::InitPhysicalTest() {
 	physics->Clear();
 
 	InitGameExamples();
-	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
-	InitPaintableTextureOnObject(floor);
+	//floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	//InitPaintableTextureOnObject(floor);
+	AddMapToWorld();
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
 #endif

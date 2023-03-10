@@ -9,29 +9,29 @@
 namespace NCL {
 	namespace CSC8503 {
 		struct gun {
-			float radius;
-			float ProjectileSize;
-			float projectileForce;
+			float radius;  //exlopsion radius 
+			float ProjectileSize; // size of bullet
+			float projectileForce; // Fire force
 			float weight;// keep a >0 weight on instances. Otherwise applied forces will have no effect
 			float rateOfFire; // time in seconds between consecuative bullets shot
 			bool affectedByGravity;
 		};
 
 		static gun pistol{
-			6.0f,
-			2.0f,
-			1000,
+			5.0f,
+			0.2f,
+			100.0f,
 			10.0f,
-			2.0f,
+			0.5f,
 			true,
 		};
 
 		static gun rocket{
-			20.0f,
+			6.0f,
 			0.5f,
 			20.0f,
 			5.0f,
-			3.0f,
+			1.5f,
 			true,
 		};
 
@@ -41,6 +41,7 @@ namespace NCL {
 		class PhysicsObject;
 		class TutorialGame;
 		class CollisionInfo;
+		class playerTracking;
 		class Projectile :public GameObject {
 		public:
 
@@ -151,8 +152,15 @@ namespace NCL {
 				return this->getExplosionRadius();
 			}
 
+			void SetPlayer(playerTracking* player)
+			{
+				this->player = player;
+			}
 
-
+			void SetTeamID(int id)
+			{
+				this->teamID = id;
+			}
 		protected:
 			float explosionRadius;
 			float ProjectileRadius;
@@ -165,9 +173,12 @@ namespace NCL {
 			//static int personalID;
 			bool canFire;
 			bool AffectedGravity;
+			int teamID;
 			//PhysicsObject* physicsProjectile;
 			Vector3 bulletDirectionVector;
 			vector<Projectile*>* parentVector;
+
+			playerTracking* player;
 			GameWorld* world;
 
 

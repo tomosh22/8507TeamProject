@@ -10,6 +10,7 @@
 namespace NCL {
 	namespace CSC8503 {
 
+		class Team;
 		class playerTracking :public GameObject {
 		public:
 
@@ -22,13 +23,11 @@ namespace NCL {
 
 			}
 
-			
 			void Update(float dt);
-
 
 			void Move(float dt);
 			void Rotate();
-			void Shoot();
+			void Shoot(float dt);
 			float SmoothDamp(float current, float target, float& currentVelocity, float smoothTime, float maxSpeed, float deltaTime);
 
 			void setplayerID(int assignedPlayerID) {
@@ -39,6 +38,16 @@ namespace NCL {
 				playerID = assignedTeamID;
 			}
 
+			int GetTeamId()
+			{
+				return teamID;
+			}
+
+			void SetTeamId(int team)
+			{
+				teamID = team;
+			}
+
 			void resetPlayerProjectile() {
 				playerProjectile = nullptr;
 			}
@@ -47,16 +56,10 @@ namespace NCL {
 				weaponType = newWeponType;
 			}
 
-			void setPaintColor(Vector4 newPaintColor) {
-				paintColor = newPaintColor;
-			}
 
 			void addToBulletsUsed(Projectile* bulletToAdd) {
 				bulletsUsed.push_back(bulletToAdd);
 			}
-
-			void clearBulletsUsed();
-
 
 			int getBulletVectorSize() {
 				return bulletsUsed.size();
@@ -64,12 +67,18 @@ namespace NCL {
 
 			Projectile* reuseBullet();
 
-			Vector4 getPaintColor() {
-				return paintColor;
-			}
 
 			gun getWeponType() {
 				return weaponType;
+			}
+
+			float GetSpeed()
+			{
+				return moveSpeed;
+			}
+			void SetSpeed(float speed)
+			{
+				moveSpeed = speed;
 			}
 
 			/*void AssignPlayerWeapon(gun weponType) {
@@ -94,14 +103,18 @@ namespace NCL {
 			int IndividualplayerScore;
 			Projectile *playerProjectile;
 			gun weaponType;
-			Vector4 paintColor;
-			
+			//Vector4 paintColor;
+		
+			float moveSpeed;
+
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;
 			Vector3 right;
+			Vector3 aimDir;
 			//This is me 
 			ObjectPool<Projectile> *bulletPool;
+			float coolDownTimer;   //this is timer of firing
 
 			vector<Projectile*> bulletsUsed;
 			vector<Projectile*> bulletsUsedAndMoved;

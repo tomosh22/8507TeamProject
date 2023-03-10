@@ -163,17 +163,16 @@ rocket launcher, gaining a point when the player hits the gold coin, and so on).
 void PhysicsSystem::UpdateCollisionList() {
 	for (std::set<CollisionDetection::CollisionInfo>::iterator i = allCollisions.begin(); i != allCollisions.end(); ) {
 		if ((*i).framesLeft == numCollisionFrames) {
-			i->a->OnCollisionBegin(i->b);
-			i->b->OnCollisionBegin(i->a);
-
+		
 			
-			if (i->a->GetName() == "Bullet" && i->b->isPaintable)
-				NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(i->b,i->b->GetTransform().GetPosition() + i->point.localB, 10);
+			/*if (i->a->GetName() == "Bullet" && i->b->isPaintable)
+				NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(i->b,i->a->GetTransform().GetPosition(), 10,  );
 
 			if (i->b->GetName() == "Bullet" && i->a->isPaintable)
-				NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(i->a, i->a->GetTransform().GetPosition() + i->point.localA, 10);
-
-			//
+				NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(i->a, i->b->GetTransform().GetPosition(), 10, Team::team2);
+		*/
+			i->a->OnCollisionBegin(i->b);
+			i->b->OnCollisionBegin(i->a);
 		}
 
 		CollisionDetection::CollisionInfo& in = const_cast<CollisionDetection::CollisionInfo&>(*i);
@@ -224,11 +223,11 @@ PhysicsSystem::collisionData PhysicsSystem::BasicCollisionDetection() {
 	gameWorld.GetObjectIterators(first, last);
 
 	for (auto i = first; i != last; i++) {
-		if ((*i)->GetPhysicsObject() == nullptr) {
+		if ((*i)->GetPhysicsObject() == nullptr||!(*i)->IsActive()) {
 			continue;
 		}
 		for (auto j = i + 1; j != last; ++j) {
-			if ((*j)->GetPhysicsObject() == nullptr) {
+			if ((*j)->GetPhysicsObject() == nullptr||!(*j)->IsActive()) {
 				continue;
 			}
 			CollisionDetection::CollisionInfo info;

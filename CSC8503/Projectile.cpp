@@ -27,6 +27,7 @@ Projectile::Projectile()
 	GetPhysicsObject()->InitSphereInertia();
 	SetName("Bullet");
 	AffectedGravity = true;
+	SetActive(false);
 	GameWorld::GetInstance()->AddGameObject(this);
 }
 
@@ -83,7 +84,16 @@ void Projectile::setGunType(gun wepType) {
 
 void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 {
+	if (otherObject->isPaintable)
+	{
 
+		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(),explosionRadius, teamID);
+		//Bullet Recycle
+		if (player!=nullptr)
+		{
+			player->ReTurnBullet(this);
+		}
+	}
 }
 
 void NCL::CSC8503::Projectile::OnCollisionEnd(GameObject* otherObject)

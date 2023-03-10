@@ -40,7 +40,6 @@ public:
 
 	void ReturnObject(Object* pObj)
 	{
-		returnObj(pObj);
 		_mPool.push_back(pObj);
 		++_nSize;
 	}

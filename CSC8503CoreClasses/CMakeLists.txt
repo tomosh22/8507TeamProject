@@ -204,6 +204,7 @@ set(ADDITIONAL_LIBRARY_DEPENDENCIES
 
 include_directories("../OpenGLRendering/")
 include_directories("../NCLCoreClasses/")
+include_directories("../OpenGLRendering/")
 include_directories("../CSC8503/")
 include_directories("./")
 

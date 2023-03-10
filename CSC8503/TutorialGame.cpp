@@ -1071,41 +1071,54 @@ void TutorialGame::AddMapToWorld() {
 	AddFloorToWorld(Vector3(0, -20, 0), Vector3(250, 1, 400));
 
 	//back cover walls
-	AddWallToWorld(Vector3(0, -20, 300), Vector3(30, 2, 1));
-	AddWallToWorld(Vector3(0, -20, -300), Vector3(30, 2, 1));
+	AddWallToWorld(Vector3(0, -22, 300), Vector3(30, 2, 1), 0);
+	AddWallToWorld(Vector3(0, -22, -300), Vector3(30, 2, 1), 0);
 
 	//middle cover walls
-	AddWallToWorld(Vector3(175, -20, 200), Vector3(20, 2, 1));
-	AddWallToWorld(Vector3(175, -20, -200), Vector3(20, 2, 1));
-	AddWallToWorld(Vector3(-175, -20, 200), Vector3(20, 2, 1));
-	AddWallToWorld(Vector3(-175, -20, -200), Vector3(20, 2, 1));
+	AddWallToWorld(Vector3(175, -22, 200), Vector3(20, 2, 1), 0);
+	AddWallToWorld(Vector3(175, -22, -200), Vector3(20, 2, 1), 0);
+	AddWallToWorld(Vector3(-175, -22, 200), Vector3(20, 2, 1), 0);
+	AddWallToWorld(Vector3(-175, -22, -200), Vector3(20, 2, 1), 0);
 
 	//low middle cover walls
-	AddWallToWorld(Vector3(50, -20, 200), Vector3(15, 1, 5));
-	AddWallToWorld(Vector3(-50, -20, 200), Vector3(15, 1, 5));
-	AddWallToWorld(Vector3(50, -20, -200), Vector3(15, 1, 5));
-	AddWallToWorld(Vector3(-50, -20, -200), Vector3(15, 1, 5));
+	AddWallToWorld(Vector3(50, -22, 200), Vector3(15, 1, 5), 0);
+	AddWallToWorld(Vector3(-50, -22, 200), Vector3(15, 1, 5), 0);
+	AddWallToWorld(Vector3(50, -22, -200), Vector3(15, 1, 5), 0);
+	AddWallToWorld(Vector3(-50, -22, -200), Vector3(15, 1, 5), 0);
 
-	AddWallToWorld(Vector3(50, -20, 100), Vector3(15, 1, 5));
-	AddWallToWorld(Vector3(-50, -20, 100), Vector3(15, 1, 5));
-	AddWallToWorld(Vector3(50, -20, -100), Vector3(15, 1, 5));
-	AddWallToWorld(Vector3(-50, -20, -100), Vector3(15, 1, 5));
+	AddWallToWorld(Vector3(50, -22, 100), Vector3(15, 1, 5), 0);
+	AddWallToWorld(Vector3(-50, -22, 100), Vector3(15, 1, 5), 0);
+	AddWallToWorld(Vector3(50, -22, -100), Vector3(15, 1, 5), 0);
+	AddWallToWorld(Vector3(-50, -22, -100), Vector3(15, 1, 5), 0);
 
-	AddWallToWorld(Vector3(175, -20, 100), Vector3(15, 1, 5));
-	AddWallToWorld(Vector3(-175, -20, 100), Vector3(15, 1, 5));
-	AddWallToWorld(Vector3(175, -20, -100), Vector3(15, 1, 5));
-	AddWallToWorld(Vector3(-175, -20, -100), Vector3(15, 1, 5));
+	AddWallToWorld(Vector3(175, -22, 100), Vector3(15, 1, 5), 0);
+	AddWallToWorld(Vector3(-175, -22, 100), Vector3(15, 1, 5), 0);
+	AddWallToWorld(Vector3(175, -22, -100), Vector3(15, 1, 5), 0);
+	AddWallToWorld(Vector3(-175, -22, -100), Vector3(15, 1, 5), 0);
 
 	//centre cover walls
-	AddWallToWorld(Vector3(0, -20, 10), Vector3(30, 2, 10));
-	AddWallToWorld(Vector3(160, -20, 10), Vector3(30, 2, 10));
-	AddWallToWorld(Vector3(-160, -20, 10), Vector3(30, 2, 10));
+	AddWallToWorld(Vector3(0, -22, 10), Vector3(30, 2, 10), 0);
+	AddWallToWorld(Vector3(160, -22, 10), Vector3(30, 2, 10), 0);
+	AddWallToWorld(Vector3(-160, -22, 10), Vector3(30, 2, 10), 0);
 
 	//dividing walls 
-	AddWallToWorld(Vector3(100, -20, 150), Vector3(1, 3, 200));
-	AddWallToWorld(Vector3(-100, -20, 150), Vector3(1, 3, 200));
-	AddWallToWorld(Vector3(100, -20, 450), Vector3(1, 3, 200));
-	AddWallToWorld(Vector3(-100, -20, 450), Vector3(1, 3, 200));
+	AddWallToWorld(Vector3(100, -22, 150), Vector3(1, 3, 200), 0);
+	AddWallToWorld(Vector3(-100, -22, 150), Vector3(1, 3, 200), 0);
+	AddWallToWorld(Vector3(100, -22, 450), Vector3(1, 3, 200), 0);
+	AddWallToWorld(Vector3(-100, -22, 450), Vector3(1, 3, 200), 0);
+
+	//enclosing walls and ceiling
+	AddFloorToWorld(Vector3(0, 100, 0), Vector3(250, 1, 400));
+
+	//side walls
+	AddWallToWorld(Vector3(250, -50, 1200), Vector3(4, 20, 800), 0);
+	AddWallToWorld(Vector3(-250, -50, 1200), Vector3(4, 20, 800), 0);
+
+	//back walls
+	AddWallToWorld(Vector3(0, -50, 405), Vector3(250, 20, 4), 0);
+	AddWallToWorld(Vector3(0, -50, -395), Vector3(250, 20, 4), 0);
+
+
 }
 
 playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation) {
@@ -1334,8 +1347,8 @@ void TutorialGame::InitGameExamples() {
 	
 	//TODO
 	auto q = Quaternion();
-	//lockedObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
-
+	lockedObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	//AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	//AddEnemyToWorld(Vector3(5, 5, 0));
 	//AddBonusToWorld(Vector3(10, 5, 0));
 }

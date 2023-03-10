@@ -11,7 +11,7 @@ namespace NCL {
 		class Item :public GameObject {
 		public:
 			void OnCollisionBegin(GameObject* otherObject);
-			virtual void Trigger() =0;
+			virtual void Trigger(GameObject* character) =0;
 		protected:
 
 		};
@@ -22,14 +22,25 @@ namespace NCL {
 			~PowerUpItem() {
 				//physicsProjectile;
 			}
-			void Trigger() override {
+			void Trigger(GameObject* character) override {
 				std::cout << "Power Up" << std::endl;
-				//Recyle
 			}
 		protected:
 
 		};
 
+		class WeaponUpItem :public PowerUpItem {
+		public:
+			WeaponUpItem(const Vector3 pos);
+			~WeaponUpItem() {
+				//physicsProjectile;
+			}
+			void Trigger(GameObject* character) override {
+				std::cout << "Weapon Up" << std::endl;
+			}
+		protected:
+
+		};
 
 	}
 }

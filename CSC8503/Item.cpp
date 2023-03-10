@@ -10,7 +10,7 @@ void NCL::CSC8503::Item::OnCollisionBegin(GameObject* otherObject)
 {
 	if (otherObject->GetName() == "character")
 	{
-		Trigger();
+		Trigger(otherObject);
 	}
 }
 

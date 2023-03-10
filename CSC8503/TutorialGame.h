@@ -12,7 +12,7 @@
 #include <array>
 #include"ObjectPool.h"
 #include "RenderObject.h"
-
+#include "PropSystem.h"
 
 namespace NCL {
 	namespace CSC8503 {

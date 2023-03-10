@@ -89,6 +89,9 @@ namespace NCL {
 				return playerProjectile;
 			}
 
+			void TakeDamage(int damage);
+
+
 			void FireBullet();
 			void ResetBullet(Projectile* bullet);
 			void ReTurnBullet(Projectile* bullet);
@@ -98,6 +101,8 @@ namespace NCL {
 
 			float playerYawOrientation;
 			float playerPitchOrientation;
+			
+			int hp;
 			int playerID;
 			int teamID;
 			int IndividualplayerScore;

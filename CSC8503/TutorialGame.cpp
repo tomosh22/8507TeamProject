@@ -1546,6 +1546,9 @@ void TutorialGame::InitGameExamples() {
 	//TODO
 	auto q = Quaternion();
 	lockedObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	//TestCode of Item
+	PropSystem::GetInstance()->SpawnItem();
+
 	//AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	//AddEnemyToWorld(Vector3(5, 5, 0));
 	//AddBonusToWorld(Vector3(10, 5, 0));

@@ -89,6 +89,15 @@ void NCL::CSC8503::playerTracking::Shoot(float dt)
 }
 
 
+void NCL::CSC8503::playerTracking::TakeDamage(int damage)
+{
+	hp = hp - damage > 0 ? hp - damage : 0;
+	if (hp <= 0)
+	{
+		//Die and ReSpawn
+	}
+}
+
 //Call this function to init a new Bullet
 void playerTracking::ResetBullet(Projectile* bullet)
 {

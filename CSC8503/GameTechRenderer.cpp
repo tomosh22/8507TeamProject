@@ -391,7 +391,7 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(heightLocation, maskDims.y);
 
 		glUniform1f(noiseScaleLocation, noiseScale);
-		glUniform1f(noiseOffsetSizeLocation, noiseOffsetSize);
+		glUniform1f(noiseOffsetSizeLocation, noiseOffsetSize / 1000.0f * i->GetTransform()->GetScale().Length());
 		glUniform1f(noiseNormalStrengthLocation, noiseNormalStrength);
 		glUniform1f(noisenormalNoiseMultLocation, noiseNormalNoiseMult);
 
@@ -667,8 +667,8 @@ void GameTechRenderer::ImGui() {
 		ImGui::SliderFloat3("Position", imguiptrs.testSphereCenter->array, -200, 500);
 		ImGui::SliderFloat("Sphere Radius", imguiptrs.testSphereRadius, 0, 2000);
 		ImGui::Checkbox("New Method", imguiptrs.newMethod);
-		ImGui::SliderFloat("Noise Scale", &noiseScale,0,1000);
-		ImGui::SliderFloat("Noise Offset Size", &noiseOffsetSize,0,1);
+		ImGui::SliderFloat("Noise Scale", &noiseScale,0,10);
+		ImGui::SliderFloat("Noise Offset Size", &noiseOffsetSize,0,0.1f);
 		ImGui::SliderFloat("Noise Normal Strength", &noiseNormalStrength,0,10);
 		ImGui::SliderFloat("Noise Normal Multiplier", &noiseNormalNoiseMult,0,10);
 		ImGui::SliderFloat("Time Scale", &timeScale,0,1);

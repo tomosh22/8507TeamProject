@@ -48,10 +48,10 @@ namespace NCL {
 			};
 			ImGUIPtrs imguiptrs;
 
-			float noiseScale= 6.0;
-			float noiseOffsetSize = 0.005;
-			float noiseNormalStrength= 10;
-			float noiseNormalNoiseMult = 10;
+			float noiseScale= 0.38f;
+			float noiseOffsetSize = 0.002f;
+			float noiseNormalStrength= 0.6;
+			float noiseNormalNoiseMult = 1.27;
 
 			bool newMethod = true;
 
@@ -72,7 +72,7 @@ namespace NCL {
 			bool useGlossMap = true;
 
 			float timePassed = 0;
-			float timeScale = 0.06;
+			float timeScale = 0.5;
 
 			OGLShader* debugShader;
 			OGLShader* quadShader;

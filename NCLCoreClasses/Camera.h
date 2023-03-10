@@ -34,6 +34,7 @@ namespace NCL {
 			farPlane	= 100.0f;
 
 			camType		= CameraType::Perspective;
+			lockMode = false;
 		};
 
 		Camera(float pitch, float yaw, const Vector3& position) : Camera() {
@@ -46,6 +47,7 @@ namespace NCL {
 			this->farPlane	= 100.0f;
 
 			this->camType	= CameraType::Perspective;
+			lockMode = false;
 		}
 
 		~Camera(void) = default;
@@ -110,6 +112,11 @@ namespace NCL {
 			return forward;
 		}
 
+		void SetCameraMode(bool mode)
+		{
+			lockMode = mode;
+		}
+
 		static Camera BuildPerspectiveCamera(const Vector3& pos, float pitch, float yaw, float fov, float near, float far);
 		static Camera BuildOrthoCamera(const Vector3& pos, float pitch, float yaw, float left, float right, float top, float bottom, float near, float far);
 	protected:
@@ -131,5 +138,7 @@ namespace NCL {
 		Vector3 rightDir;		//Right direciton of camera
 		Vector3 targetPosition;   //The target camera look at 
 		Vector3 lockOffset;		 // offset between camera and target
+
+		bool lockMode;
 	};
 }

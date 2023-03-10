@@ -202,7 +202,7 @@ set(ADDITIONAL_LIBRARY_DEPENDENCIES
     "ws2_32.lib"
 )
 
-include_directories("../OpenGLRendering/")
+
 include_directories("../NCLCoreClasses/")
 include_directories("../OpenGLRendering/")
 include_directories("../CSC8503/")

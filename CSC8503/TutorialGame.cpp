@@ -1262,8 +1262,9 @@ GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 }
 
 void TutorialGame::AddMapToWorld() {
-
-	AddFloorToWorld(Vector3(0, -20, 0), Vector3(250, 1, 400));
+	
+	InitPaintableTextureOnObject(AddFloorToWorld(Vector3(0, -20, 0), Vector3(250, 1, 400)));
+	//AddFloorToWorld(Vector3(0, -20, 0), Vector3(250, 1, 400));
 
 	//back cover walls
 	AddWallToWorld(Vector3(0, -22, 300), Vector3(30, 2, 1), 0);
@@ -1297,10 +1298,10 @@ void TutorialGame::AddMapToWorld() {
 	AddWallToWorld(Vector3(-160, -22, 10), Vector3(30, 2, 10), 0);
 
 	//dividing walls 
-	AddWallToWorld(Vector3(100, -22, 150), Vector3(1, 3, 200), 0);
-	AddWallToWorld(Vector3(-100, -22, 150), Vector3(1, 3, 200), 0);
-	AddWallToWorld(Vector3(100, -22, 450), Vector3(1, 3, 200), 0);
-	AddWallToWorld(Vector3(-100, -22, 450), Vector3(1, 3, 200), 0);
+	AddWallToWorld(Vector3(100, -25, 150), Vector3(1, 3, 200), 0);
+	AddWallToWorld(Vector3(-100, -25, 150), Vector3(1, 3, 200), 0);
+	AddWallToWorld(Vector3(100, -25, 450), Vector3(1, 3, 200), 0);
+	AddWallToWorld(Vector3(-100, -25, 450), Vector3(1, 3, 200), 0);
 
 	//enclosing walls and ceiling
 	AddFloorToWorld(Vector3(0, 100, 0), Vector3(250, 1, 400));

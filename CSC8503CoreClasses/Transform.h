@@ -31,6 +31,11 @@ namespace NCL {
 			Matrix4 GetMatrix() const {
 				return matrix;
 			}
+
+			Vector3 GetDirVector() const {
+				return orientation * Vector3(0, 0, -1);
+			}
+
 			void UpdateMatrix();
 		protected:
 			Matrix4		matrix;

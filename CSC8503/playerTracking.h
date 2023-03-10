@@ -23,7 +23,7 @@ namespace NCL {
 
 			}
 
-			void Update(float dt);
+			void Update(float dt) override;
 
 			void Move(float dt);
 			void Rotate();
@@ -116,7 +116,7 @@ namespace NCL {
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;
 			Vector3 right;
-			Vector3 aimDir;
+			Vector3 aimPos;
 			//This is me 
 			ObjectPool<Projectile> *bulletPool;
 			float coolDownTimer;   //this is timer of firing

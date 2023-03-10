@@ -31,6 +31,8 @@ namespace NCL::Maths {
 
 		float	DistanceFromPlane(const Vector3 &in) const;
 
+		Vector3 GetIntersection(const Vector3 &pos, const Vector3 &vec);
+
 		Vector3 GetPointOnPlane() const {
 			return normal * -distance;
 		}
@@ -38,6 +40,7 @@ namespace NCL::Maths {
 		Vector3 ProjectPointOntoPlane(const Vector3 &point) const;
 
 
+		static Plane PlaneFromVector(const Vector3& vec1, const Vector3& vec2);
 		static Plane PlaneFromTri(const Vector3 &v0, const Vector3 &v1, const Vector3 &v2);
 
 	protected:

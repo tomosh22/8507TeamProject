@@ -1089,7 +1089,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	OBBVolume* volume = new OBBVolume(dimensions);
 	cube->SetBoundingVolume((CollisionVolume*)volume);
 
-	cube->GetTransform().SetPosition(position).SetScale(dimensions * 3.0f);
+	cube->GetTransform().SetPosition(position).SetScale(dimensions * 2.0f);
 
 	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, nullptr, basicShader));
 	cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));

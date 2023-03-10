@@ -69,14 +69,14 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 
 void NCL::CSC8503::playerTracking::Shoot(float dt)
 {
+	//Plane plane = Plane::PlaneFromVector(Vector3(0.0f, 1000.0f, 0.0f), transform.GetDirVector());
+	//aimPos = plane.GetIntersection(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetForward());
+	//Debug::DrawLine(transform.GetPosition(), aimPos, Vector4(1.0f, 0.0f, 0.0f, 1.0f));
 	if (Window::GetMouse()->DoubleClicked(MouseButtons::LEFT)&&coolDownTimer<=0)
 	{
-		RayCollision closestCollision;
-		Ray r = Ray(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetForward());
-
-		if (GameWorld::GetInstance()->Raycast(r, closestCollision, true)) {
-			aimDir = closestCollision.collidedAt;
-		}
+		//Find the intersection of the plane in the player's direction and the camera ray
+		Plane plane = Plane::PlaneFromVector(Vector3(0.0f, 1000.0f, 0.0f), transform.GetDirVector());
+		aimPos = plane.GetIntersection(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetForward());
 
 		Projectile* newBullet = bulletPool->GetObject2();
 		ResetBullet(newBullet);
@@ -113,13 +113,12 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	bullet->setExplosionRadius(weaponType.radius);
 	bullet->SetActive(true);
 	
-	Vector3 fireDir = (aimDir - bullet->GetTransform().GetPosition()).Normalised();
+	Vector3 fireDir = (aimPos - bullet->GetTransform().GetPosition()).Normalised();
 	std::cout << "FireDir is :" << fireDir << std::endl;
 
 
 	bullet->GetPhysicsObject()->ClearForces();
 	bullet->GetPhysicsObject()->AddForce(fireDir*weaponType.projectileForce);
-	//Debug::DrawLine(transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0), fireDir * 30 + transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0), Vector4(1, 0, 1, 1), 100.f);
 }
 void playerTracking::ReTurnBullet(Projectile* bullet)
 {

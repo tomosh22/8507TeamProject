@@ -460,6 +460,8 @@ void TutorialGame::UpdateGame(float dt) {
 		}
 		Vector3 camPos = objPos + lockedOffset;
 
+		//Debug::DrawLine(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetPosition() + GameWorld::GetInstance()->GetMainCamera()->GetForward() * 100, Vector4(1, 0, 1, 1), 10.0f);
+
 		GameWorld::GetInstance()->GetMainCamera()->SetTargetPosition(objPos);
 	}
 

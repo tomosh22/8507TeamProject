@@ -103,7 +103,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 {
 	bullet->GetTransform()
 		.SetScale(Vector3(weaponType.ProjectileSize, weaponType.ProjectileSize, weaponType.ProjectileSize))
-		.SetPosition(transform.GetPosition()+forwad * fireOffset + Vector3(0,1.8,0));
+		.SetPosition(aimDir);
 	//std::cout << "Bullet pos:"<< transform.GetPosition() + forwad * fireOffset << std::endl;
 	bullet->GetPhysicsObject()->SetInverseMass(weaponType.weight);
 	bullet->GetPhysicsObject()->InitSphereInertia();
@@ -111,10 +111,14 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	bullet->SetPlayer(this);
 	bullet->setExplosionRadius(weaponType.radius);
 	bullet->SetActive(true);
+	
 	Vector3 fireDir = (aimDir - bullet->GetTransform().GetPosition()).Normalised();
 	std::cout << "FireDir is :" << fireDir << std::endl;
+
+
+
 	bullet->GetPhysicsObject()->AddForce(fireDir*weaponType.projectileForce);
-	Debug::DrawLine(transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0), fireDir * 10 + transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0), Vector4(1, 0, 1, 1), 100.f);
+	//Debug::DrawLine(transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0), fireDir * 30 + transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0), Vector4(1, 0, 1, 1), 100.f);
 }
 void playerTracking::ReTurnBullet(Projectile* bullet)
 {

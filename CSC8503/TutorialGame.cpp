@@ -432,8 +432,8 @@ void TutorialGame::UpdateGame(float dt) {
 	timePassed += dt;
 	
 	if(rayMarch)DispatchComputeShaderForEachPixel();
-	if(worldFloor != nullptr)
-	Debug::DrawAxisLines(worldFloor->GetTransform().GetMatrix());
+	if(floor != nullptr)
+	Debug::DrawAxisLines(floor->GetTransform().GetMatrix());
 
 	if (!inSelectionMode) {
 		GameWorld::GetInstance()->GetMainCamera()->UpdateCamera(dt);
@@ -977,7 +977,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 	floor->GetPhysicsObject()->InitCubeInertia();
 
 	GameWorld::GetInstance()->AddGameObject(floor);
-	worldFloor = floor;
+	
 	floor->SetName("floor");
 	return floor;
 }
@@ -1263,56 +1263,59 @@ GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 
 void TutorialGame::AddMapToWorld() {
 
-	AddFloorToWorld(Vector3(0, -20, 0), Vector3(250, 1, 400));
-
+	floor = AddFloorToWorld(Vector3(0, -20, 0), Vector3(250, 1, 400));
+	
 	//back cover walls
-	AddWallToWorld(Vector3(0, -22, 300), Vector3(30, 2, 1), 0);
-	AddWallToWorld(Vector3(0, -22, -300), Vector3(30, 2, 1), 0);
+	walls.push_back(AddWallToWorld(Vector3(0, -22, 300), Vector3(30, 2, 1), 0));
+	walls.push_back(AddWallToWorld(Vector3(0, -22, -300), Vector3(30, 2, 1), 0));
 
 	//middle cover walls
-	AddWallToWorld(Vector3(175, -22, 200), Vector3(20, 2, 1), 0);
-	AddWallToWorld(Vector3(175, -22, -200), Vector3(20, 2, 1), 0);
-	AddWallToWorld(Vector3(-175, -22, 200), Vector3(20, 2, 1), 0);
-	AddWallToWorld(Vector3(-175, -22, -200), Vector3(20, 2, 1), 0);
+	walls.push_back(AddWallToWorld(Vector3(175, -22, 200), Vector3(20, 2, 1), 0));
+	walls.push_back(AddWallToWorld(Vector3(175, -22, -200), Vector3(20, 2, 1), 0));
+	walls.push_back(AddWallToWorld(Vector3(-175, -22, 200), Vector3(20, 2, 1), 0));
+	walls.push_back(AddWallToWorld(Vector3(-175, -22, -200), Vector3(20, 2, 1), 0));
 
 	//low middle cover walls
-	AddWallToWorld(Vector3(50, -22, 200), Vector3(15, 1, 5), 0);
-	AddWallToWorld(Vector3(-50, -22, 200), Vector3(15, 1, 5), 0);
-	AddWallToWorld(Vector3(50, -22, -200), Vector3(15, 1, 5), 0);
-	AddWallToWorld(Vector3(-50, -22, -200), Vector3(15, 1, 5), 0);
+	walls.push_back(AddWallToWorld(Vector3(50, -22, 200), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-50, -22, 200), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(50, -22, -200), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-50, -22, -200), Vector3(15, 1, 5), 0));
 
-	AddWallToWorld(Vector3(50, -22, 100), Vector3(15, 1, 5), 0);
-	AddWallToWorld(Vector3(-50, -22, 100), Vector3(15, 1, 5), 0);
-	AddWallToWorld(Vector3(50, -22, -100), Vector3(15, 1, 5), 0);
-	AddWallToWorld(Vector3(-50, -22, -100), Vector3(15, 1, 5), 0);
+	walls.push_back(AddWallToWorld(Vector3(50, -22, 100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-50, -22, 100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(50, -22, -100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-50, -22, -100), Vector3(15, 1, 5), 0));
 
-	AddWallToWorld(Vector3(175, -22, 100), Vector3(15, 1, 5), 0);
-	AddWallToWorld(Vector3(-175, -22, 100), Vector3(15, 1, 5), 0);
-	AddWallToWorld(Vector3(175, -22, -100), Vector3(15, 1, 5), 0);
-	AddWallToWorld(Vector3(-175, -22, -100), Vector3(15, 1, 5), 0);
+	walls.push_back(AddWallToWorld(Vector3(175, -22, 100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-175, -22, 100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(175, -22, -100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-175, -22, -100), Vector3(15, 1, 5), 0));
 
 	//centre cover walls
-	AddWallToWorld(Vector3(0, -22, 10), Vector3(30, 2, 10), 0);
-	AddWallToWorld(Vector3(160, -22, 10), Vector3(30, 2, 10), 0);
-	AddWallToWorld(Vector3(-160, -22, 10), Vector3(30, 2, 10), 0);
+	walls.push_back(AddWallToWorld(Vector3(0, -22, 10), Vector3(30, 2, 10), 0));
+	walls.push_back(AddWallToWorld(Vector3(160, -22, 10), Vector3(30, 2, 10), 0));
+	walls.push_back(AddWallToWorld(Vector3(-160, -22, 10), Vector3(30, 2, 10), 0));
 
 	//dividing walls 
-	AddWallToWorld(Vector3(100, -22, 150), Vector3(1, 3, 200), 0);
-	AddWallToWorld(Vector3(-100, -22, 150), Vector3(1, 3, 200), 0);
-	AddWallToWorld(Vector3(100, -22, 450), Vector3(1, 3, 200), 0);
-	AddWallToWorld(Vector3(-100, -22, 450), Vector3(1, 3, 200), 0);
+	walls.push_back(AddWallToWorld(Vector3(100, -22, 150), Vector3(1, 3, 200), 0));
+	walls.push_back(AddWallToWorld(Vector3(-100, -22, 150), Vector3(1, 3, 200), 0));
+	walls.push_back(AddWallToWorld(Vector3(100, -22, 450), Vector3(1, 3, 200), 0));
+	walls.push_back(AddWallToWorld(Vector3(-100, -22, 450), Vector3(1, 3, 200), 0));
 
 	//enclosing walls and ceiling
 	AddFloorToWorld(Vector3(0, 100, 0), Vector3(250, 1, 400));
 
 	//side walls
-	AddWallToWorld(Vector3(250, -50, 1200), Vector3(4, 20, 800), 0);
-	AddWallToWorld(Vector3(-250, -50, 1200), Vector3(4, 20, 800), 0);
+	walls.push_back(AddWallToWorld(Vector3(250, -50, 1200), Vector3(4, 20, 800), 0));
+	walls.push_back(AddWallToWorld(Vector3(-250, -50, 1200), Vector3(4, 20, 800), 0));
 
 	//back walls
-	AddWallToWorld(Vector3(0, -50, 405), Vector3(250, 20, 4), 0);
-	AddWallToWorld(Vector3(0, -50, -395), Vector3(250, 20, 4), 0);
+	walls.push_back(AddWallToWorld(Vector3(0, -50, 405), Vector3(250, 20, 4), 0));
+	walls.push_back(AddWallToWorld(Vector3(0, -50, -395), Vector3(250, 20, 4), 0));
 
+	for (GameObject*& wall : walls) {
+		InitPaintableTextureOnObject(wall);
+	}
 
 }
 

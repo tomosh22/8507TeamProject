@@ -28,6 +28,7 @@ namespace NCL {
 			void Move(float dt);
 			void Rotate();
 			void Shoot(float dt);
+			void Jump(); 
 			float SmoothDamp(float current, float target, float& currentVelocity, float smoothTime, float maxSpeed, float deltaTime);
 
 			void setplayerID(int assignedPlayerID) {
@@ -98,11 +99,13 @@ namespace NCL {
 
 
 		protected:
+			bool canJump; 
 
 			float playerYawOrientation;
 			float playerPitchOrientation;
 			
 			int hp;
+			int shield; 
 			int playerID;
 			int teamID;
 			int IndividualplayerScore;
@@ -111,7 +114,7 @@ namespace NCL {
 			//Vector4 paintColor;
 		
 			float moveSpeed;
-
+			float sprintTimer;
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;

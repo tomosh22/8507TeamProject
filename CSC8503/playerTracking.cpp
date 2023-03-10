@@ -17,6 +17,7 @@ playerTracking::playerTracking()
 		IndividualplayerScore = 0;
 		weaponType = pistol;
 		moveSpeed = 10;
+		sprintTimer = 5.0f; 
 
 		fireOffset = 10;
 		bulletPool =new ObjectPool<Projectile>();
@@ -31,6 +32,7 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 	Rotate();
 	Shoot(dt);
 	Move(dt);
+	Jump();
 }
 
 void NCL::CSC8503::playerTracking::Rotate()
@@ -62,6 +64,19 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 	right = Vector3(camWorld.GetColumn(0));
 	forwad = Vector3::Cross(Vector3(0, 1, 0), right);
 
+	//sprint
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W) && Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && sprintTimer > 0) 
+	{
+		moveSpeed = 30;
+		sprintTimer = sprintTimer - 20 * dt;
+	}
+	else 
+	{
+		moveSpeed = 10;
+		sprintTimer = sprintTimer + 10 * dt;
+	}
+
+
 
 	transform.SetPosition(transform.GetPosition()+(forwad * Dup + right * Dright)*dt*moveSpeed);
 
@@ -88,10 +103,40 @@ void NCL::CSC8503::playerTracking::Shoot(float dt)
 	}
 }
 
+void NCL::CSC8503::playerTracking::Jump()
+{
+	RayCollision closetCollision;
+
+	Vector3 rayPos;
+	Vector3 rayDir;
+
+	rayDir = Vector3(0, -1, 0);
+	rayPos = this->GetTransform().GetPosition();
+
+	Ray r = Ray(rayPos, rayDir);
+
+	if (GameWorld::GetInstance()->Raycast(r, closetCollision, true, this) && closetCollision.rayDistance < 2.0f)
+		canJump = true;
+	else
+		canJump = false;
+
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SPACE) && canJump)
+	{
+		this->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, 20, 0));
+		std::cout << "Jump" << std::endl;
+	}
+	
+}
+
 
 void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 {
-	hp = hp - damage > 0 ? hp - damage : 0;
+	if (shield <= 0)
+	{
+		hp = hp - damage > 0 ? hp - damage : 0;
+	}
+	else
+		shield = shield - damage > 0 ? shield - damage : 0;
 	if (hp <= 0)
 	{
 		//Die and ReSpawn

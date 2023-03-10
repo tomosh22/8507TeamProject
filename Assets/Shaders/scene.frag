@@ -362,7 +362,7 @@ void main(void)
 	fragColor = vec4(0,0,0,1);
 	point(fragColor,diffuse,bumpNormal,metallic.r,roughness.r,reflectivity);
 	fragColor.rgb *= shadow;
-	fragColor += diffuse * 0.05 * AO;
+	fragColor += diffuse * 0.5 * pow(AO,2);
 	//fragColor.a = opacity;//todo add back in
 	fragColor += emission;
 	//fragColor = vec4(bumpNormal,1);

@@ -202,7 +202,7 @@ namespace NCL {
 
 			ObjectPool<Projectile>* objectpool;
 
-			GameObject* worldFloor;
+			
 			
 			//this was me
 			OGLComputeShader* computeShader;

@@ -48,10 +48,10 @@ namespace NCL {
 			};
 			ImGUIPtrs imguiptrs;
 
-			float noiseScale= 25.0;
-			float noiseOffsetSize = 0.017;
-			float noiseNormalStrength= 0.6;
-			float noiseNormalNoiseMult = 1.27;
+			float noiseScale= 6.0;
+			float noiseOffsetSize = 0.005;
+			float noiseNormalStrength= 10;
+			float noiseNormalNoiseMult = 10;
 
 			bool newMethod = true;
 

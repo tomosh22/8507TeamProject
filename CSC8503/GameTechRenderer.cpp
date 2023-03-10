@@ -670,7 +670,7 @@ void GameTechRenderer::ImGui() {
 		ImGui::SliderFloat("Noise Scale", &noiseScale,0,1000);
 		ImGui::SliderFloat("Noise Offset Size", &noiseOffsetSize,0,1);
 		ImGui::SliderFloat("Noise Normal Strength", &noiseNormalStrength,0,10);
-		ImGui::SliderFloat("Noise Normal Multiplier", &noiseNormalNoiseMult,0,2);
+		ImGui::SliderFloat("Noise Normal Multiplier", &noiseNormalNoiseMult,0,10);
 		ImGui::SliderFloat("Time Scale", &timeScale,0,1);
 		if (ImGui::Button("Move to Center")) { *(imguiptrs.testSphereCenter) = Vector3(0, 0, 0); }
 

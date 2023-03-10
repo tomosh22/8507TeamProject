@@ -71,6 +71,13 @@ void NCL::CSC8503::playerTracking::Shoot(float dt)
 {
 	if (Window::GetMouse()->DoubleClicked(MouseButtons::LEFT)&&coolDownTimer<=0)
 	{
+		RayCollision closestCollision;
+		Ray r = Ray(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetForward());
+
+		if (GameWorld::GetInstance()->Raycast(r, closestCollision, true)) {
+			aimDir = closestCollision.collidedAt;
+		}
+
 		Projectile* newBullet = bulletPool->GetObject2();
 		ResetBullet(newBullet);
 		coolDownTimer = weaponType.rateOfFire;
@@ -91,11 +98,13 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	//std::cout << "Bullet pos:"<< transform.GetPosition() + forwad * fireOffset << std::endl;
 	bullet->GetPhysicsObject()->SetInverseMass(weaponType.weight);
 	bullet->GetPhysicsObject()->InitSphereInertia();
-	bullet->GetPhysicsObject()->AddForce(forwad * weaponType.projectileForce);
 	bullet->SetTeamID(teamID);
 	bullet->SetPlayer(this);
 	bullet->setExplosionRadius(weaponType.radius);
 	bullet->SetActive(true);
+	Vector3 fireDir = (aimDir - bullet->GetTransform().GetPosition()).Normalised();
+	std::cout << "FireDir is :" << fireDir << std::endl;
+	bullet->GetPhysicsObject()->AddForce(fireDir*weaponType.projectileForce);
 }
 void playerTracking::ReTurnBullet(Projectile* bullet)
 {

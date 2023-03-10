@@ -111,6 +111,7 @@ namespace NCL {
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;
 			Vector3 right;
+			Vector3 aimDir;
 			//This is me 
 			ObjectPool<Projectile> *bulletPool;
 			float coolDownTimer;   //this is timer of firing

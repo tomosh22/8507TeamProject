@@ -13,6 +13,7 @@
 #include"ObjectPool.h"
 #include "RenderObject.h"
 
+
 namespace NCL {
 	namespace CSC8503 {
 		const int GAME_MODE_DEFAULT = 0;

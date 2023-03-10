@@ -445,6 +445,8 @@ void TutorialGame::UpdateGame(float dt) {
 		Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
 		Vector3 objPos = lockedObject->GetTransform().GetPosition();
 		
+		
+
 		//right Click to got to aim mode
 		if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT))
 		{
@@ -489,6 +491,8 @@ void TutorialGame::UpdateGame(float dt) {
 
 			objClosest->GetRenderObject()->SetColour(Vector4(1, 0, 1, 1));
 		}
+
+
 	}
 
 	//Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));

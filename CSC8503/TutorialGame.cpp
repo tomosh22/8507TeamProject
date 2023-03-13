@@ -125,13 +125,14 @@ void TutorialGame::InitQuadTexture() {
 	int height = (renderer->GetWindowHeight());
 	//std::array<float, 1280 * 720 * 4>* data = new std::array<float, 1280 * 720 * 4>();//todo dont hardcode
 	quadTex = new OGLTexture();
-	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), quadTex, quadShader);
+	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), nullptr, quadShader);
 	//for (int i = 0; i < 1280*720*4; i++)
 	//{ 
 	//	data->at(i) = (float)rand() / (float)RAND_MAX;
 	//}
 	
-	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()));
+	renderer->rayMarchTexture = new OGLTexture();
+	glBindTexture(GL_TEXTURE_2D, (renderer->rayMarchTexture->GetObjectID()));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
@@ -217,7 +218,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16F);
+	glBindImageTexture(0, renderer->rayMarchTexture->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16F);
 
 
 

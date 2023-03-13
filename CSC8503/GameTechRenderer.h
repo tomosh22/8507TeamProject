@@ -30,6 +30,7 @@ namespace NCL {
 
 			//this was me
 			RenderObject* quad;
+			OGLTexture* rayMarchTexture;
 			RenderObject* crosshair;
 
 			struct ImGUIPtrs {
@@ -48,10 +49,10 @@ namespace NCL {
 			};
 			ImGUIPtrs imguiptrs;
 
-			float noiseScale= 0.38f;
-			float noiseOffsetSize = 0.002f;
-			float noiseNormalStrength= 0.6;
-			float noiseNormalNoiseMult = 1.27;
+			float noiseScale = 1.8;
+			float noiseOffsetSize = 0.009;
+			float noiseNormalStrength = 10;
+			float noiseNormalNoiseMult = 0.313;
 
 			bool newMethod = true;
 
@@ -72,7 +73,7 @@ namespace NCL {
 			bool useGlossMap = true;
 
 			float timePassed = 0;
-			float timeScale = 0.5;
+			float timeScale = 0.419;
 
 			OGLShader* debugShader;
 			OGLShader* quadShader;
@@ -96,7 +97,7 @@ namespace NCL {
 			void RenderSkybox();
 
 			//this was me
-			void RenderFullScreenQuad();
+			void RenderFullScreenQuadWithTexture(OGLTexture* texture);
 			void ImGui();
 
 			void LoadSkybox();
@@ -138,6 +139,11 @@ namespace NCL {
 			size_t textCount;
 
 			void DrawCrossHair();
+
+			GLuint sceneFBO;
+			GLuint sceneColor;
+			GLuint sceneDepth;
+			void CreateFBOColorDepth(GLuint fbo, GLuint colorTex, GLuint depthTex);
 		};
 	}
 }

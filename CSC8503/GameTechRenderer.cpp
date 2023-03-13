@@ -68,6 +68,9 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 
 
 	//this was me
+
+	CreateFBOColorDepth(sceneFBO, sceneColor, sceneDepth);
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -136,12 +139,16 @@ void GameTechRenderer::RenderFrame() {
 	glDisable(GL_CULL_FACE);
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "shadow");
 	RenderShadowMap();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glPopDebugGroup();
 	RenderSkybox();
 	RenderCamera();
 	glDepthMask(false);
-	if(renderFullScreenQuad)RenderFullScreenQuad();
+	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture);//raymarching
 	glDepthMask(true);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
@@ -454,14 +461,14 @@ void GameTechRenderer::RenderCamera() {
 	
 }
 
-void GameTechRenderer::RenderFullScreenQuad() {
+void GameTechRenderer::RenderFullScreenQuadWithTexture(OGLTexture* texture) {
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE); //todo reverse winding order
 	BindShader(quad->GetShader());
 	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "hasTexture"), true);
-	BindTextureToShader((OGLTexture*)quad->GetDefaultTexture(), "mainTex", 0);
+	BindTextureToShader(texture, "mainTex", 0);
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
@@ -710,4 +717,30 @@ void GameTechRenderer::DrawCrossHair() {
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 9, "crosshair");
 	glDrawArrays(GL_LINES, 0, 4);
 	glPopDebugGroup();
+}
+
+void GameTechRenderer::CreateFBOColorDepth(GLuint fbo, GLuint colorTex, GLuint depthTex)
+{
+	glGenTextures(1, &colorTex);
+	glBindTexture(GL_TEXTURE_2D, colorTex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	glGenTextures(1, &depthTex);
+	glBindTexture(GL_TEXTURE_2D, depthTex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0);
+	glObjectLabel(GL_FRAMEBUFFER, fbo, -1, std::string("verycoolfbo").c_str());
 }

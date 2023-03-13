@@ -147,8 +147,12 @@ void main() {
 
 	float sceneDistanceFromCamera;
 	//get existing scene distance from depth texture and projMatrix
+	float depth;
 	if(depthTest){
-		float depth = texture(depthTex, texCoord).r;
+		vec2 beforeWeirdFix = vec2(-texCoord.y, texCoord.x);//todo fix having to do this
+		vec2 afterWeirdFix = beforeWeirdFix.yx;
+		afterWeirdFix.y = 1 - afterWeirdFix.y;
+		depth = texture(depthTex, afterWeirdFix).r;//todo fix weird rotations and flipping
 		vec4 clipSpace = vec4(texCoord.x, texCoord.y, depth, 1) * 2 - 1;
 		vec4 viewSpace = inverse(projMatrix) * clipSpace;
 		sceneDistanceFromCamera = -(viewSpace.z / viewSpace.w);
@@ -167,6 +171,9 @@ void main() {
 		//sphere wasn't hit or depth test failed, draw blank pixel
 		imageStore(tex, IMAGE_COORD, vec4(0));
 	}
+
+	//imageStore(tex, IMAGE_COORD, vec4(sceneDistanceFromCamera/ farPlane, sceneDistanceFromCamera/ farPlane, sceneDistanceFromCamera/ farPlane, 1));
+
 	return;
 
 

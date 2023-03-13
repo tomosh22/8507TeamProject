@@ -14,6 +14,8 @@ uniform vec4 		objectColour = vec4(1,1,1,1);
 
 uniform bool hasVertexColours = false;
 
+uniform bool rotated;
+
 out Vertex
 {
 	vec4 colour;
@@ -26,6 +28,10 @@ out Vertex
 void main(void)
 {
 	OUT.texCoord = texCoord;
+	if(rotated){
+		OUT.texCoord = texCoord.yx;
+		OUT.texCoord.y = 1 - OUT.texCoord.y;
+	}
 	OUT.colour = colour;
 	mat4 mvp 		  = (projMatrix * viewMatrix * modelMatrix);
 	gl_Position		= vec4(position, 1.0);

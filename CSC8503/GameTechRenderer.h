@@ -80,6 +80,11 @@ namespace NCL {
 
 			bool drawCrosshair = false;
 
+			GLuint sceneFBO;
+			GLuint sceneColor;
+			GLuint sceneDepth;
+			void CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex);
+
 		protected:
 			void NewRenderLines();
 			void NewRenderText();
@@ -97,7 +102,7 @@ namespace NCL {
 			void RenderSkybox();
 
 			//this was me
-			void RenderFullScreenQuadWithTexture(GLuint texture);
+			void RenderFullScreenQuadWithTexture(GLuint texture, bool rotated = false);
 			void ImGui();
 
 			void LoadSkybox();
@@ -140,10 +145,7 @@ namespace NCL {
 
 			void DrawCrossHair();
 
-			GLuint sceneFBO;
-			GLuint sceneColor;
-			GLuint sceneDepth;
-			void CreateFBOColorDepth(GLuint fbo, GLuint colorTex, GLuint depthTex);
+			
 		};
 	}
 }

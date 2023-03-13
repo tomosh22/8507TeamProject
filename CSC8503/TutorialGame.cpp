@@ -124,7 +124,7 @@ void TutorialGame::InitQuadTexture() {
 	int width = (renderer->GetWindowWidth());
 	int height = (renderer->GetWindowHeight());
 	//std::array<float, 1280 * 720 * 4>* data = new std::array<float, 1280 * 720 * 4>();//todo dont hardcode
-	quadTex = new OGLTexture();
+	
 	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), nullptr, quadShader);
 	//for (int i = 0; i < 1280*720*4; i++)
 	//{ 
@@ -171,19 +171,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	Matrix4 projMatrix = GameWorld::GetInstance()->GetMainCamera()->BuildProjectionMatrix(screenAspect);
 	Vector3 cameraPos = GameWorld::GetInstance()->GetMainCamera()->GetPosition();
 	
-	std::vector<float> buffer;
-	buffer.resize(width * height);
-	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, buffer.data());
-	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
-	glTexImage2D(GL_TEXTURE_2D, 0,
-		GL_DEPTH_COMPONENT,
-		renderer->GetWindowWidth(),
-		renderer->GetWindowHeight(),
-		0,
-		GL_DEPTH_COMPONENT,
-		GL_FLOAT,
-		buffer.data());
-	glBindTexture(GL_TEXTURE_2D, 0);
+	
 	
 
 	int projLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "projMatrix");
@@ -224,7 +212,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 
 	glUniform1i(depthTexLocation, 1);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
+	glBindTexture(GL_TEXTURE_2D, renderer->sceneDepth);
 
 	rayMarchComputeShader->Execute(width/8+1, height/8+1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);

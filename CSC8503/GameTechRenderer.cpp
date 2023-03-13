@@ -139,16 +139,25 @@ void GameTechRenderer::RenderFrame() {
 	glDisable(GL_CULL_FACE);
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "shadow");
 	RenderShadowMap();
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glPopDebugGroup();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "myFBO");
 	RenderSkybox();
 	RenderCamera();
 	glDepthMask(false);
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 8, "raymarch");
 	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture->GetObjectID());//raymarching
+	glPopDebugGroup();
 	glDepthMask(true);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//RenderFullScreenQuadWithTexture(sceneColor);
+	glPopDebugGroup();
+
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 8, "fboColor");
+	RenderFullScreenQuadWithTexture(sceneColor,true);//todo fix rotation
+	glPopDebugGroup();
+
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
@@ -461,7 +470,7 @@ void GameTechRenderer::RenderCamera() {
 	
 }
 
-void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture) {
+void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture, bool rotated) {
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
@@ -470,6 +479,7 @@ void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture) {
 	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "hasTexture"), true);
 	glActiveTexture(GL_TEXTURE0);
 	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "mainTex"), 0);
+	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "rotated"), rotated);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -721,15 +731,16 @@ void GameTechRenderer::DrawCrossHair() {
 	glPopDebugGroup();
 }
 
-void GameTechRenderer::CreateFBOColorDepth(GLuint fbo, GLuint colorTex, GLuint depthTex)
+void GameTechRenderer::CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex)
 {
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 11, "creatingFBO");
 	glGenTextures(1, &colorTex);
 	glBindTexture(GL_TEXTURE_2D, colorTex);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, windowWidth, windowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 	glGenTextures(1, &depthTex);
 	glBindTexture(GL_TEXTURE_2D, depthTex);
@@ -737,12 +748,20 @@ void GameTechRenderer::CreateFBOColorDepth(GLuint fbo, GLuint colorTex, GLuint d
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
 
 
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0);
 	glObjectLabel(GL_FRAMEBUFFER, fbo, -1, std::string("verycoolfbo").c_str());
+	
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "fbo creation error!!!\n";
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glPopDebugGroup();
 }

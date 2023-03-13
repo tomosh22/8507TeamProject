@@ -85,6 +85,15 @@ namespace NCL {
 			GLuint sceneDepth;
 			void CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex);
 
+			GLuint edgesFBO;
+			GLuint edgesTex;
+			OGLShader* edgesShader;
+			void CreateFBOColor(GLuint& fbo, GLuint& colorTex);
+
+			void EdgeDetectionPass();
+			bool renderEdges = true;
+			float smaaThreshold = 0.001;
+
 		protected:
 			void NewRenderLines();
 			void NewRenderText();

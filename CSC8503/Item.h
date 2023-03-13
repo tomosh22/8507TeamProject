@@ -4,6 +4,7 @@
 #include "CollisionVolume.h"
 #include"GameObject.h"
 #include"GameWorld.h"
+#include "playerTracking.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -59,6 +60,9 @@ namespace NCL {
 			~ShieldItem() {}
 			void Trigger(GameObject* character) override {
 				std::cout << "Shield" << std::endl;
+				playerTracking* c  = static_cast<playerTracking*>(character);
+				c->ShieldUp();
+				std::cout << c->GetShield() << std::endl; 
 			}
 		protected:
 

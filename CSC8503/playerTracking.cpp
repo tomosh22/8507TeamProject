@@ -123,7 +123,6 @@ void NCL::CSC8503::playerTracking::Jump()
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SPACE) && canJump)
 	{
 		this->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, 20, 0));
-		std::cout << "Jump" << std::endl;
 	}
 	
 }

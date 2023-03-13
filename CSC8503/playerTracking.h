@@ -82,6 +82,21 @@ namespace NCL {
 				moveSpeed = speed;
 			}
 
+			int GetShield()
+			{
+				return shield;
+			}
+
+			void ShieldUp()
+			{
+				shield = 100; 
+			}
+
+			void Heal()
+			{
+				hp = 100; 
+			}
+
 			/*void AssignPlayerWeapon(gun weponType) {
 				playerProjectile->setGunType(weponType);
 			}*/

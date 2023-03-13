@@ -25,6 +25,7 @@ Projectile::Projectile()
 
 	GetPhysicsObject()->SetInverseMass(1.0f);
 	GetPhysicsObject()->InitSphereInertia();
+	SetLayerMask(Bullet);
 	SetName("Bullet");
 	AffectedGravity = true;
 	SetActive(false);

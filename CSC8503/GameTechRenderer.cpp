@@ -145,10 +145,10 @@ void GameTechRenderer::RenderFrame() {
 	RenderSkybox();
 	RenderCamera();
 	glDepthMask(false);
-	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture);//raymarching
+	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture->GetObjectID());//raymarching
 	glDepthMask(true);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+	//RenderFullScreenQuadWithTexture(sceneColor);
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
@@ -461,14 +461,16 @@ void GameTechRenderer::RenderCamera() {
 	
 }
 
-void GameTechRenderer::RenderFullScreenQuadWithTexture(OGLTexture* texture) {
+void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture) {
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE); //todo reverse winding order
 	BindShader(quad->GetShader());
 	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "hasTexture"), true);
-	BindTextureToShader(texture, "mainTex", 0);
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "mainTex"), 0);
+	glBindTexture(GL_TEXTURE_2D, texture);
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }

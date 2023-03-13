@@ -97,7 +97,7 @@ namespace NCL {
 			void RenderSkybox();
 
 			//this was me
-			void RenderFullScreenQuadWithTexture(OGLTexture* texture);
+			void RenderFullScreenQuadWithTexture(GLuint texture);
 			void ImGui();
 
 			void LoadSkybox();

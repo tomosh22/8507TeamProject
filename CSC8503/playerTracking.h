@@ -133,11 +133,10 @@ namespace NCL {
 			void ResetBullet(Projectile* bullet);
 			void ReTurnBullet(Projectile* bullet);
 
-			void WeaponUp(gun newGun);
+			void WeaponUp(Gun newGun);
 
-			void SpeedUp();
 
-			void HealthUp(gun newGun);
+			void HealthUp(Gun newGun);
 
 			 std::string id()
 			{

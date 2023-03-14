@@ -202,17 +202,14 @@ void playerTracking::ReTurnBullet(Projectile* bullet)
 	bulletPool->ReturnObject(bullet);
 }
 
-void playerTracking::WeaponUp(gun newGun)
+void playerTracking::WeaponUp(Gun newGun)
 {
 	weaponType = newGun;
 }
 
-void playerTracking::SpeedUp()
-{
-	
-}
 
-void playerTracking::HealthUp(gun newGun)
+
+void playerTracking::HealthUp(Gun newGun)
 {
 	
 }

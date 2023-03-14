@@ -18,6 +18,7 @@ playerTracking::playerTracking()
 		weaponType = pistol;
 		moveSpeed = 10;
 		sprintTimer = 5.0f; 
+		respawnTimer = 200.0f; 
 		speedUp = false; 
 		weaponUp = false; 
 		hp = 100;
@@ -37,12 +38,15 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 	Shoot(dt);
 	Move(dt);
 	Jump();
+	Respawning(dt);
 
 	//test damage
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::L))
 	{
 		TakeDamage(50);
 	}
+
+	
 }
 
 void NCL::CSC8503::playerTracking::Rotate()
@@ -95,7 +99,7 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 
 
 
-	transform.SetPosition(transform.GetPosition()+(forwad * Dup + right * Dright)*dt*moveSpeed);
+	transform.SetPosition(transform.GetPosition()+(forwad * Dup + right * Dright) * dt * moveSpeed);
 
 }
 
@@ -170,6 +174,30 @@ void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 	{
 		//Die and ReSpawn
 		std::cout << "Player Dead" << std::endl;
+		PlayerDie();
+	}
+}
+
+void NCL::CSC8503::playerTracking::PlayerDie()
+{
+	playerDead = true;
+	GetTransform().SetPosition(Vector3(2000, 2000, 2000));
+}
+
+void NCL::CSC8503::playerTracking::PlayerRespawn()
+{
+	playerDead = false; 
+}
+
+void NCL::CSC8503::playerTracking::Respawning(float dt)
+{
+	if (playerDead)
+	{
+		respawnTimer = respawnTimer - 10 * dt;
+		if (respawnTimer <= 0)
+		{
+			PlayerRespawn();
+		}
 	}
 }
 

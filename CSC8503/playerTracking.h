@@ -126,6 +126,9 @@ namespace NCL {
 			}
 
 			void TakeDamage(int damage);
+			void PlayerDie();
+			void PlayerRespawn();
+			void Respawning(float dt);
 
 
 
@@ -138,6 +141,7 @@ namespace NCL {
 			bool canJump; 
 			bool speedUp;
 			bool weaponUp; 
+			bool playerDead; 
 
 			float playerYawOrientation;
 			float playerPitchOrientation;
@@ -155,6 +159,7 @@ namespace NCL {
 			float sprintTimer;
 			float speedUpTimer;
 			float weaponUpTimer; 
+			float respawnTimer; 
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;

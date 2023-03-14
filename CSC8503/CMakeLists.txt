@@ -42,6 +42,7 @@ set(Header_Files
     "Projectile.h"
 	"PropSystem.h"
 	"Item.h"
+	"RespawnPoint.h"
 
 )
 source_group("Header Files" FILES ${Header_Files})
@@ -55,6 +56,7 @@ set(Source_Files
     "Projectile.cpp"
 	"PropSystem.cpp"
 	"Item.cpp"
+	"RespawnPoint.cpp"
 )
 
 if(USE_VULKAN)

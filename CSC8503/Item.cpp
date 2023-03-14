@@ -6,6 +6,17 @@
 using namespace NCL;
 using namespace CSC8503;
 
+void NCL::CSC8503::Item::Update(float dt)
+{
+	if (notSpawned)
+		respawnTimer = respawnTimer - 10 * dt;
+	if (respawnTimer <= 0)
+	{
+		notSpawned = false;
+		this->GetTransform().SetPosition(originalPos);
+	}
+}
+
 void NCL::CSC8503::Item::OnCollisionBegin(GameObject* otherObject)
 {
 	if (otherObject->GetName() == "character")
@@ -57,7 +68,7 @@ NCL::CSC8503::WeaponUpItem::WeaponUpItem(const Vector3 pos)
 	//GetPhysicsObject()->SetAffectedByGravity(true);
 	GetPhysicsObject()->InitSphereInertia();
 	SetName("WeaponUp");
-
+	originalPos = pos;
 	SetActive(true);
 	GameWorld::GetInstance()->AddGameObject(this);
 }
@@ -78,7 +89,7 @@ NCL::CSC8503::SpeedUpItem::SpeedUpItem(const Vector3 pos)
 	//GetPhysicsObject()->SetAffectedByGravity(true);
 	GetPhysicsObject()->InitSphereInertia();
 	SetName("Speed");
-
+	originalPos = pos;
 	SetActive(true);
 	GameWorld::GetInstance()->AddGameObject(this);
 }
@@ -99,7 +110,7 @@ NCL::CSC8503::ShieldItem::ShieldItem(const Vector3 pos)
 	//GetPhysicsObject()->SetAffectedByGravity(true);
 	GetPhysicsObject()->InitSphereInertia();
 	SetName("Shield");
-
+	originalPos = pos;
 	SetActive(true);
 	GameWorld::GetInstance()->AddGameObject(this);
 }
@@ -120,7 +131,7 @@ NCL::CSC8503::HealItem::HealItem(const Vector3 pos)
 	//GetPhysicsObject()->SetAffectedByGravity(true);
 	GetPhysicsObject()->InitSphereInertia();
 	SetName("Heal");
-
+	originalPos = pos;
 	SetActive(true);
 	GameWorld::GetInstance()->AddGameObject(this);
 }

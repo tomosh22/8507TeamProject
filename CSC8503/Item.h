@@ -11,10 +11,14 @@ namespace NCL {
 	
 		class Item :public GameObject {
 		public:
+			void Update(float dt);
 			void OnCollisionBegin(GameObject* otherObject);
-			virtual void Trigger(GameObject* character) =0;
+			virtual void Trigger(GameObject* character) = 0;
 		protected:
-
+			Vector3 originalPos;
+			float respawnTimer;
+			float time = 600.0f;
+			bool notSpawned = false;
 		};
 
 		class PowerUpItem :public Item {
@@ -41,6 +45,9 @@ namespace NCL {
 				std::cout << "Weapon Up" << std::endl;
 				playerTracking* c = static_cast<playerTracking*>(character);
 				c->setWeponType(rocket);
+				this->GetTransform().SetPosition(Vector3(1000, 1000, 1000));
+				notSpawned = true;
+				respawnTimer = time;
 			}
 		protected:
 
@@ -55,6 +62,9 @@ namespace NCL {
 				playerTracking* c = static_cast<playerTracking*>(character);
 				c->SpeedUp();
 				std::cout << c->GetSpeed() << std::endl;
+				this->GetTransform().SetPosition(Vector3(1000, 1000, 1000));
+				notSpawned = true;
+				respawnTimer = time;
 			}
 		protected:
 
@@ -69,6 +79,9 @@ namespace NCL {
 				playerTracking* c  = static_cast<playerTracking*>(character);
 				c->ShieldUp();
 				std::cout << c->GetShield() << std::endl; 
+				this->GetTransform().SetPosition(Vector3(1000, 1000, 1000));
+				notSpawned = true;
+				respawnTimer = time;
 			}
 		protected:
 
@@ -83,9 +96,11 @@ namespace NCL {
 				playerTracking* c = static_cast<playerTracking*>(character);
 				c->Heal();
 				std::cout << c->GetHealth() << std::endl;
+				this->GetTransform().SetPosition(Vector3(1000, 1000, 1000));
+				notSpawned = true;
+				respawnTimer = time;
 			}
 		protected:
-
 		};
 	}
 }

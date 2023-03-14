@@ -6,27 +6,31 @@ using namespace CSC8503;
 
 PropSystem* PropSystem::_instance = nullptr;
 
-void NCL::CSC8503::PropSystem::SpawnItem()
+void NCL::CSC8503::PropSystem::SpawnItem(Vector3 pos)
 {
-	PowerUpItem * newItem = new PowerUpItem(Vector3(6, 3, 6));
+	PowerUpItem * newItem = new PowerUpItem(pos);
 }
 
-void NCL::CSC8503::PropSystem::SpawnHeal()
+Item* NCL::CSC8503::PropSystem::SpawnHeal(Vector3 pos)
 {
-	PowerUpItem* newItem = new HealItem(Vector3(9, 3, 6));
+	PowerUpItem* newItem = new HealItem(pos);
+	return newItem;
 }
 
-void NCL::CSC8503::PropSystem::SpawnSpeedUp()
+Item* NCL::CSC8503::PropSystem::SpawnSpeedUp(Vector3 pos)
 {
-	PowerUpItem* newItem = new SpeedUpItem(Vector3(12, 3, 6));
+	PowerUpItem* newItem = new SpeedUpItem(pos);
+	return newItem;
 }
 
-void NCL::CSC8503::PropSystem::SpawnShield()
+Item* NCL::CSC8503::PropSystem::SpawnShield(Vector3 pos)
 {
-	PowerUpItem* newItem = new ShieldItem(Vector3(15, 3, 6));
+	PowerUpItem* newItem = new ShieldItem(pos);
+	return newItem;
 }
 
-void NCL::CSC8503::PropSystem::SpawnWeaponUp()
+Item* NCL::CSC8503::PropSystem::SpawnWeaponUp(Vector3 pos)
 {
-	PowerUpItem* newItem = new WeaponUpItem(Vector3(18, 3, 6));
+	PowerUpItem* newItem = new WeaponUpItem(pos);
+	return newItem;
 }

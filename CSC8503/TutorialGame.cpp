@@ -1558,11 +1558,16 @@ void TutorialGame::InitGameExamples() {
 	testPlayer = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	lockedObject = testPlayer; 
 	//TestCode of Item
-	PropSystem::GetInstance()->SpawnItem();
-	PropSystem::GetInstance()->SpawnSpeedUp();
-	PropSystem::GetInstance()->SpawnShield();
-	PropSystem::GetInstance()->SpawnHeal();
-	PropSystem::GetInstance()->SpawnWeaponUp(); 
+	Item* p;
+	PropSystem::GetInstance()->SpawnItem(Vector3(6, 3, 6));
+	p = PropSystem::GetInstance()->SpawnSpeedUp(Vector3(9, 3, 6));
+	GameWorld::GetInstance()->AddGameObject(p);
+	p = PropSystem::GetInstance()->SpawnShield(Vector3(12, 3, 6));
+	GameWorld::GetInstance()->AddGameObject(p);
+	p = PropSystem::GetInstance()->SpawnHeal(Vector3(15, 3, 6));
+	GameWorld::GetInstance()->AddGameObject(p);
+	p = PropSystem::GetInstance()->SpawnWeaponUp(Vector3(18, 3, 6));
+	GameWorld::GetInstance()->AddGameObject(p);
 
 	//AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	//AddEnemyToWorld(Vector3(5, 5, 0));

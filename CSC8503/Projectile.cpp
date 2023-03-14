@@ -93,6 +93,11 @@ void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 			player->ReTurnBullet(this);
 		}
 	}
+	else if (otherObject->id() == "character")
+	{
+		playerTracking* enemy = static_cast<playerTracking*>(otherObject);   // safe conversion
+		enemy->TakeDamage(5); //Up To bullet
+	}
 }
 
 void NCL::CSC8503::Projectile::OnCollisionEnd(GameObject* otherObject)

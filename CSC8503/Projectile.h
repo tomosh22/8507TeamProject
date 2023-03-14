@@ -26,6 +26,8 @@ namespace NCL {
 			true,
 		};
 
+		
+
 		static gun rocket{
 			6.0f,
 			0.5f,

@@ -18,9 +18,13 @@ playerTracking::playerTracking()
 		weaponType = pistol;
 		moveSpeed = 10;
 		sprintTimer = 5.0f; 
+		speedUp = false; 
+		weaponUp = false; 
+		hp = 100;
+		shield = 0; 
 
 		fireOffset = 10;
-		bulletPool =new ObjectPool<Projectile>();
+		bulletPool = new ObjectPool<Projectile>();
 		coolDownTimer = 0;
 		bulletsUsed = {};
 		bulletsUsedAndMoved = {};
@@ -33,6 +37,12 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 	Shoot(dt);
 	Move(dt);
 	Jump();
+
+	//test damage
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::L))
+	{
+		TakeDamage(50);
+	}
 }
 
 void NCL::CSC8503::playerTracking::Rotate()
@@ -65,7 +75,14 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 	forwad = Vector3::Cross(Vector3(0, 1, 0), right);
 
 	//sprint
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W) && Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && sprintTimer > 0) 
+	if (speedUp)
+	{
+		moveSpeed = 35;
+		speedUpTimer = speedUpTimer - 10 * dt;
+		if (speedUpTimer <= 0)
+			speedUp = false;
+	}
+	else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W) && Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && sprintTimer > 0) 
 	{
 		moveSpeed = 30;
 		sprintTimer = sprintTimer - 20 * dt;
@@ -128,6 +145,19 @@ void NCL::CSC8503::playerTracking::Jump()
 }
 
 
+void NCL::CSC8503::playerTracking::Weapon(float dt)
+{
+	if (weaponUp)
+	{
+		weaponUpTimer = weaponUpTimer - 10 * dt;
+		if (weaponUpTimer <= 0)
+		{
+			weaponUp = false;
+			setWeponType(pistol);
+		}
+	}
+}
+
 void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 {
 	if (shield <= 0)
@@ -139,6 +169,7 @@ void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 	if (hp <= 0)
 	{
 		//Die and ReSpawn
+		std::cout << "Player Dead" << std::endl;
 	}
 }
 

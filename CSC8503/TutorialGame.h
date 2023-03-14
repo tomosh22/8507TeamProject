@@ -193,7 +193,7 @@ namespace NCL {
 
 			playerTracking* goatCharacter = nullptr;
 			GameObject* EnemyGoat = nullptr;
-			playerTracking* testplayer = nullptr;
+			playerTracking* testPlayer = nullptr;
 
 			const int bulletLifeLimit = 2;
 			const int bulletDeletionLimit = 5;

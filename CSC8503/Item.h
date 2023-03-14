@@ -4,6 +4,7 @@
 #include "CollisionVolume.h"
 #include"GameObject.h"
 #include"GameWorld.h"
+#include "playerTracking.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -19,6 +20,7 @@ namespace NCL {
 		class PowerUpItem :public Item {
 		public:
 			PowerUpItem(const Vector3 pos);
+			PowerUpItem();
 			~PowerUpItem() {
 				//physicsProjectile;
 			}
@@ -37,6 +39,8 @@ namespace NCL {
 			}
 			void Trigger(GameObject* character) override {
 				std::cout << "Weapon Up" << std::endl;
+				playerTracking* c = static_cast<playerTracking*>(character);
+				c->setWeponType(rocket);
 			}
 		protected:
 
@@ -48,6 +52,9 @@ namespace NCL {
 			~SpeedUpItem() {}
 			void Trigger(GameObject* character) override {
 				std::cout << "Speed Up" << std::endl;
+				playerTracking* c = static_cast<playerTracking*>(character);
+				c->SpeedUp();
+				std::cout << c->GetSpeed() << std::endl;
 			}
 		protected:
 
@@ -59,6 +66,9 @@ namespace NCL {
 			~ShieldItem() {}
 			void Trigger(GameObject* character) override {
 				std::cout << "Shield" << std::endl;
+				playerTracking* c  = static_cast<playerTracking*>(character);
+				c->ShieldUp();
+				std::cout << c->GetShield() << std::endl; 
 			}
 		protected:
 
@@ -69,7 +79,10 @@ namespace NCL {
 			HealItem(const Vector3 pos);
 			~HealItem() {}
 			void Trigger(GameObject* character) override {
-				std::cout << "Shield" << std::endl;
+				std::cout << "Heal" << std::endl;
+				playerTracking* c = static_cast<playerTracking*>(character);
+				c->Heal();
+				std::cout << c->GetHealth() << std::endl;
 			}
 		protected:
 

@@ -18,6 +18,7 @@ GameObject::GameObject(string objectName)	{
 	physicsObject	= nullptr;
 	renderObject	= nullptr;
 	networkObject	= nullptr;
+	layer = Default;
 }
 
 GameObject::~GameObject()	{

@@ -467,12 +467,12 @@ void TutorialGame::UpdateGame(float dt) {
 
 	UpdateKeys();
 
-	if (useGravity) {
+	/*if (useGravity) {
 		Debug::Print("(G)ravity on", Vector2(5, 95), Debug::RED);
 	}
 	else {
 		Debug::Print("(G)ravity off", Vector2(5, 95), Debug::RED);
-	}
+	}*/
 
 	RayCollision closestCollision;
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::K) && selectionObject) {
@@ -503,6 +503,10 @@ void TutorialGame::UpdateGame(float dt) {
 	MoveSelectedObject();
 	//movePlayer(goatCharacter);
 
+	if (GAME_MODE_PHISICAL_TEST == gameMode) {
+		Debug::Print("Health: " + std::to_string(testPlayer->GetHealth()), Vector2(5, 95));
+		Debug::Print("Shield: " + std::to_string(testPlayer->GetShield()), Vector2(5, 100));
+	}
 
 	GameWorld::GetInstance()->UpdateWorld(dt);
 
@@ -520,6 +524,9 @@ void TutorialGame::UpdateGame(float dt) {
 		UpdateRayMarchSpheres();
 		SendRayMarchData();
 	}
+
+	
+	
 }
 
 void TutorialGame::SelectMode() {
@@ -1550,13 +1557,19 @@ void TutorialGame::InitGameExamples() {
 	
 	//TODO
 	auto q = Quaternion();
-	lockedObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	testPlayer = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	lockedObject = testPlayer; 
 	//TestCode of Item
 	PropSystem::GetInstance()->SpawnItem();
+	PropSystem::GetInstance()->SpawnSpeedUp();
+	PropSystem::GetInstance()->SpawnShield();
+	PropSystem::GetInstance()->SpawnHeal();
+	PropSystem::GetInstance()->SpawnWeaponUp(); 
 
 	//AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	//AddEnemyToWorld(Vector3(5, 5, 0));
 	//AddBonusToWorld(Vector3(10, 5, 0));
+
 }
 
 void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius) {

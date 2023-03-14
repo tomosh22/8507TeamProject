@@ -35,7 +35,9 @@ uniform float SMAA_THRESHOLD;
 #define SMAA_SEARCHTEX_SELECT(sample) sample.r
 #endif
 
-uniform vec2 resolution;
+uniform int width;
+uniform int height;
+vec2 resolution = vec2(width,height);
 
 uniform sampler2D edgesTex;
 uniform sampler2D areaTex;
@@ -461,5 +463,5 @@ void main() {
     SMAADetectVerticalCornerPattern(edgesTex, weights.ba, coords.xyxz, d);
   }
 
-  fragColor = weights;
+  fragColor = weights * 100;
 }

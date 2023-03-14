@@ -33,6 +33,8 @@
 
 Build/
 
+/FMOD/core/lib/x86
+/FMOD/studio/lib/x86
 
 /x64/Debug/OpenGLRendering.pdb
 /x64/Debug/NCLCoreClasses.pdb

@@ -264,10 +264,7 @@ link_directories("../FMOD/core/lib/x64")
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC NCLCoreClasses)
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC CSC8503CoreClasses)
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC OpenGLRendering)
-target_link_libraries(${PROJECT_NAME} LINK_PUBLIC ../FMOD/core/lib/x64/fmod_vc.lib)
-target_link_libraries(${PROJECT_NAME} LINK_PUBLIC ../FMOD/core/lib/x64/fmodL_vc.lib)
-target_link_libraries(${PROJECT_NAME} LINK_PUBLIC ../FMOD/studio/lib/x64/fmodstudio_vc.lib)
-target_link_libraries(${PROJECT_NAME} LINK_PUBLIC ../FMOD/studio/lib/x64/fmodstudioL_vc.lib)
+
 
 if(USE_VULKAN)
 include_directories("../VulkanRendering/")

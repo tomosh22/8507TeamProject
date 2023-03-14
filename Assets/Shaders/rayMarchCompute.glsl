@@ -39,7 +39,6 @@ struct HitInformation {
 vec3 RayDir(vec2 pixel)//takes pixel in 0,1 range
 {
 	vec2 ndc = pixel * 2 - 1;//move from 0,1 to -1,1
-	ndc = vec2(ndc.y, -ndc.x);//thank you jason
 
 	vec4 clipSpace = vec4(ndc, -1,1);
 
@@ -140,7 +139,6 @@ void main() {
 	ivec2 IMAGE_COORD = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 	if(IMAGE_COORD.x >= viewportWidth || IMAGE_COORD.y >= viewportHeight){return;}
 	vec2 texCoord = vec2(gl_GlobalInvocationID.x/float(viewportWidth), gl_GlobalInvocationID.y/float(viewportHeight));
-	texCoord = vec2(texCoord.y, -texCoord.x);//thank you jason
 	vec3 rayDir = RayDir(vec2(IMAGE_COORD.x/float(viewportWidth),IMAGE_COORD.y/float(viewportHeight)));
 	
 	vec4 result = RayMarch(rayDir);//rgb = colour, a = distance from camera
@@ -149,10 +147,7 @@ void main() {
 	//get existing scene distance from depth texture and projMatrix
 	float depth;
 	if(depthTest){
-		vec2 beforeWeirdFix = vec2(-texCoord.y, texCoord.x);//todo fix having to do this
-		vec2 afterWeirdFix = beforeWeirdFix.yx;
-		afterWeirdFix.y = 1 - afterWeirdFix.y;
-		depth = texture(depthTex, afterWeirdFix).r;//todo fix weird rotations and flipping
+		depth = texture(depthTex, texCoord).r;
 		vec4 clipSpace = vec4(texCoord.x, texCoord.y, depth, 1) * 2 - 1;
 		vec4 viewSpace = inverse(projMatrix) * clipSpace;
 		sceneDistanceFromCamera = -(viewSpace.z / viewSpace.w);

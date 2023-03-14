@@ -74,6 +74,8 @@ namespace NCL {
 			MeshGeometry* enemyMesh = nullptr;
 			MeshGeometry* bonusMesh = nullptr;
 
+			MeshGeometry* playerMesh = nullptr;
+
 			enum Team {
 				teamNull,
 				team1,

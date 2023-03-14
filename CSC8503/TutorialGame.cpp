@@ -257,6 +257,8 @@ void TutorialGame::InitialiseAssets() {
 	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh", &meshes);
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
 
+	playerMesh = renderer->LoadMesh("BasicCharacter.msh", &meshes);
+
 	for (MeshGeometry*& mesh : meshes) {
 		if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
 		if (mesh->GetIndexCount() / 3 > highestTriCount) {
@@ -1343,7 +1345,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
+	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, basicShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
 	character->GetPhysicsObject()->setTorqueFriction(0.005f);

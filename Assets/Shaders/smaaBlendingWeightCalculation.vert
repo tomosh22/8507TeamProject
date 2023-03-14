@@ -35,7 +35,7 @@ void main() {
 	vec2 resolution = vec2(width,height);
   vec4 SMAA_RT_METRICS = vec4(1.0 / resolution.x, 1.0 / resolution.y, resolution.x, resolution.y);
 
-	OUT.texCoord = vec2((position + 1.0) / 2.0);
+	OUT.texCoord = vec2((position.xy + 1.0) / 2.0);
 	//OUT.texCoord.y = 1 - OUT.texCoord.y;
 
   OUT.pixelCoord = OUT.texCoord * SMAA_RT_METRICS.zw;

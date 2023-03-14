@@ -72,11 +72,14 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 
 	CreateFBOColorDepth(sceneFBO, sceneColor, sceneDepth);
 
-	edgesShader = new OGLShader("smaaEdgeDetection.vert", "smaaEdgeDetectionDepth.frag");
+	edgesShader = new OGLShader("smaaEdgeDetection.vert", "smaaEdgeDetectionColor.frag");
 	CreateFBOColor(edgesFBO, edgesTex);
 
 	weightCalcShader = new OGLShader("smaaBlendingWeightCalculation.vert", "smaaBlendingWeightCalculation.frag");
 	CreateFBOColor(weightCalcFBO, blendTex);
+
+	neighborhoodBlendingShader = new OGLShader("smaaNeighborhoodBlending.vert", "smaaNeighborhoodBlending.frag");
+	CreateFBOColor(neighborhoodBlendingFBO, smaaOutput);
 
 	unsigned char* flippedAreaTex = new unsigned char[sizeof(areaTexBytes)];
 
@@ -184,7 +187,7 @@ void GameTechRenderer::LoadSkybox() {
 
 void GameTechRenderer::RenderFrame() {
 	glEnable(GL_CULL_FACE);
-	glClearColor(0.1, 0.1, 0.1, 1);
+	glClearColor(0,0,0,1);
 	BuildObjectList();
 	SortObjectList();
 	glDisable(GL_CULL_FACE);
@@ -199,18 +202,7 @@ void GameTechRenderer::RenderFrame() {
 	
 	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture->GetObjectID());//raymarching
 	
-	glDepthMask(true);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	
-	RenderFullScreenQuadWithTexture(sceneColor,true);//todo fix rotation
-	
-	EdgeDetection();
-	if(renderEdges)RenderFullScreenQuadWithTexture(edgesTex, true);
-
-	WeightCalculation();
-	if (renderBlend)RenderFullScreenQuadWithTexture(blendTex, true);
-	
-
 	
 	
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
@@ -222,6 +214,20 @@ void GameTechRenderer::RenderFrame() {
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	RenderFullScreenQuadWithTexture(sceneColor, true);//todo fix rotation
+
+	EdgeDetection();
+	if (renderEdges)RenderFullScreenQuadWithTexture(edgesTex, true);
+
+	WeightCalculation();
+	if (renderBlend)RenderFullScreenQuadWithTexture(blendTex, true);
+
+	NeighborhoodBlending();
+	if (renderAA)RenderFullScreenQuadWithTexture(smaaOutput, true);
+
 	ImGui();
 	if(drawCrosshair)DrawCrossHair();
 }
@@ -543,6 +549,7 @@ void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture, bool rota
 }
 
 void GameTechRenderer::EdgeDetection() {
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "edge");
 	glBindFramebuffer(GL_FRAMEBUFFER, edgesFBO);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	BindShader(edgesShader);
@@ -550,11 +557,12 @@ void GameTechRenderer::EdgeDetection() {
 	glUniform1i(glGetUniformLocation(edgesShader->GetProgramID(), "depthTex"), 0);
 	glUniform1i(glGetUniformLocation(edgesShader->GetProgramID(), "width"), windowWidth);
 	glUniform1i(glGetUniformLocation(edgesShader->GetProgramID(), "height"), windowHeight);
-	glBindTexture(GL_TEXTURE_2D, sceneDepth);
+	glBindTexture(GL_TEXTURE_2D, sceneColor);
 	glUniform1f(glGetUniformLocation(edgesShader->GetProgramID(), "SMAA_THRESHOLD"), smaaThreshold);
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glPopDebugGroup();
 }
 
 void GameTechRenderer::WeightCalculation() {
@@ -579,6 +587,32 @@ void GameTechRenderer::WeightCalculation() {
 	glUniform1i(glGetUniformLocation(weightCalcShader->GetProgramID(), "height"), windowHeight);
 
 	glUniform1f(glGetUniformLocation(weightCalcShader->GetProgramID(), "SMAA_THRESHOLD"), smaaThreshold);
+
+	BindMesh(quad->GetMesh());
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glPopDebugGroup();
+}
+
+void GameTechRenderer::NeighborhoodBlending() {
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 8, "neighbor");
+	glBindFramebuffer(GL_FRAMEBUFFER, neighborhoodBlendingFBO);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	BindShader(neighborhoodBlendingShader);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, sceneColor);
+	glUniform1i(glGetUniformLocation(neighborhoodBlendingShader->GetProgramID(), "colorTex"), 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, blendTex);
+	glUniform1i(glGetUniformLocation(neighborhoodBlendingShader->GetProgramID(), "blendTex"), 1);
+
+
+	glUniform1i(glGetUniformLocation(neighborhoodBlendingShader->GetProgramID(), "width"), windowWidth);
+	glUniform1i(glGetUniformLocation(neighborhoodBlendingShader->GetProgramID(), "height"), windowHeight);
+
+	glUniform1f(glGetUniformLocation(neighborhoodBlendingShader->GetProgramID(), "SMAA_THRESHOLD"), smaaThreshold);
 
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -814,7 +848,8 @@ void GameTechRenderer::ImGui() {
 	if (ImGui::TreeNode("SMAA")) {
 		ImGui::Checkbox("Display Edges", &renderEdges);
 		ImGui::Checkbox("Display Blending", &renderBlend);
-		ImGui::SliderFloat("Edge Threshold", &smaaThreshold, 0, 0.01,"%.10f");
+		ImGui::Checkbox("Display SMAA Output", &renderAA);
+		ImGui::SliderFloat("Edge Threshold", &smaaThreshold, 0, 0.5);
 
 		ImGui::TreePop();
 	}

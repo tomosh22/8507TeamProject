@@ -101,11 +101,17 @@ namespace NCL {
 
 			void EdgeDetection();
 			bool renderEdges = true;
-			float smaaThreshold = 0.001;
+			float smaaThreshold = 0.1;
 
-
+			GLuint blendingFBO;
 			void WeightCalculation();
 			bool renderBlend = true;
+
+			GLuint neighborhoodBlendingFBO;
+			OGLShader* neighborhoodBlendingShader;
+			GLuint smaaOutput;
+			void NeighborhoodBlending();
+			bool renderAA = true;
 
 		protected:
 			void NewRenderLines();

@@ -252,11 +252,11 @@ OGLMesh* OGLMesh::GenerateCrossHair() {
 	OGLMesh* m = new OGLMesh();
 
 	std::vector<Vector3> vertices;
-	vertices.push_back({ 0.0f, -0.1f, 0.0f });
-	vertices.push_back({ 0.0f, 0.1f, 0.0f });
+	vertices.push_back({ 0.0f, -0.05f, 0.0f });
+	vertices.push_back({ 0.0f, 0.05f, 0.0f });
 
-	vertices.push_back({ -0.1f, 0.0f, 0.0f });
-	vertices.push_back({ 0.1f, 0.0f, 0.0f });
+	vertices.push_back({ -0.05f, 0.0f, 0.0f });
+	vertices.push_back({ 0.05f, 0.0f, 0.0f });
 	m->SetVertexPositions(vertices);
 
 

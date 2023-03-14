@@ -78,13 +78,39 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	weightCalcShader = new OGLShader("smaaBlendingWeightCalculation.vert", "smaaBlendingWeightCalculation.frag");
 	CreateFBOColor(weightCalcFBO, blendTex);
 
+	unsigned char* flippedAreaTex = new unsigned char[sizeof(areaTexBytes)];
+
+	for (int y = 0; y < AREATEX_HEIGHT; y++)
+	{
+		int flippedY = AREATEX_HEIGHT - y - 1;
+
+		for (int x = 0; x < AREATEX_WIDTH; x++)
+		{
+			((uint16_t*)flippedAreaTex)[AREATEX_WIDTH * flippedY + x] = ((uint16_t*)areaTexBytes)[AREATEX_WIDTH * y + x];
+		}
+	}
+
+	unsigned char* flippedSearchTex = new unsigned char[sizeof(searchTexBytes)];
+
+	for (int y = 0; y < SEARCHTEX_HEIGHT; y++)
+	{
+		int flippedY = SEARCHTEX_HEIGHT - y - 1;
+
+		for (int x = 0; x < SEARCHTEX_WIDTH; x++)
+		{
+			(flippedSearchTex)[SEARCHTEX_WIDTH * flippedY + x] = (searchTexBytes)[SEARCHTEX_WIDTH * y + x];
+		}
+	}
+
 	glGenTextures(1, &areaTex);
 	glBindTexture(GL_TEXTURE_2D, areaTex);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, AREATEX_WIDTH, AREATEX_HEIGHT, 0, GL_RG, GL_UNSIGNED_BYTE, areaTexBytes);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, AREATEX_WIDTH, AREATEX_HEIGHT, 0, GL_RG, GL_UNSIGNED_BYTE, flippedAreaTex);
+
+	delete[] flippedAreaTex;
 
 	glGenTextures(1, &searchTex);
 	glBindTexture(GL_TEXTURE_2D, searchTex);
@@ -92,9 +118,9 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, searchTexBytes);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, flippedSearchTex);
 
-
+	delete[] flippedSearchTex;
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();

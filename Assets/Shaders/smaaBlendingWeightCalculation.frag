@@ -463,5 +463,5 @@ void main() {
     SMAADetectVerticalCornerPattern(edgesTex, weights.ba, coords.xyxz, d);
   }
 
-  fragColor = weights * 100;
+  fragColor = weights;
 }

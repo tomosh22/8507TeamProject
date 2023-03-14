@@ -8,7 +8,7 @@
 
 namespace NCL {
 	namespace CSC8503 {
-		struct gun {
+		struct Gun {
 			float radius;  //exlopsion radius 
 			float ProjectileSize; // size of bullet
 			float projectileForce; // Fire force
@@ -17,7 +17,7 @@ namespace NCL {
 			bool affectedByGravity;
 		};
 
-		static gun pistol{
+		static Gun pistol{
 			10.0f,
 			0.2f,
 			100.0f,
@@ -26,7 +26,7 @@ namespace NCL {
 			true,
 		};
 
-		static gun rocket{
+		static Gun rocket{
 			6.0f,
 			0.5f,
 			20.0f,
@@ -53,7 +53,7 @@ namespace NCL {
 				}*/
 
 			Projectile();
-			Projectile(gun GunToUse);
+			Projectile(Gun GunToUse);
 			Projectile(Vector3& position);
 			//Projectile(gun GunToUse, vector<Projectile*>* parentVector, GameWorld* world) = 0;
 			~Projectile() {
@@ -61,7 +61,7 @@ namespace NCL {
 			}
 
 			void Update(float dt);
-			void setGunType(gun wepType);
+			void setGunType(Gun wepType);
 
 
 			void DestroySelf() {

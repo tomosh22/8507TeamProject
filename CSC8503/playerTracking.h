@@ -53,8 +53,8 @@ namespace NCL {
 				playerProjectile = nullptr;
 			}
 
-			void setWeponType(gun newWeponType) {
-				weaponType = newWeponType;
+			void setWeponType(Gun newWeponType) {
+				weaponType = newWeponType; 
 			}
 
 
@@ -69,7 +69,7 @@ namespace NCL {
 			Projectile* reuseBullet();
 
 
-			gun getWeponType() {
+			Gun getWeponType() {
 				return weaponType;
 			}
 
@@ -92,10 +92,30 @@ namespace NCL {
 				shield = 100; 
 			}
 
+			int GetHealth()
+			{
+				return hp;
+			}
+
 			void Heal()
 			{
 				hp = 100; 
 			}
+
+			void SpeedUp()
+			{
+				speedUp = true;
+				speedUpTimer = 300.0f; 
+			}
+
+			void WeaponUp()
+			{
+				weaponType = rocket;
+				weaponUp = true; 
+				weaponUpTimer = 300.0f; 
+			}
+
+			void Weapon(float dt);
 
 			/*void AssignPlayerWeapon(gun weponType) {
 				playerProjectile->setGunType(weponType);
@@ -108,6 +128,7 @@ namespace NCL {
 			void TakeDamage(int damage);
 
 
+
 			void FireBullet();
 			void ResetBullet(Projectile* bullet);
 			void ReTurnBullet(Projectile* bullet);
@@ -115,6 +136,8 @@ namespace NCL {
 
 		protected:
 			bool canJump; 
+			bool speedUp;
+			bool weaponUp; 
 
 			float playerYawOrientation;
 			float playerPitchOrientation;
@@ -125,11 +148,13 @@ namespace NCL {
 			int teamID;
 			int IndividualplayerScore;
 			Projectile *playerProjectile;
-			gun weaponType;
+			Gun weaponType;
 			//Vector4 paintColor;
 		
 			float moveSpeed;
 			float sprintTimer;
+			float speedUpTimer;
+			float weaponUpTimer; 
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;

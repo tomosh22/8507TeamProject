@@ -6,15 +6,16 @@ struct _ENetEvent;
 
 enum BasicNetworkMessages {
 	None,
-	Hello,
 	Message,
-	String_Message,
-	Delta_State,	//1 byte per channel since the last state
-	Full_State,		//Full transform etc
-	Received_State, //received from a client, informs that its received packet n
-	Player_Connected,
+	Connect_Confirmed,
 	Player_Disconnected,
-	Shutdown
+	Add_Object,
+	Full_State,		//Full transform etc
+	Delta_State,
+	Received_State, //received from a client
+	Shutdown,
+
+	MessageTypeMax
 };
 
 struct GamePacket {

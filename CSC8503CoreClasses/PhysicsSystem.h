@@ -8,6 +8,13 @@ namespace NCL {
 			PhysicsSystem(GameWorld& g);
 			~PhysicsSystem();
 
+			struct collisionData
+			{
+				float paintRadius;
+				Vector3 contactPosition;
+
+			};
+
 			void Clear();
 
 			void Update(float dt);
@@ -21,8 +28,9 @@ namespace NCL {
 			}
 
 			void SetGravity(const Vector3& g);
+
 		protected:
-			void BasicCollisionDetection();
+			collisionData BasicCollisionDetection();
 			void BroadPhase();
 			void NarrowPhase();
 
@@ -37,6 +45,8 @@ namespace NCL {
 			void UpdateObjectAABBs();
 
 			void ImpulseResolveCollision(GameObject& a , GameObject&b, CollisionDetection::ContactPoint& p) const;
+			void ImpulseResolveStop(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const;
+			void ImpulseResolveContinuedResponse(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const;
 
 			GameWorld& gameWorld;
 

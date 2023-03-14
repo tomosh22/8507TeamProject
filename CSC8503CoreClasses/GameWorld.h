@@ -58,23 +58,27 @@ namespace NCL {
 				return worldStateCounter;
 			}
 
-			static GameWorld& GetInstance()
+			static GameWorld* GetInstance()
 			{
-				static GameWorld instance;
-				return instance;
+				if (_instance == nullptr)
+				{
+					_instance = new GameWorld();
+				}
+				return _instance;
 			}
 
-
 		protected:
+			static GameWorld* _instance;
+
 			std::vector<GameObject*> gameObjects;
 			std::vector<Constraint*> constraints;
 
+			Camera* mainCamera;
 
 			bool shuffleConstraints;
 			bool shuffleObjects;
 			int		worldIDCounter;
 			int		worldStateCounter;
-			Camera* mainCamera;
 		};
 	}
 }

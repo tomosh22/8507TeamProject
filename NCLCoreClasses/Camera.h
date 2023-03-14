@@ -10,6 +10,7 @@ https://research.ncl.ac.uk/game/
 #include "Matrix4.h"
 #include "Vector3.h"
 #include "Maths.h"
+
 namespace NCL {
 	using namespace NCL::Maths;
 	enum class CameraType {
@@ -32,14 +33,8 @@ namespace NCL {
 			nearPlane	= 1.0f;
 			farPlane	= 100.0f;
 
-			forward.z = -cos(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
-			forward.y = sin(Maths::DegreesToRadians(pitch));
-			forward.x = -sin(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
-			forward = forward.Normalised();
-			
-
-
 			camType		= CameraType::Perspective;
+			lockMode = false;
 		};
 
 		Camera(float pitch, float yaw, const Vector3& position) : Camera() {
@@ -52,6 +47,7 @@ namespace NCL {
 			this->farPlane	= 100.0f;
 
 			this->camType	= CameraType::Perspective;
+			lockMode = false;
 		}
 
 		~Camera(void) = default;
@@ -60,6 +56,10 @@ namespace NCL {
 
 		float GetFieldOfVision() const {
 			return fov;
+		}
+
+		void SetFieldOfVision(float fov) {
+			this->fov = fov;
 		}
 
 		float GetNearPlane() const {
@@ -107,14 +107,14 @@ namespace NCL {
 		//Sets pitch, in degrees
 		Camera& SetPitch(float p) { pitch = p; return *this; }
 
-		Vector3 GetForward() const { return forward; }
-
-		inline Vector3 GetRight()
+		Vector3 GetForward()
 		{
-			rightDir.x = cos(yaw);
-			rightDir.y = 0;
-			rightDir.z = -sin(yaw);
-			return rightDir;
+			return forward;
+		}
+
+		void SetCameraMode(bool mode)
+		{
+			lockMode = mode;
 		}
 
 		static Camera BuildPerspectiveCamera(const Vector3& pos, float pitch, float yaw, float fov, float near, float far);
@@ -138,5 +138,7 @@ namespace NCL {
 		Vector3 rightDir;		//Right direciton of camera
 		Vector3 targetPosition;   //The target camera look at 
 		Vector3 lockOffset;		 // offset between camera and target
+
+		bool lockMode;
 	};
 }

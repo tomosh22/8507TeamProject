@@ -46,6 +46,26 @@ bool Plane::PointInPlane(const Vector3 &position) const {
 	return true;
 }
 
+Vector3 Plane::GetIntersection(const Vector3& pos, const Vector3& vec) {
+	double dotValue = Vector3::DoubleDot(vec, normal); 
+
+	//If the dot product results in 0, the vectors are parallel to the plane and have no intersection
+	if (dotValue == 0) {
+		return Vector3();
+	}
+	double dotPN = Vector3::DoubleDot(pos, normal);
+	double t = abs((distance - dotPN) / dotValue);
+	Vector3 intersection = pos + vec * static_cast<float>(t);
+	return intersection;
+}
+
+Plane Plane::PlaneFromVector(const Vector3& vec1, const Vector3& vec2) {
+	Plane plane;
+	plane.normal = Vector3::Cross(vec1, vec2);
+	plane.distance = -Vector3::Dot(vec1, vec2);
+	return plane;
+}
+
 Plane Plane::PlaneFromTri(const Vector3 &v0, const Vector3 &v1, const Vector3 &v2) {
 	Vector3 v1v0 = v1-v0;
 	Vector3 v2v0 = v2-v0;

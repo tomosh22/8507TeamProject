@@ -65,6 +65,7 @@ void OGLShader::ReloadShader() {
 		
 				if (shaderValid[i] != GL_TRUE) {
 					std::cout << ShaderNames[i] << " shader " << " has failed!" << std::endl;
+					__debugbreak();
 				}
 				else {
 					glAttachShader(programID, shaderIDs[i]);
@@ -80,6 +81,7 @@ void OGLShader::ReloadShader() {
 
 	if (programValid != GL_TRUE) {
 		std::cout << "This shader has failed!" << std::endl;
+		__debugbreak();
 	}
 	else {
 		std::cout << "Shader loaded!" << std::endl;
@@ -107,7 +109,7 @@ void	OGLShader::PrintCompileLog(GLuint object) {
 		char* tempData = new char[logLength];
 		glGetShaderInfoLog(object, logLength, NULL, tempData);
 		std::cout << "Compile Log:\n" << tempData << std::endl;
-		delete tempData;
+		delete[] tempData;
 	}
 }
 

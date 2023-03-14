@@ -37,6 +37,13 @@ namespace NCL::Rendering {
 			return false;
 		}
 
+		int GetWindowWidth() const {
+			return windowWidth;
+		}
+		int GetWindowHeight() const {
+			return windowHeight;
+		}
+
 	protected:
 		virtual void OnWindowResize(int w, int h) = 0;
 		virtual void OnWindowDetach() {}; //Most renderers won't care about this

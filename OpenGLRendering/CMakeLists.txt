@@ -90,6 +90,7 @@ set(ADDITIONAL_LIBRARY_DEPENDENCIES
     "NCLCoreClasses"
     "opengl32.lib"
 )
+
 include_directories("../NCLCoreClasses/")
 include_directories("../OpenGLRendering/")
 

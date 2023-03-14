@@ -88,6 +88,10 @@ namespace NCL::Maths {
 			return (a.x*b.x) + (a.y*b.y) + (a.z*b.z);
 		}
 
+		static constexpr double DoubleDot(const Vector3& a, const Vector3& b) {
+			return ((double)a.x * (double)b.x) + ((double)a.y * (double)b.y) + ((double)a.z * (double)b.z);
+		}
+
 		static Vector3	Cross(const Vector3 &a, const Vector3 &b) {
 			return Vector3((a.y*b.z) - (a.z*b.y), (a.z*b.x) - (a.x*b.z), (a.x*b.y) - (a.y*b.x));
 		}

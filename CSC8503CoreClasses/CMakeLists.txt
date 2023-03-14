@@ -66,6 +66,7 @@ set(Networking
     "NetworkBase.cpp"
     "NetworkObject.h"
     "NetworkObject.cpp"
+     "NetworkPacket.h"
     "NetworkState.h"
     "NetworkState.cpp"
 )
@@ -201,7 +202,10 @@ set(ADDITIONAL_LIBRARY_DEPENDENCIES
     "ws2_32.lib"
 )
 
+
 include_directories("../NCLCoreClasses/")
+include_directories("../OpenGLRendering/")
+include_directories("../CSC8503/")
 include_directories("./")
 
 if(MSVC)

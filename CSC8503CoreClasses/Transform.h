@@ -32,20 +32,8 @@ namespace NCL {
 				return matrix;
 			}
 
-			Vector3 GetForward()
-			{
-				return (orientation * Vector3(0, 0, -1)).Normalised();
-			}
-
-			void Rotate(Vector3 angle)
-			{
-				Vector3 selfAngle = GetOrientation().ToEuler();
-				SetOrientation(Quaternion::EulerAnglesToQuaternion(selfAngle.x + angle.x, selfAngle.y + angle.y, selfAngle.z + angle.z));
-			}
-
-			void RotateTo(Vector3 angle)
-			{			
-				SetOrientation(Quaternion::EulerAnglesToQuaternion( angle.x,  angle.y, angle.z));
+			Vector3 GetDirVector() const {
+				return orientation * Vector3(0, 0, -1);
 			}
 
 			void UpdateMatrix();

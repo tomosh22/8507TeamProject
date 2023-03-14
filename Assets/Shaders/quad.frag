@@ -19,7 +19,6 @@ uniform int width;
 uniform int height;
 
 
-
 in Vertex
 {
 	vec4 colour;
@@ -34,7 +33,8 @@ out vec4 fragColor;
 
 void main(void)
 {
-	fragColor = texture(mainTex,IN.texCoord);
+	if(hasTexture)fragColor = texture(mainTex,IN.texCoord);
+	else fragColor = IN.colour;
 }
 
 

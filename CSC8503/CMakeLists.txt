@@ -3,27 +3,58 @@ set(PROJECT_NAME CSC8503)
 ################################################################################
 # Source groups
 ################################################################################
+set(Networking
+    "NetworkedGame.h"
+    "NetworkedGame.cpp"
+    "NetworkPlayer.h"
+    "NetworkPlayer.cpp"
+)
+
+source_group("Networking" FILES ${Networking})
+
+set(Image
+    "imconfig.h"
+    "imgui.cpp"
+     "imgui.h"
+     "imgui_demo.cpp"
+     "imgui_draw.cpp"
+     "imgui_impl_opengl3.cpp"
+     "imgui_impl_opengl3.h"
+     "imgui_impl_opengl3_loader.h"
+     "imgui_impl_win32.cpp"
+     "imgui_impl_win32.h"
+     "imgui_internal.h"
+     "imgui_tables.cpp"
+     "imgui_widgets.cpp"
+     "imstb_rectpack.h"
+     "imstb_textedit.h"
+     "imstb_truetype.h"
+)
+
+source_group("Image" FILES ${Image})
+
 set(Header_Files
     "GameTechRenderer.h"
-    "NetworkedGame.h"
-    "NetworkPlayer.h"
     "StateGameObject.h"
     "TutorialGame.h"
-    "MyDelegate.h"
-    "Player.h"
-    "Paintball.h"
+    "playerTracking.h"
+    "ObjectPool.h"
+    "Projectile.h"
+	"PropSystem.h"
+	"Item.h"
+
 )
 source_group("Header Files" FILES ${Header_Files})
 
 set(Source_Files
     "GameTechRenderer.cpp"
     "Main.cpp"
-    "NetworkedGame.cpp"
-    "NetworkPlayer.cpp"
     "StateGameObject.cpp"
     "TutorialGame.cpp"
-    "Player.cpp"
-    "Paintball.cpp"
+    "playerTracking.cpp"
+    "Projectile.cpp"
+	"PropSystem.cpp"
+	"Item.cpp"
 )
 
 if(USE_VULKAN)
@@ -38,8 +69,20 @@ endif()
 
 source_group("Source Files" FILES ${Source_Files})
 
+set(Networking
+    "NetworkedGame.h"
+    "NetworkPlayer.h"
+    "NetworkedGame.cpp"
+    "NetworkPlayer.cpp"
+)
+
+source_group("Networking" FILES ${Networking})
+
+
 set(ALL_FILES
     ${Header_Files}
+     ${Networking}
+     ${Image}
     ${Source_Files}
 )
 
@@ -119,6 +162,7 @@ if(MSVC)
         "_WINSOCKAPI_"   
         "_WINSOCK2API_"
         "_WINSOCK_DEPRECATED_NO_WARNINGS"
+          "_CRT_SECURE_NO_WARNINGS"
     )
 endif()
 

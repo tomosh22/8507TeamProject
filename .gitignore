@@ -37,8 +37,13 @@ Build/
 /x64/Debug/OpenGLRendering.pdb
 /x64/Debug/NCLCoreClasses.pdb
 /x64/Debug/CSC8503CoreClasses.pdb
+/x64/Debug/GameServer.pdb
 /x64/Debug/CSC8503.pdb
-/x64/Debug
+/x64/Debug/CSC8503CoreClasses.lib
+/x64/Debug/GameServer.exe
+/x64/Debug/GameServer.ilk
+/x64/Debug/NCLCoreClasses.lib
+/x64/Debug/OpenGLRendering.lib
 /.vs/VSWorkspaceState.json
 /.vs/slnx.sqlite
 /.vs/ProjectSettings.json

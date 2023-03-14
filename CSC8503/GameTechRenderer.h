@@ -11,6 +11,8 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_win32.h"
+#include "AreaTex.h"
+#include "SearchTex.h"
 
 namespace NCL {
 	class Maths::Vector3;
@@ -83,16 +85,27 @@ namespace NCL {
 			GLuint sceneFBO;
 			GLuint sceneColor;
 			GLuint sceneDepth;
+
 			void CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex);
+			void CreateFBOColor(GLuint& fbo, GLuint& colorTex);
 
 			GLuint edgesFBO;
 			GLuint edgesTex;
 			OGLShader* edgesShader;
-			void CreateFBOColor(GLuint& fbo, GLuint& colorTex);
 
-			void EdgeDetectionPass();
+			GLuint weightCalcFBO;
+			GLuint blendTex;
+			GLuint areaTex;
+			GLuint searchTex;
+			OGLShader* weightCalcShader;
+
+			void EdgeDetection();
 			bool renderEdges = true;
 			float smaaThreshold = 0.001;
+
+
+			void WeightCalculation();
+			bool renderBlend = true;
 
 		protected:
 			void NewRenderLines();

@@ -7,6 +7,7 @@
 //this was me
 #include <Win32Window.h>
 
+
 using namespace NCL;
 using namespace Rendering;
 using namespace CSC8503;
@@ -73,6 +74,27 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 
 	edgesShader = new OGLShader("smaaEdgeDetection.vert", "smaaEdgeDetectionDepth.frag");
 	CreateFBOColor(edgesFBO, edgesTex);
+
+	weightCalcShader = new OGLShader("smaaBlendingWeightCalculation.vert", "smaaBlendingWeightCalculation.frag");
+	CreateFBOColor(weightCalcFBO, blendTex);
+
+	glGenTextures(1, &areaTex);
+	glBindTexture(GL_TEXTURE_2D, areaTex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, AREATEX_WIDTH, AREATEX_HEIGHT, 0, GL_RG, GL_UNSIGNED_BYTE, areaTexBytes);
+
+	glGenTextures(1, &searchTex);
+	glBindTexture(GL_TEXTURE_2D, searchTex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, searchTexBytes);
+
+
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -155,12 +177,15 @@ void GameTechRenderer::RenderFrame() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	
 	RenderFullScreenQuadWithTexture(sceneColor,true);//todo fix rotation
-	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "edge");
-	EdgeDetectionPass();
 	
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	EdgeDetection();
 	if(renderEdges)RenderFullScreenQuadWithTexture(edgesTex, true);
-	glPopDebugGroup();
+
+	WeightCalculation();
+	if (renderBlend)RenderFullScreenQuadWithTexture(blendTex, true);
+	
+
+	
 	
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
@@ -491,7 +516,7 @@ void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture, bool rota
 	glDepthMask(true);
 }
 
-void GameTechRenderer::EdgeDetectionPass() {
+void GameTechRenderer::EdgeDetection() {
 	glBindFramebuffer(GL_FRAMEBUFFER, edgesFBO);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	BindShader(edgesShader);
@@ -503,6 +528,36 @@ void GameTechRenderer::EdgeDetectionPass() {
 	glUniform1f(glGetUniformLocation(edgesShader->GetProgramID(), "SMAA_THRESHOLD"), smaaThreshold);
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void GameTechRenderer::WeightCalculation() {
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "weight");
+	glBindFramebuffer(GL_FRAMEBUFFER, weightCalcFBO);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	BindShader(weightCalcShader);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, edgesTex);
+	glUniform1i(glGetUniformLocation(weightCalcShader->GetProgramID(), "edgesTex"), 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, areaTex);
+	glUniform1i(glGetUniformLocation(weightCalcShader->GetProgramID(), "areaTex"), 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, searchTex);
+	glUniform1i(glGetUniformLocation(weightCalcShader->GetProgramID(), "searchTex"), 2);
+
+	glUniform1i(glGetUniformLocation(weightCalcShader->GetProgramID(), "width"), windowWidth);
+	glUniform1i(glGetUniformLocation(weightCalcShader->GetProgramID(), "height"), windowHeight);
+
+	glUniform1f(glGetUniformLocation(weightCalcShader->GetProgramID(), "SMAA_THRESHOLD"), smaaThreshold);
+
+	BindMesh(quad->GetMesh());
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glPopDebugGroup();
 }
 
 MeshGeometry* GameTechRenderer::LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes) {
@@ -732,6 +787,7 @@ void GameTechRenderer::ImGui() {
 	}
 	if (ImGui::TreeNode("SMAA")) {
 		ImGui::Checkbox("Display Edges", &renderEdges);
+		ImGui::Checkbox("Display Blending", &renderBlend);
 		ImGui::SliderFloat("Edge Threshold", &smaaThreshold, 0, 0.01,"%.10f");
 
 		ImGui::TreePop();

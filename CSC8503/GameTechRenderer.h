@@ -100,8 +100,8 @@ namespace NCL {
 			OGLShader* weightCalcShader;
 
 			void EdgeDetection();
-			bool renderEdges = true;
-			float smaaThreshold = 0.1;
+			bool renderEdges = false;
+			float smaaThreshold = 0.05;
 
 			GLuint blendingFBO;
 			void WeightCalculation();

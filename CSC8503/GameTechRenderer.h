@@ -11,6 +11,8 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_win32.h"
+#include "AreaTex.h"
+#include "SearchTex.h"
 
 namespace NCL {
 	class Maths::Vector3;
@@ -30,6 +32,7 @@ namespace NCL {
 
 			//this was me
 			RenderObject* quad;
+			OGLTexture* rayMarchTexture;
 			RenderObject* crosshair;
 
 			struct ImGUIPtrs {
@@ -48,10 +51,10 @@ namespace NCL {
 			};
 			ImGUIPtrs imguiptrs;
 
-			float noiseScale= 0.38f;
-			float noiseOffsetSize = 0.002f;
-			float noiseNormalStrength= 0.6;
-			float noiseNormalNoiseMult = 1.27;
+			float noiseScale = 1.8;
+			float noiseOffsetSize = 0.009;
+			float noiseNormalStrength = 10;
+			float noiseNormalNoiseMult = 0.313;
 
 			bool newMethod = true;
 
@@ -72,12 +75,50 @@ namespace NCL {
 			bool useGlossMap = true;
 
 			float timePassed = 0;
-			float timeScale = 0.5;
+			float timeScale = 0.419;
 
 			OGLShader* debugShader;
 			OGLShader* quadShader;
 
 			bool drawCrosshair = false;
+
+			GLuint sceneFBO;
+			GLuint sceneColor;
+			GLuint sceneDepth;
+
+			void CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex);
+			void CreateFBOColor(GLuint& fbo, GLuint& colorTex);
+
+			GLuint edgesFBO;
+			GLuint edgesTex;
+			OGLShader* edgesShader;
+
+			GLuint weightCalcFBO;
+			GLuint blendTex;
+			GLuint areaTex;
+			GLuint searchTex;
+			OGLShader* weightCalcShader;
+
+			void EdgeDetection();
+			bool renderEdges = false;
+			float smaaThreshold = 0.05;
+
+			GLuint blendingFBO;
+			void WeightCalculation();
+			bool renderBlend = true;
+
+			GLuint neighborhoodBlendingFBO;
+			OGLShader* neighborhoodBlendingShader;
+			GLuint smaaOutput;
+			void NeighborhoodBlending();
+			bool renderAA = true;
+
+			void SMAA();
+
+			OGLShader* fxaaShader;
+			void FXAA();
+			bool useFXAA = true;
+			bool edgeDetection = true;
 
 		protected:
 			void NewRenderLines();
@@ -96,7 +137,7 @@ namespace NCL {
 			void RenderSkybox();
 
 			//this was me
-			void RenderFullScreenQuad();
+			void RenderFullScreenQuadWithTexture(GLuint texture, bool rotated = false);
 			void ImGui();
 
 			void LoadSkybox();
@@ -138,6 +179,8 @@ namespace NCL {
 			size_t textCount;
 
 			void DrawCrossHair();
+
+			
 		};
 	}
 }

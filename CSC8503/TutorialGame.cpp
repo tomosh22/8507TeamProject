@@ -124,14 +124,15 @@ void TutorialGame::InitQuadTexture() {
 	int width = (renderer->GetWindowWidth());
 	int height = (renderer->GetWindowHeight());
 	//std::array<float, 1280 * 720 * 4>* data = new std::array<float, 1280 * 720 * 4>();//todo dont hardcode
-	quadTex = new OGLTexture();
-	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), quadTex, quadShader);
+	
+	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), nullptr, quadShader);
 	//for (int i = 0; i < 1280*720*4; i++)
 	//{ 
 	//	data->at(i) = (float)rand() / (float)RAND_MAX;
 	//}
 	
-	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()));
+	renderer->rayMarchTexture = new OGLTexture();
+	glBindTexture(GL_TEXTURE_2D, (renderer->rayMarchTexture->GetObjectID()));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
@@ -170,19 +171,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	Matrix4 projMatrix = GameWorld::GetInstance()->GetMainCamera()->BuildProjectionMatrix(screenAspect);
 	Vector3 cameraPos = GameWorld::GetInstance()->GetMainCamera()->GetPosition();
 	
-	std::vector<float> buffer;
-	buffer.resize(width * height);
-	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, buffer.data());
-	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
-	glTexImage2D(GL_TEXTURE_2D, 0,
-		GL_DEPTH_COMPONENT,
-		renderer->GetWindowWidth(),
-		renderer->GetWindowHeight(),
-		0,
-		GL_DEPTH_COMPONENT,
-		GL_FLOAT,
-		buffer.data());
-	glBindTexture(GL_TEXTURE_2D, 0);
+	
 	
 
 	int projLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "projMatrix");
@@ -217,13 +206,13 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16F);
+	glBindImageTexture(0, renderer->rayMarchTexture->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16F);
 
 
 
 	glUniform1i(depthTexLocation, 1);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
+	glBindTexture(GL_TEXTURE_2D, renderer->sceneDepth);
 
 	rayMarchComputeShader->Execute(width/8+1, height/8+1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -250,12 +239,14 @@ void TutorialGame::InitialiseAssets() {
 	enemyMesh	= renderer->LoadMesh("Keeper.msh", &meshes);
 	bonusMesh	= renderer->LoadMesh("apple.msh", &meshes);
 	capsuleMesh = renderer->LoadMesh("capsule.msh", &meshes);
+	
 	//this was me
 	triangleMesh = OGLMesh::GenerateTriangleWithIndices();
 	monkeyMesh = renderer->LoadMesh("newMonkey.msh", &meshes);
 	floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh", &meshes);
 	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh", &meshes);
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
+	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
 
 	playerMesh = renderer->LoadMesh("BasicCharacter.msh", &meshes);
 
@@ -831,6 +822,10 @@ void TutorialGame::InitGraphicTest() {
 	walls.back()->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(90, 0, 0));
 	walls.back()->SetName(std::string("back"));
 
+	bunny = AddBunnyToWorld({ 0,20,50 }, { 5,5,5 },false);
+	bunny->GetRenderObject()->pbrTextures = rockPBR;
+	bunny->GetRenderObject()->useHeightMap = true;
+
 	//max = AddMaxToWorld({ 10,10,-10 }, { 10,10,10 });
 
 #ifdef TRI_DEBUG
@@ -1209,6 +1204,32 @@ GameObject* TutorialGame::AddMaxToWorld(const Vector3& position, Vector3 dimensi
 	GameWorld::GetInstance()->AddGameObject(max);
 
 	return max;
+}
+
+GameObject* TutorialGame::AddBunnyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, bool physics) {
+	GameObject* bunny = new GameObject();
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+	bunny->SetBoundingVolume((CollisionVolume*)volume);
+
+	bunny->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2);
+
+	bunny->SetRenderObject(new RenderObject(&bunny->GetTransform(), bunnyMesh, nullptr, basicShader));
+	if (physics) {
+		bunny->SetPhysicsObject(new PhysicsObject(&bunny->GetTransform(), bunny->GetBoundingVolume()));
+
+		bunny->GetPhysicsObject()->SetInverseMass(inverseMass);
+		bunny->GetPhysicsObject()->InitCubeInertia();
+	}
+	
+
+	InitPaintableTextureOnObject(bunny);
+
+	GameWorld::GetInstance()->AddGameObject(bunny);
+
+	return bunny;
 }
 
 void TutorialGame::setLockedObjectNull() {

@@ -65,6 +65,7 @@ namespace NCL {
 			MeshGeometry* floorMesh = nullptr;
 			MeshGeometry* maxMesh = nullptr;
 			MeshGeometry* basicWallMesh = nullptr;
+			MeshGeometry* bunnyMesh = nullptr;
 
 			TextureBase* basicTex = nullptr;
 			ShaderBase* basicShader = nullptr;
@@ -148,6 +149,7 @@ namespace NCL {
 
 			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddBunnyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 
 			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation);
@@ -210,7 +212,7 @@ namespace NCL {
 			OGLComputeShader* computeShader;
 			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center, int teamID);
 			OGLShader* quadShader;
-			TextureBase* quadTex = nullptr;
+			
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object, bool rotated = false);
@@ -253,6 +255,7 @@ namespace NCL {
 			std::array<char, 1000 * 1000> zeros;
 			GameObject* testTriangle;
 			GameObject* monkey;
+			GameObject* bunny;
 			void AddDebugTriangleInfoToObject(GameObject* object);
 			
 			TextureBase* metalTex;

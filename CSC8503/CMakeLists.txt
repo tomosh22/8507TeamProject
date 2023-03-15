@@ -42,8 +42,13 @@ set(Header_Files
     "Projectile.h"
 	"PropSystem.h"
 	"Item.h"
+
+    "AreaTex.h"
+    "SearchTex.h"
+
 	"GameManager.h"
 	"AudioSystem.h"
+
 
 )
 source_group("Header Files" FILES ${Header_Files})

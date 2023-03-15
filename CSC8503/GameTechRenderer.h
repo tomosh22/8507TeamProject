@@ -120,6 +120,10 @@ namespace NCL {
 			bool useFXAA = true;
 			bool edgeDetection = true;
 
+			GLuint hdrFBO;
+			OGLShader* hdrShader;
+			GLuint tonemappedTexture;
+
 		protected:
 			void NewRenderLines();
 			void NewRenderText();

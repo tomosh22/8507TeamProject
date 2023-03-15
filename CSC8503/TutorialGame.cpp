@@ -248,6 +248,8 @@ void TutorialGame::InitialiseAssets() {
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
 	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
 
+	playerMesh = renderer->LoadMesh("BasicCharacter.msh", &meshes);
+
 	for (MeshGeometry*& mesh : meshes) {
 		if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
 		if (mesh->GetIndexCount() / 3 > highestTriCount) {
@@ -458,12 +460,12 @@ void TutorialGame::UpdateGame(float dt) {
 
 	UpdateKeys();
 
-	if (useGravity) {
+	/*if (useGravity) {
 		Debug::Print("(G)ravity on", Vector2(5, 95), Debug::RED);
 	}
 	else {
 		Debug::Print("(G)ravity off", Vector2(5, 95), Debug::RED);
-	}
+	}*/
 
 	RayCollision closestCollision;
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::K) && selectionObject) {
@@ -494,6 +496,10 @@ void TutorialGame::UpdateGame(float dt) {
 	MoveSelectedObject();
 	//movePlayer(goatCharacter);
 
+	if (GAME_MODE_PHISICAL_TEST == gameMode) {
+		Debug::Print("Health: " + std::to_string(testPlayer->GetHealth()), Vector2(5, 95));
+		Debug::Print("Shield: " + std::to_string(testPlayer->GetShield()), Vector2(5, 100));
+	}
 
 	GameWorld::GetInstance()->UpdateWorld(dt);
 
@@ -511,6 +517,9 @@ void TutorialGame::UpdateGame(float dt) {
 		UpdateRayMarchSpheres();
 		SendRayMarchData();
 	}
+
+	
+	
 }
 
 void TutorialGame::SelectMode() {
@@ -842,6 +851,8 @@ void TutorialGame::InitPhysicalTest() {
 	InitGameExamples();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
+
+
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
 #endif
@@ -1355,7 +1366,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
+	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, basicShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
 	character->GetPhysicsObject()->setTorqueFriction(0.005f);
@@ -1569,13 +1580,19 @@ void TutorialGame::InitGameExamples() {
 	
 	//TODO
 	auto q = Quaternion();
-	lockedObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	testPlayer = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	lockedObject = testPlayer; 
 	//TestCode of Item
 	PropSystem::GetInstance()->SpawnItem();
+	PropSystem::GetInstance()->SpawnSpeedUp();
+	PropSystem::GetInstance()->SpawnShield();
+	PropSystem::GetInstance()->SpawnHeal();
+	PropSystem::GetInstance()->SpawnWeaponUp(); 
 
 	//AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	//AddEnemyToWorld(Vector3(5, 5, 0));
 	//AddBonusToWorld(Vector3(10, 5, 0));
+
 }
 
 void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius) {

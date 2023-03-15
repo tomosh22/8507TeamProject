@@ -227,7 +227,7 @@ PhysicsSystem::collisionData PhysicsSystem::BasicCollisionDetection() {
 			continue;
 		}
 		for (auto j = i + 1; j != last; ++j) {
-			if ((*j)->GetPhysicsObject() == nullptr||!(*j)->IsActive()) {
+			if ((*j)->GetPhysicsObject() == nullptr||!(*j)->IsActive() || ((*i)->GetLayerMask()==Bullet&& (*j)->GetLayerMask() == Bullet)) {
 				continue;
 			}
 			CollisionDetection::CollisionInfo info;

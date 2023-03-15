@@ -75,6 +75,8 @@ namespace NCL {
 			MeshGeometry* enemyMesh = nullptr;
 			MeshGeometry* bonusMesh = nullptr;
 
+			MeshGeometry* playerMesh = nullptr;
+
 			enum Team {
 				teamNull,
 				team1,
@@ -195,7 +197,7 @@ namespace NCL {
 
 			playerTracking* goatCharacter = nullptr;
 			GameObject* EnemyGoat = nullptr;
-			playerTracking* testplayer = nullptr;
+			playerTracking* testPlayer = nullptr;
 
 			const int bulletLifeLimit = 2;
 			const int bulletDeletionLimit = 5;

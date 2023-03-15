@@ -17,6 +17,10 @@ namespace NCL {
 			}
 
 			void SpawnItem();
+			void SpawnHeal();
+			void SpawnSpeedUp();
+			void SpawnShield(); 
+			void SpawnWeaponUp(); 
 
 		protected:
 			static PropSystem* _instance;

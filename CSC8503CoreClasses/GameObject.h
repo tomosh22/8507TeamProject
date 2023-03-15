@@ -10,6 +10,13 @@ using std::vector;
 
 namespace NCL::CSC8503 {
 
+	enum LayerMask
+	{
+		Default,
+		Bullet,
+	};
+
+
 	class NetworkObject;
 	class RenderObject;
 	class PhysicsObject;
@@ -137,11 +144,24 @@ namespace NCL::CSC8503 {
 			return worldID;
 		}
 
-		
+		void SetLayerMask(LayerMask layerMask)
+		{
+			layer = layerMask;
+		}
+
+		LayerMask GetLayerMask()
+		{
+			return layer;
+		}
 
 		virtual float collisionInfo() {
 			return 0;
 		}
+
+		virtual std::string id()
+		{
+		    return "Object";
+	    }
 
 		//unsigned int ssbo;
 		//unsigned int texture;
@@ -162,7 +182,7 @@ namespace NCL::CSC8503 {
 		RenderObject*		renderObject;
 		NetworkObject*		networkObject;
 		AgentMovement*      agentObject;
-
+		LayerMask           layer;
 
 		bool        isAlpha = false;
 		bool		isActive;

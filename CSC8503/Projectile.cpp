@@ -25,6 +25,7 @@ Projectile::Projectile()
 
 	GetPhysicsObject()->SetInverseMass(1.0f);
 	GetPhysicsObject()->InitSphereInertia();
+	SetLayerMask(Bullet);
 	SetName("Bullet");
 	AffectedGravity = true;
 	SetActive(false);
@@ -33,7 +34,7 @@ Projectile::Projectile()
 
 
 	//Projectile::Projectile(gun GunToUse,vector<Projectile*>* parentVector,GameWorld* world) {
-Projectile::Projectile(gun GunToUse) {
+Projectile::Projectile(Gun GunToUse) {
 		this->parentVector = parentVector;
 		this->world = world;
 		setGunType(GunToUse);
@@ -66,7 +67,7 @@ void NCL::CSC8503::Projectile::Update(float dt)
 {
 }
 
-void Projectile::setGunType(gun wepType) {
+void Projectile::setGunType(Gun wepType) {
 		setExplosionRadius(wepType.radius);
 		setProjectileRadius(wepType.ProjectileSize);
 		setProjectilePropultionForce(wepType.projectileForce);
@@ -92,6 +93,11 @@ void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 		{
 			player->ReTurnBullet(this);
 		}
+	}
+	else if (otherObject->id() == "character")
+	{
+		playerTracking* enemy = static_cast<playerTracking*>(otherObject);   // safe conversion
+		enemy->TakeDamage(5); //Up To bullet
 	}
 }
 

@@ -118,6 +118,7 @@ namespace NCL {
 			OGLShader* fxaaShader;
 			void FXAA();
 			bool useFXAA = true;
+			bool edgeDetection = true;
 
 		protected:
 			void NewRenderLines();

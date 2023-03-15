@@ -569,6 +569,8 @@ void GameTechRenderer::FXAA() {
 	glUniform1i(glGetUniformLocation(fxaaShader->GetProgramID(), "width"), windowWidth);
 	glUniform1i(glGetUniformLocation(fxaaShader->GetProgramID(), "height"), windowHeight);
 
+	glUniform1i(glGetUniformLocation(fxaaShader->GetProgramID(), "edgeDetection"), edgeDetection);
+
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glPopDebugGroup();
@@ -902,6 +904,7 @@ void GameTechRenderer::ImGui() {
 	}
 	if (ImGui::TreeNode("FXAA")) {
 		ImGui::Checkbox("Use FXAA", &useFXAA);
+		ImGui::Checkbox("Edge Detection", &edgeDetection);
 
 		ImGui::TreePop();
 	}

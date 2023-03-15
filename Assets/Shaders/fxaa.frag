@@ -4,6 +4,9 @@ uniform sampler2D mainTex;
 uniform sampler2D edgesTex;
 uniform int width;
 uniform int height;
+
+uniform bool edgeDetection;
+
 vec2 frameBufSize = vec2(width,height);
 in Vertex
 {
@@ -15,18 +18,17 @@ out vec4 fragColor;
 
 void main( void ) {
     
-    vec3 edge = texture2D(edgesTex,IN.texCoord).xyz;
-    bool isOnEdge = length(edge) > 0.1;
+    
 
-    if(!isOnEdge){
-        fragColor = texture2D(mainTex,IN.texCoord);
+    if(edgeDetection){
+        //fragColor = vec4(1);return;
+        vec3 edge = texture2D(edgesTex,IN.texCoord).xyz;
+        bool isOnEdge = length(edge) > 0.1;
+        if(!isOnEdge){
+            fragColor = texture2D(mainTex,IN.texCoord);
         return;
+        }
     }
-    else{
-        //fragColor = vec4(1,0,0,1);
-        //return;
-    }
-
 
     float FXAA_SPAN_MAX = 8.0;
     float FXAA_REDUCE_MUL = 1.0/8.0;

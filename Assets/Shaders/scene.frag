@@ -45,6 +45,9 @@ uniform float noiseOffsetSize;
 uniform float noiseNormalStrength;
 uniform float noiseNormalNoiseMult;
 
+uniform bool toneMap = false;
+uniform float exposure = 1;
+
 layout(std430, binding = 4) buffer PaintSSBO{
 	int paintData[];
 };
@@ -393,5 +396,17 @@ void main(void)
 	//fragColor.a = opacity;//todo add back in
 	//fragColor = vec4(bumpNormal,1);
 	//fragColor = vec4(bumpNormal,1);
+
+	if(toneMap){
+		const float gamma = 2.2;
+		vec3 hdrColor = fragColor.rgb;
+  
+		// exposure tone mapping
+		vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);
+		// gamma correction 
+		//mapped = pow(mapped, vec3(1.0 / gamma));
+  
+		fragColor = vec4(mapped, 1.0);
+	}
 }
 

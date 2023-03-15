@@ -124,6 +124,8 @@ namespace NCL {
 			GLuint hdrFBO;
 			OGLShader* hdrShader;
 			GLuint tonemappedTexture;
+			bool toneMap = true;
+			float exposure = 1;
 
 		protected:
 			void NewRenderLines();

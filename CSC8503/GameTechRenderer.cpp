@@ -481,6 +481,9 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1f(timePassedLocation, timePassed);
 		glUniform1f(timeScaleLocation, timeScale);
 
+		glUniform1i(glGetUniformLocation(shader->GetProgramID(), "toneMap"), toneMap);
+		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "exposure"), exposure);
+
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
 		if (i->isPaintable) {
@@ -549,6 +552,7 @@ void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture) {
 	glActiveTexture(GL_TEXTURE0);
 	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "mainTex"), 0);
 	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "hasTexture"), true);
+	
 	glBindTexture(GL_TEXTURE_2D, texture);
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -913,6 +917,12 @@ void GameTechRenderer::ImGui() {
 
 		ImGui::TreePop();
 	}
+	if (ImGui::TreeNode("HDR")) {
+		ImGui::Checkbox("Tone map", &toneMap);
+		ImGui::SliderFloat("Edge Threshold", &exposure, -10, 10);
+		ImGui::TreePop();
+	}
+	
 
 	ImGui::SliderFloat3("Light Position", lightPosition.array, -200, 200);
 

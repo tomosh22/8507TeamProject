@@ -181,12 +181,17 @@ void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 void NCL::CSC8503::playerTracking::PlayerDie()
 {
 	playerDead = true;
+	speedUp = false;
+	weaponUp = false;
+
 	GetTransform().SetPosition(Vector3(2000, 2000, 2000));
+	setWeponType(pistol);
 }
 
 void NCL::CSC8503::playerTracking::PlayerRespawn()
 {
 	playerDead = false; 
+	hp = 100; 
 }
 
 void NCL::CSC8503::playerTracking::Respawning(float dt)

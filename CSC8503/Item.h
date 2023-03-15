@@ -44,7 +44,7 @@ namespace NCL {
 			void Trigger(GameObject* character) override {
 				std::cout << "Weapon Up" << std::endl;
 				playerTracking* c = static_cast<playerTracking*>(character);
-				c->setWeponType(rocket);
+				c->WeaponUp();
 				this->GetTransform().SetPosition(Vector3(1000, 1000, 1000));
 				notSpawned = true;
 				respawnTimer = time;

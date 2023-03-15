@@ -131,7 +131,6 @@ namespace NCL {
 			void Respawning(float dt);
 
 
-
 			void FireBullet();
 			void ResetBullet(Projectile* bullet);
 			void ReTurnBullet(Projectile* bullet);

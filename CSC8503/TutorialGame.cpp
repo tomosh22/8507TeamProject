@@ -11,8 +11,9 @@
 #include<cmath>
 #include "Projectile.h"
 
-#include<iostream>
-#include"PropSystem.h"
+#include <iostream>
+#include "PropSystem.h"
+
 
 using namespace NCL;
 using namespace CSC8503;

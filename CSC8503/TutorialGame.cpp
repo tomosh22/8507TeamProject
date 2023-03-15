@@ -14,6 +14,7 @@
 #include<iostream>
 #include"PropSystem.h"
 
+
 using namespace NCL;
 using namespace CSC8503;
 
@@ -112,6 +113,14 @@ TutorialGame::TutorialGame()	{
 
 
 	renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
+
+	playerIdle = new MeshAnimation("BasicCharacter.anm");
+	playerMaterial = new MeshMaterial("BasicCharacter.mat");
+
+
+
+	currentFrame = 0;
+	frameTime = 0.0f;
 
 	return;
 
@@ -284,6 +293,7 @@ void TutorialGame::InitialiseAssets() {
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc","scene.tese");
+	characterShader = renderer->LoadShader("SkinningVertex.vert", "SkinningFrag.frag");
 	metalTex = renderer->LoadTexture("metal.png");
 	testBumpTex = renderer->LoadTexture("testBump.jpg");
 
@@ -499,6 +509,13 @@ void TutorialGame::UpdateGame(float dt) {
 	if (GAME_MODE_PHISICAL_TEST == gameMode) {
 		Debug::Print("Health: " + std::to_string(testPlayer->GetHealth()), Vector2(5, 95));
 		Debug::Print("Shield: " + std::to_string(testPlayer->GetShield()), Vector2(5, 100));
+
+		frameTime -= dt;
+		while (frameTime < 0.0f) {
+			currentFrame = (currentFrame + 1) % playerIdle-> GetFrameCount();
+			frameTime += 1.0f / playerIdle-> GetFrameRate();
+		}
+
 	}
 
 	GameWorld::GetInstance()->UpdateWorld(dt);

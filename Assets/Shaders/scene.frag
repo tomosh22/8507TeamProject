@@ -334,10 +334,8 @@ vec3 sampleTeamColor(vec2 uv) {
 void main(void)
 {
 	vec4 diffuse = texture(baseTex,IN.texCoord);
+	diffuse.rgb = pow(diffuse.rgb, vec3(2.2));
 
-	int dataIndex = int(floor(IN.texCoord.y * height)) * width + int(floor(IN.texCoord.x * width));
-	
-	
 	float shadow = 1.0; // New !
 	
 	if( IN . shadowProj. w > 0.0) { // New !
@@ -349,6 +347,24 @@ void main(void)
 
 	vec3 bumpNormal = useBumpMap ? (2.0 * texture(bumpTex,IN.texCoord).rgb - 1.0) : IN.normal;
 	
+	//PBR stuff
+	vec4 metallic = useMetallicMap ? texture(metallicTex,IN.texCoord) : vec4(0);
+	vec4 roughness = useRoughnessMap ? texture(roughnessTex,IN.texCoord) : vec4(0);
+	vec3 emission = useEmissionMap ? texture(emissionTex, IN.texCoord).xyz : vec3(0);
+	float AO = useAOMap ? texture(AOTex,IN.texCoord).r : 1;
+	float opacity = useOpacityMap ? texture(opacityTex,IN.texCoord).r : 1;
+	float reflectivity = useGlossMap ? texture(glossTex,IN.texCoord).r : 0.8;
+
+	emission = pow(emission, vec3(2.2));
+
+	vec4 baseColor = vec4(0,0,0,1);
+	point(baseColor,diffuse,bumpNormal,metallic.r,roughness.r,reflectivity);
+	baseColor.rgb += diffuse.rgb * 0.5 * pow(AO,2);
+	baseColor.rgb *= shadow;
+	baseColor.rgb += emission * 100;
+	baseColor.a = 1;
+
+	//Paint stuff
 	{
 		vec2 offset = bloodnoise(noiseScale);
 		vec2 normalOffset = bloodnoise(noiseNormalNoiseMult * noiseScale);
@@ -361,34 +377,20 @@ void main(void)
 
 		float opacity = min(maskAlbedo.r + maskAlbedo.g + maskAlbedo.b, 1);
 		opacity = smoothstep(0.4, 0.5, opacity);
+		
+		bumpNormal = normalize(bumpNormal + normalSkew);
 
-		diffuse.rgb = mix(diffuse.rgb, maskAlbedo, opacity);
-		bumpNormal = mix(bumpNormal, bumpNormal + normalSkew, opacity);
-		bumpNormal = normalize(bumpNormal);
+		vec4 paintColor = vec4(maskAlbedo, 1.0);
+		point(paintColor,paintColor,bumpNormal,0,0.1,0.5);
+		paintColor *= shadow;
 
+		fragColor.rgb = mix(baseColor.rgb, paintColor.rgb, opacity);
+		fragColor.a = 1;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-	
-
-
-
-
-	vec4 metallic = useMetallicMap ? texture(metallicTex,IN.texCoord) : vec4(0);
-	vec4 roughness = useRoughnessMap ? texture(roughnessTex,IN.texCoord) : vec4(0);
-	vec4 emission = useEmissionMap ? texture(emissionTex, IN.texCoord) : vec4(0);
-	float AO = useAOMap ? texture(AOTex,IN.texCoord).r : 1;
-	float opacity = useOpacityMap ? texture(opacityTex,IN.texCoord).r : 1;
-	float reflectivity = useGlossMap ? texture(glossTex,IN.texCoord).r : 0.8;
-
-	fragColor = vec4(0,0,0,1);
-	point(fragColor,diffuse,bumpNormal,metallic.r,roughness.r,reflectivity);
-	fragColor.rgb *= shadow;
-	fragColor += diffuse * 0.5 * pow(AO,2);
 	//fragColor.a = opacity;//todo add back in
-	fragColor += emission;
 	//fragColor = vec4(bumpNormal,1);
 	//fragColor = vec4(bumpNormal,1);
 }

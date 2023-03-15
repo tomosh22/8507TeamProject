@@ -8,11 +8,14 @@ namespace NCL {
 		{
 			public:
 				RespawnPoint(Vector3 pos);
-				void AddRespawnPoint(RespawnPoint rp);
-				void FindSafeRespawn(); 
+				void AddRespawnPoint(RespawnPoint* rp);
+				Vector3 FindSafeRespawn(int team); 
 				void OnCollisionBegin(GameObject* otherObject);
+				void OnCollisionEnd(GameObject* otherObject);
 			protected:
-				std::vector<RespawnPoint>respawnPoints;
+				std::vector<RespawnPoint*>respawnPoints;
+				bool team1Safe;
+				bool team2Safe; 
 		};
 	}
 }

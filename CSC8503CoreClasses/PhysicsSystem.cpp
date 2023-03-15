@@ -254,8 +254,13 @@ so that objects separate back out.
 
 */
 void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
+	if (a.GetLayerMask() == Trigger || b.GetLayerMask() == Trigger)
+		return;
+
 	PhysicsObject* physA = a.GetPhysicsObject();
 	PhysicsObject* physB = b.GetPhysicsObject();
+
+
 	Vector3 relativeA = p.localA;
 	Vector3 relativeB = p.localB;
 
@@ -270,6 +275,7 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 	Vector3 contactVelocity = fullVelocityB - fullVelocityA;
 	p.normal.Normalise();
 	//try layer id
+	
 	if ((physA->getLayerId() == physB->getLayerId()) && physA->getLayerId() == 2) {
 		return;
 	}
@@ -299,8 +305,12 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 
 
 void PhysicsSystem::ImpulseResolveStop(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
+	if (a.GetLayerMask() == Trigger || b.GetLayerMask() == Trigger)
+		return;
+
 	PhysicsObject* physA = a.GetPhysicsObject();
 	PhysicsObject* physB = b.GetPhysicsObject();
+
 
 	Transform& transformA = a.GetTransform();
 	Transform& transformB = b.GetTransform();
@@ -333,6 +343,9 @@ void PhysicsSystem::ImpulseResolveStop(GameObject& a, GameObject& b, CollisionDe
 
 
 void PhysicsSystem::ImpulseResolveContinuedResponse(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
+	if (a.GetLayerMask() == Trigger || b.GetLayerMask() == Trigger)
+		return;
+	
 	PhysicsObject* physA = a.GetPhysicsObject();
 	PhysicsObject* physB = b.GetPhysicsObject();
 

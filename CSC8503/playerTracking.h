@@ -6,6 +6,7 @@
 #include"Vector4.h"
 #include"ObjectPool.h"
 #include "GameWorld.h"
+#include "RespawnPoint.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -57,6 +58,10 @@ namespace NCL {
 				weaponType = newWeponType; 
 			}
 
+			void SetRespawn(RespawnPoint* rp)
+			{
+				respawn = rp;
+			}
 
 			void addToBulletsUsed(Projectile* bulletToAdd) {
 				bulletsUsed.push_back(bulletToAdd);
@@ -135,6 +140,15 @@ namespace NCL {
 			void ResetBullet(Projectile* bullet);
 			void ReTurnBullet(Projectile* bullet);
 
+			void OnCollisionBegin(GameObject* otherObject)
+			{
+				if (otherObject->GetName() == "floor")
+				{
+					std::cout << "Hit Floor" << std::endl;
+				}
+				std::cout << "Hit Something" << std::endl;
+			}
+
 
 		protected:
 			bool canJump; 
@@ -170,6 +184,8 @@ namespace NCL {
 
 			vector<Projectile*> bulletsUsed;
 			vector<Projectile*> bulletsUsedAndMoved;
+
+			RespawnPoint* respawn; 
 		};
 
 

@@ -2,6 +2,7 @@
 #include <iostream>
 #include"PhysicsObject.h"
 #include "TutorialGame.h"
+#include "RespawnPoint.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -10,25 +11,25 @@ using namespace CSC8503;
 
 playerTracking::playerTracking() 
 {
-		playerYawOrientation = 0.0f;
-		playerPitchOrientation = 0.0f;
-		playerID = 1;
-		teamID = 0;
-		IndividualplayerScore = 0;
-		weaponType = pistol;
-		moveSpeed = 10;
-		sprintTimer = 5.0f; 
-		respawnTimer = 200.0f; 
-		speedUp = false; 
-		weaponUp = false; 
-		hp = 100;
-		shield = 0; 
+	playerYawOrientation = 0.0f;
+	playerPitchOrientation = 0.0f;
+	playerID = 1;
+	teamID = 0;
+	IndividualplayerScore = 0;
+	weaponType = pistol;
+	moveSpeed = 10;
+	sprintTimer = 5.0f; 
+	respawnTimer = 50.0f; 
+	speedUp = false; 
+	weaponUp = false; 
+	hp = 100;
+	shield = 0; 
 
-		fireOffset = 10;
-		bulletPool = new ObjectPool<Projectile>();
-		coolDownTimer = 0;
-		bulletsUsed = {};
-		bulletsUsedAndMoved = {};
+	fireOffset = 10;
+	bulletPool = new ObjectPool<Projectile>();
+	coolDownTimer = 0;
+	bulletsUsed = {};
+	bulletsUsedAndMoved = {};
 
 }
 
@@ -190,8 +191,12 @@ void NCL::CSC8503::playerTracking::PlayerDie()
 
 void NCL::CSC8503::playerTracking::PlayerRespawn()
 {
+	Vector3 position;
 	playerDead = false; 
 	hp = 100; 
+	position = respawn->FindSafeRespawn(teamID);
+	respawnTimer = 50.0f;
+	GetTransform().SetPosition(position);
 }
 
 void NCL::CSC8503::playerTracking::Respawning(float dt)

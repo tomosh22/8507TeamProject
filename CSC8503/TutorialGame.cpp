@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include "PropSystem.h"
+#include "RespawnPoint.h"
 
 
 using namespace NCL;
@@ -1329,7 +1330,7 @@ void TutorialGame::AddMapToWorld() {
 
 }
 
-playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation) {
+playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation, Team team, RespawnPoint* rp) {
 	float meshSize = 2.0f;
 	float inverseMass = 0.8f;
 
@@ -1353,8 +1354,14 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	InitPaintableTextureOnObject(character);
 
 	GameWorld::GetInstance()->AddGameObject(character);
-	character->SetName("character");
-	character->SetTeamId(Team::team1);
+	character->SetTeamId(team);
+	if (character->GetTeamId() == 1)
+		character->SetName("character");
+	else
+		character->SetName("character2");
+
+	character->SetRespawn(rp);
+
 	return character;
 }
 
@@ -1554,9 +1561,11 @@ void TutorialGame::InitGameExamples() {
 	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
 	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 2.5, 2.5);
 	
+	RespawnPoint* respawnPoint = new RespawnPoint(Vector3(40, 5, 6));
+	respawnPoint->AddRespawnPoint(respawnPoint);
 	//TODO
 	auto q = Quaternion();
-	testPlayer = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	testPlayer = AddPlayerToWorld(Vector3(0, 5.0f, 20.0f), q, Team::team1, respawnPoint);
 	lockedObject = testPlayer; 
 	//TestCode of Item
 	Item* p;
@@ -1569,6 +1578,8 @@ void TutorialGame::InitGameExamples() {
 	GameWorld::GetInstance()->AddGameObject(p);
 	p = PropSystem::GetInstance()->SpawnWeaponUp(Vector3(18, 3, 6));
 	GameWorld::GetInstance()->AddGameObject(p);
+
+	
 
 	//AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	//AddEnemyToWorld(Vector3(5, 5, 0));

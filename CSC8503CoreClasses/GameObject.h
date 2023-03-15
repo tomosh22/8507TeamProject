@@ -14,6 +14,7 @@ namespace NCL::CSC8503 {
 	{
 		Default,
 		Bullet,
+		Trigger, 
 	};
 
 

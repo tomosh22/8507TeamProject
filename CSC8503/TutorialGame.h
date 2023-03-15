@@ -6,8 +6,6 @@
 #include "PhysicsSystem.h"
 
 #include "playerTracking.h"
-
-
 #include "StateGameObject.h"
 #include <array>
 #include "ObjectPool.h"
@@ -148,7 +146,7 @@ namespace NCL {
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 
-			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation);
+			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation, Team team = Team::teamNull, RespawnPoint* rp = nullptr);
 			GameObject* AddEnemyGoatToWorld(const Vector3& position);
 			GameObject* AddEnemyToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);

@@ -40,9 +40,9 @@ set(Header_Files
     "playerTracking.h"
     "ObjectPool.h"
     "Projectile.h"
-	"PropSystem.h"
-	"Item.h"
-	"RespawnPoint.h"
+    "PropSystem.h"
+    "Item.h"
+    "RespawnPoint.h"
 
 )
 source_group("Header Files" FILES ${Header_Files})
@@ -54,9 +54,9 @@ set(Source_Files
     "TutorialGame.cpp"
     "playerTracking.cpp"
     "Projectile.cpp"
-	"PropSystem.cpp"
-	"Item.cpp"
-	"RespawnPoint.cpp"
+    "PropSystem.cpp"
+    "Item.cpp"
+    "RespawnPoint.cpp"
 )
 
 if(USE_VULKAN)

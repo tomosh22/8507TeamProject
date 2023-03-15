@@ -125,6 +125,9 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 
 	delete[] flippedSearchTex;
 
+	//https://stackoverflow.com/questions/12105330/how-does-this-simple-fxaa-work
+	fxaaShader = new OGLShader("fxaa.vert", "fxaa.frag");
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -203,7 +206,12 @@ void GameTechRenderer::RenderFrame() {
 	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture->GetObjectID());//raymarching
 	
 	
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	
+	if(useFXAA)FXAA();
+	else RenderFullScreenQuadWithTexture(sceneColor, true);//todo fix rotation
+
 	
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
 	glDisable(GL_BLEND);
@@ -215,18 +223,10 @@ void GameTechRenderer::RenderFrame() {
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	
 
-	RenderFullScreenQuadWithTexture(sceneColor, true);//todo fix rotation
-
-	EdgeDetection();
-	if (renderEdges)RenderFullScreenQuadWithTexture(edgesTex, true);
-
-	WeightCalculation();
-	if (renderBlend)RenderFullScreenQuadWithTexture(blendTex, true);
-
-	NeighborhoodBlending();
-	if (renderAA)RenderFullScreenQuadWithTexture(smaaOutput, true);
+	
+	
 
 	ImGui();
 	if(drawCrosshair)DrawCrossHair();
@@ -548,6 +548,53 @@ void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture, bool rota
 	glDepthMask(true);
 }
 
+void GameTechRenderer::FXAA() {
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "fxaa");
+	EdgeDetection();
+	if (renderEdges) {
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		RenderFullScreenQuadWithTexture(edgesTex, true);
+		return;
+	}
+	BindShader(fxaaShader);
+
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(glGetUniformLocation(fxaaShader->GetProgramID(), "mainTex"), 0);
+	glBindTexture(GL_TEXTURE_2D, sceneColor);
+
+	glActiveTexture(GL_TEXTURE1);
+	glUniform1i(glGetUniformLocation(fxaaShader->GetProgramID(), "edgesTex"), 1);
+	glBindTexture(GL_TEXTURE_2D, edgesTex);
+
+	glUniform1i(glGetUniformLocation(fxaaShader->GetProgramID(), "width"), windowWidth);
+	glUniform1i(glGetUniformLocation(fxaaShader->GetProgramID(), "height"), windowHeight);
+
+	BindMesh(quad->GetMesh());
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glPopDebugGroup();
+}
+
+void GameTechRenderer::SMAA() {
+	EdgeDetection();
+	if (renderEdges) {
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		RenderFullScreenQuadWithTexture(edgesTex, true);
+		return;
+	}
+
+	WeightCalculation();
+	if (renderBlend) {
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		RenderFullScreenQuadWithTexture(blendTex, true);
+	}
+
+	NeighborhoodBlending();
+	if (renderAA) {
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		RenderFullScreenQuadWithTexture(smaaOutput, true);
+	}
+}
+
 void GameTechRenderer::EdgeDetection() {
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "edge");
 	glBindFramebuffer(GL_FRAMEBUFFER, edgesFBO);
@@ -853,6 +900,11 @@ void GameTechRenderer::ImGui() {
 
 		ImGui::TreePop();
 	}
+	if (ImGui::TreeNode("FXAA")) {
+		ImGui::Checkbox("Use FXAA", &useFXAA);
+
+		ImGui::TreePop();
+	}
 
 	ImGui::SliderFloat3("Light Position", lightPosition.array, -200, 200);
 
@@ -863,17 +915,20 @@ void GameTechRenderer::ImGui() {
 }
 
 void GameTechRenderer::DrawCrossHair() {
+	glDepthMask(false);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE); //todo reverse winding order
 	BindShader(quadShader);
+	glUniform1i(glGetUniformLocation(quadShader->GetProgramID(), "rotated"), true);
 	glUniform1i(glGetUniformLocation(quadShader->GetProgramID(), "hasTexture"), false);
-	BindTextureToShader((OGLTexture*)quad->GetDefaultTexture(), "mainTex", 0);
 	BindMesh(crosshair->GetMesh());
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 9, "crosshair");
 	glDrawArrays(GL_LINES, 0, 4);
 	glPopDebugGroup();
+	glDepthMask(true);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void GameTechRenderer::CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex)

@@ -7,15 +7,15 @@ precision highp int;
 //#define SMAA_THRESHOLD 0.1
 //#endif
 uniform float SMAA_THRESHOLD;
-#ifndef SMAA_MAX_SEARCH_STEPS
-#define SMAA_MAX_SEARCH_STEPS 16
-#endif
-#ifndef SMAA_MAX_SEARCH_STEPS_DIAG
-#define SMAA_MAX_SEARCH_STEPS_DIAG 8
-#endif
-#ifndef SMAA_CORNER_ROUNDING
+
+#define SMAA_MAX_SEARCH_STEPS 112
+
+
+#define SMAA_MAX_SEARCH_STEPS_DIAG 20
+
+
 #define SMAA_CORNER_ROUNDING 25
-#endif
+
 
 // Non-Configurable Defines
 #define SMAA_AREATEX_MAX_DISTANCE 16
@@ -376,7 +376,8 @@ void main() {
   vec2 e = texture2D(edgesTex, IN.texCoord).rg;
 
   if (e.g > 0.0) { // Edge at north
-
+    
+    
     #if !defined(SMAA_DISABLE_DIAG_DETECTION)
     // Diagonals have both north and west edges, so searching for them in
     // one of the boundaries is enough.
@@ -403,6 +404,7 @@ void main() {
     // Find the distance to the right:
     coords.z = SMAASearchXRight(edgesTex, searchTex, IN.offset[0].zw, IN.offset[2].y);
     d.y = coords.z;
+
 
     // We want the distances to be in pixel units (doing this here allow to
     // better interleave arithmetic and memory accesses):
@@ -455,13 +457,15 @@ void main() {
     // Fetch the bottom crossing edges:
     float e2 = SMAASampleLevelZeroOffset(edgesTex, coords.xz, vec2(0, 1)).g;
 
+    
     // Get the area for this direction:
     weights.ba = SMAAArea(areaTex, sqrt_d, e1, e2, subsampleIndices.x);
-
+    
     // Fix corners:
     coords.x = IN.texCoord.x;
     SMAADetectVerticalCornerPattern(edgesTex, weights.ba, coords.xyxz, d);
   }
 
   fragColor = weights;
+  //fragColor.a = 1;
 }

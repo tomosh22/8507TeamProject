@@ -239,12 +239,14 @@ void TutorialGame::InitialiseAssets() {
 	enemyMesh	= renderer->LoadMesh("Keeper.msh", &meshes);
 	bonusMesh	= renderer->LoadMesh("apple.msh", &meshes);
 	capsuleMesh = renderer->LoadMesh("capsule.msh", &meshes);
+	
 	//this was me
 	triangleMesh = OGLMesh::GenerateTriangleWithIndices();
 	monkeyMesh = renderer->LoadMesh("newMonkey.msh", &meshes);
 	floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh", &meshes);
 	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh", &meshes);
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
+	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
 
 	for (MeshGeometry*& mesh : meshes) {
 		if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
@@ -811,6 +813,10 @@ void TutorialGame::InitGraphicTest() {
 	walls.back()->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(90, 0, 0));
 	walls.back()->SetName(std::string("back"));
 
+	bunny = AddBunnyToWorld({ 0,20,50 }, { 5,5,5 },false);
+	bunny->GetRenderObject()->pbrTextures = rockPBR;
+	bunny->GetRenderObject()->useHeightMap = true;
+
 	//max = AddMaxToWorld({ 10,10,-10 }, { 10,10,10 });
 
 #ifdef TRI_DEBUG
@@ -1187,6 +1193,32 @@ GameObject* TutorialGame::AddMaxToWorld(const Vector3& position, Vector3 dimensi
 	GameWorld::GetInstance()->AddGameObject(max);
 
 	return max;
+}
+
+GameObject* TutorialGame::AddBunnyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, bool physics) {
+	GameObject* bunny = new GameObject();
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+	bunny->SetBoundingVolume((CollisionVolume*)volume);
+
+	bunny->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2);
+
+	bunny->SetRenderObject(new RenderObject(&bunny->GetTransform(), bunnyMesh, nullptr, basicShader));
+	if (physics) {
+		bunny->SetPhysicsObject(new PhysicsObject(&bunny->GetTransform(), bunny->GetBoundingVolume()));
+
+		bunny->GetPhysicsObject()->SetInverseMass(inverseMass);
+		bunny->GetPhysicsObject()->InitCubeInertia();
+	}
+	
+
+	InitPaintableTextureOnObject(bunny);
+
+	GameWorld::GetInstance()->AddGameObject(bunny);
+
+	return bunny;
 }
 
 void TutorialGame::setLockedObjectNull() {

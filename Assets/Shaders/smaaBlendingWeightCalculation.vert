@@ -2,19 +2,11 @@
 
 #define mad(a, b, c) (a * b + c)
 
-#if defined(SMAA_PRESET_LOW)
-#define SMAA_MAX_SEARCH_STEPS 4
-#elif defined(SMAA_PRESET_MEDIUM)
-#define SMAA_MAX_SEARCH_STEPS 8
-#elif defined(SMAA_PRESET_HIGH)
-#define SMAA_MAX_SEARCH_STEPS 16
-#elif defined(SMAA_PRESET_ULTRA)
-#define SMAA_MAX_SEARCH_STEPS 32
-#endif
 
-#ifndef SMAA_MAX_SEARCH_STEPS
-#define SMAA_MAX_SEARCH_STEPS 16
-#endif
+
+
+#define SMAA_MAX_SEARCH_STEPS 112
+
 
 
 layout(location = 0) in vec3 position;

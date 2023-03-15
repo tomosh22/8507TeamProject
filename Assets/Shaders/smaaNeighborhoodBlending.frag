@@ -41,6 +41,7 @@ void main() {
   a.x = texture2D(blendTex, IN.offset.xy).a; // Right
   a.y = texture2D(blendTex, IN.offset.zw).g; // Top
   a.wz = texture2D(blendTex, IN.texCoord).xz; // Bottom / Left
+  
 
   // Is there any blending weight with a value greater than 0.0?
   if (dot(a, vec4(1.0, 1.0, 1.0, 1.0)) <= 1e-5) {

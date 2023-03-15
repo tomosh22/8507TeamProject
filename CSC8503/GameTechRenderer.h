@@ -113,6 +113,12 @@ namespace NCL {
 			void NeighborhoodBlending();
 			bool renderAA = true;
 
+			void SMAA();
+
+			OGLShader* fxaaShader;
+			void FXAA();
+			bool useFXAA = true;
+
 		protected:
 			void NewRenderLines();
 			void NewRenderText();

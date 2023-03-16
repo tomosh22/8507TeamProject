@@ -14,6 +14,9 @@
 #include "RenderObject.h"
 #include "PropSystem.h"
 
+#include"MeshAnimation.h"
+#include"MeshMaterial.h"
+
 namespace NCL {
 	namespace CSC8503 {
 		const int GAME_MODE_DEFAULT = 0;
@@ -69,6 +72,7 @@ namespace NCL {
 
 			TextureBase* basicTex = nullptr;
 			ShaderBase* basicShader = nullptr;
+
 
 			//Coursework Meshes
 			MeshGeometry* charMesh = nullptr;
@@ -315,8 +319,13 @@ namespace NCL {
 			GameObject* testSphere4 = nullptr;
 
 			bool rayMarch = true;
+			//Player Animation 
+			ShaderBase* characterShader;
+			MeshAnimation* playerIdle;
+			MeshMaterial* playerMaterial;
+			int currentFrame;
+			float frameTime;
 
-			
 
 		};
 	}

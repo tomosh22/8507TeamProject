@@ -14,6 +14,10 @@
 #include "AreaTex.h"
 #include "SearchTex.h"
 
+//animation
+#include"MeshAnimation.h"
+#include"MeshMaterial.h"
+
 namespace NCL {
 	class Maths::Vector3;
 	class Maths::Vector4;
@@ -24,6 +28,8 @@ namespace NCL {
 		public:
 			GameTechRenderer(GameWorld& world);
 			~GameTechRenderer();
+
+			void Update(float dt) override;
 
 			MeshGeometry*	LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes = nullptr);
 			TextureBase*	LoadTexture(const string& name);
@@ -120,6 +126,8 @@ namespace NCL {
 			bool useFXAA = true;
 			bool edgeDetection = true;
 
+
+			OGLShader* characterShader;
 		protected:
 			void NewRenderLines();
 			void NewRenderText();
@@ -147,6 +155,7 @@ namespace NCL {
 
 			vector<const RenderObject*> activeObjects;
 			
+
 
 			
 			OGLShader*  skyboxShader;
@@ -180,7 +189,16 @@ namespace NCL {
 
 			void DrawCrossHair();
 
-			
+			void LoadPlayerAniamtion();
+			void RenderPlayerAnimation();
+			OGLMesh* playerMesh;
+
+			MeshAnimation* playerIdle;
+			MeshMaterial* playerMaterial;
+			vector<OGLTexture*> matTextures;
+			int currentFrame;
+			float frameTime;
+
 		};
 	}
 }

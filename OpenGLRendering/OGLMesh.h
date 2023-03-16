@@ -35,9 +35,9 @@ namespace NCL {
 			GLuint oglType;
 			GLuint attributeBuffers[VertexAttribute::MAX_ATTRIBUTES];
 			GLuint indexBuffer;
-
+			GLuint	GetVAO()			const { return vao; };
 		protected:
-			GLuint	GetVAO()			const { return vao;};
+			
 			void BindVertexAttribute(int attribSlot, int bufferID, int bindingID, int elementCount, int elementSize, int elementOffset);
 
 			int		subCount;

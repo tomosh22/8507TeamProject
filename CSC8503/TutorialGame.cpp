@@ -1383,7 +1383,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, basicShader));
+	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, renderer->characterShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
 	character->GetPhysicsObject()->setTorqueFriction(0.005f);

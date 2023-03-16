@@ -182,6 +182,12 @@ namespace NCL {
 
 		static MeshGeometry* GenerateTriangle(MeshGeometry* input);
 
+		void DrawSubMesh(int i)
+		{
+			
+			GetSubMesh(i);
+		}
+
 	protected:
 		MeshGeometry();
 		MeshGeometry(const std::string&filename);
@@ -193,6 +199,8 @@ namespace NCL {
 		void ReadSubMeshNames(std::ifstream& file, int count);
 
 		bool	GetVertexIndicesForTri(unsigned int i, unsigned int& a, unsigned int& b, unsigned int& c) const;
+
+		
 
 		virtual bool ValidateMeshData();
 

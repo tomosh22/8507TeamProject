@@ -14,6 +14,7 @@ layout(location = 4) in vec4 tangent;
 uniform vec4 		objectColour = vec4(1,1,1,1);
 
 uniform bool hasVertexColours = false;
+uniform bool is_Player = false;
 
 out Vertex
 {
@@ -28,6 +29,7 @@ out Vertex
 
 void main(void)
 {
+
 	mat4 mvp 		  = (projMatrix * viewMatrix * modelMatrix);
 	mat3 normalMatrix = transpose ( inverse ( mat3 ( modelMatrix )));
 

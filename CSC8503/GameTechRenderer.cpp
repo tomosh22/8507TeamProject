@@ -232,7 +232,7 @@ void GameTechRenderer::RenderFrame() {
 	ImGui();
 	if(drawCrosshair)DrawCrossHair();
 
-	RenderPlayerAnimation();
+	
 }
 
 void GameTechRenderer::BuildObjectList() {
@@ -1023,8 +1023,9 @@ void GameTechRenderer::LoadPlayerAniamtion()
 	frameTime = 0.0f;
 }
 
-void GameTechRenderer::RenderPlayerAnimation()
+void GameTechRenderer::RenderPlayerAnimation(OGLTexture* tex)
 {
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "anim");
 	BindShader(characterShader);
 	glUniform1i(glGetUniformLocation(characterShader->GetProgramID(), "diffuseTex"), 0);
 	//UpdateShaderMatrices();
@@ -1036,6 +1037,10 @@ void GameTechRenderer::RenderPlayerAnimation()
 	}
 	int j = glGetUniformLocation(characterShader->GetProgramID(),"joints");
 	glUniformMatrix4fv(j, frameMatrices.size(), false,(float*)frameMatrices.data());
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,tex->GetObjectID());
+	glUniform1i(glGetUniformLocation(characterShader->GetProgramID(), "diffuseTex"), 0);
 
 
 	for (int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
@@ -1054,4 +1059,5 @@ void GameTechRenderer::RenderPlayerAnimation()
 		glBindVertexArray(0);
 
 	}
+	glPopDebugGroup();
 }

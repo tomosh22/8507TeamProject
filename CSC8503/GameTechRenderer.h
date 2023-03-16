@@ -128,6 +128,16 @@ namespace NCL {
 
 
 			OGLShader* characterShader;
+
+			void LoadPlayerAniamtion();
+			void RenderPlayerAnimation(OGLTexture* tex);
+			OGLMesh* playerMesh;
+
+			MeshAnimation* playerIdle;
+			MeshMaterial* playerMaterial;
+			vector<OGLTexture*> matTextures;
+			int currentFrame;
+			float frameTime;
 		protected:
 			void NewRenderLines();
 			void NewRenderText();
@@ -189,15 +199,7 @@ namespace NCL {
 
 			void DrawCrossHair();
 
-			void LoadPlayerAniamtion();
-			void RenderPlayerAnimation();
-			OGLMesh* playerMesh;
-
-			MeshAnimation* playerIdle;
-			MeshMaterial* playerMaterial;
-			vector<OGLTexture*> matTextures;
-			int currentFrame;
-			float frameTime;
+			
 
 		};
 	}

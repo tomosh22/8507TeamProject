@@ -82,6 +82,8 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	CreateFBOColor(neighborhoodBlendingFBO, smaaOutput);
 
 
+
+
 	//hdrShader = new OGLShader();
 	//CreateFBOColor(hdrFBO, tonemappedTexture, GL_RGBA16F);
 

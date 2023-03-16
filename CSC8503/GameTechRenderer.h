@@ -187,6 +187,18 @@ namespace NCL {
 
 			void DrawCrossHair();
 
+			OGLShader* downsampleShader;
+			OGLShader* upsampleShader;
+			static const int numBloomMips = 5;
+			struct BloomMip {
+				int width;
+				int height;
+				GLuint texture;
+			};
+			std::array<BloomMip, numBloomMips> downsampleChain;
+			std::array<BloomMip, numBloomMips> upsampleChain;
+			GLuint downsampleFBO;
+			GLuint upsampleFBO;
 			
 		};
 	}

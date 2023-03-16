@@ -1051,10 +1051,10 @@ void GameTechRenderer::RenderPlayerAnimation(OGLTexture* tex)
 
 		if (playerMesh->GetIndexCount() > 0) {
 			const GLvoid* offset = (const GLvoid*)(m->start * sizeof(unsigned int));
-			glDrawElements(GL_TRIANGLES, m->count, GL_UNSIGNED_INT, offset);
+			glDrawElements(playerMesh->GetPrimitiveType(), m->count, GL_UNSIGNED_INT, offset);
 		}
 		else {
-			glDrawArrays(GL_TRIANGLES, m->start, m->count);	//Draw the triangle!
+			glDrawArrays(playerMesh->GetPrimitiveType(), m->start, m->count);	//Draw the triangle!
 		}
 		glBindVertexArray(0);
 

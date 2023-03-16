@@ -22,7 +22,7 @@ void main (void) {
 	for (int i = 0; i < 4; ++i ) {
 	int jointIndex = jointIndices[i];
 	float jointWeight = jointWeights[i];
-	skelPos += joints[jointIndex] * localPos * jointWeight ;
+		skelPos += joints[jointIndex] * localPos * jointWeight ;
 	}
 	mat4 mvp = projMatrix * viewMatrix * modelMatrix ;
 	gl_Position = mvp * vec4 (skelPos.xyz , 1.0);

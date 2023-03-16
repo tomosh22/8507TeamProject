@@ -335,7 +335,7 @@ void TutorialGame::InitialiseAssets() {
 	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
 	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
 
-	std::chrono::time_point before = std::chrono::high_resolution_clock::now();
+	
 
 	crystalPBR = new PBRTextures();
 	TextureBase** test = &(crystalPBR->base);
@@ -401,9 +401,7 @@ void TutorialGame::InitialiseAssets() {
 	for (std::thread& thread : threads) {
 		thread.join();
 	}
-	std::chrono::time_point after = std::chrono::high_resolution_clock::now();
-
-	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(after - before) << std::endl;
+	
 	for (TextureThing& thing : things)
 	{
 		TextureBase* tex = OGLTexture::RGBATextureFromData(thing.texData, thing.width, thing.height, thing.channels);

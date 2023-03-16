@@ -276,30 +276,30 @@ namespace NCL {
 			
 			int highestTriCount = 0;
 
-			TextureBase* ironDiffuse = nullptr;
-			TextureBase* ironBump = nullptr;
-			TextureBase* ironMetallic = nullptr;
-			TextureBase* ironRoughness = nullptr;
+			TextureBase* ironDiffuse = new TextureBase();
+			TextureBase* ironBump = new TextureBase();
+			TextureBase* ironMetallic = new TextureBase();
+			TextureBase* ironRoughness = new TextureBase();
 
-			TextureBase* crystalDiffuse = nullptr;
-			TextureBase* crystalBump = nullptr;
-			TextureBase* crystalMetallic = nullptr;
-			TextureBase* crystalRoughness = nullptr;
-			TextureBase* crystalHeightMap = nullptr;
-			TextureBase* crystalEmissionMap = nullptr;
-			TextureBase* crystalAOMap = nullptr;
-			TextureBase* crystalOpacityMap = nullptr;
-			TextureBase* crystalGlossMap = nullptr;
+			TextureBase* crystalDiffuse = new TextureBase();
+			TextureBase* crystalBump = new TextureBase();
+			TextureBase* crystalMetallic = new TextureBase();
+			TextureBase* crystalRoughness = new TextureBase();
+			TextureBase* crystalHeightMap = new TextureBase();
+			TextureBase* crystalEmissionMap = new TextureBase();
+			TextureBase* crystalAOMap = new TextureBase();
+			TextureBase* crystalOpacityMap = new TextureBase();
+			TextureBase* crystalGlossMap = new TextureBase();
 
-			TextureBase* spaceShipDiffuse = nullptr;
-			TextureBase* spaceShipBump = nullptr;
-			TextureBase* spaceShipMetallic = nullptr;
-			TextureBase* spaceShipRoughness = nullptr;
-			TextureBase* spaceShipHeightMap = nullptr;
-			TextureBase* spaceShipEmissionMap = nullptr;
-			TextureBase* spaceShipAOMap = nullptr;
-			TextureBase* spaceShipOpacityMap = nullptr;
-			TextureBase* spaceShipGlossMap = nullptr;
+			TextureBase* spaceShipDiffuse = new TextureBase();
+			TextureBase* spaceShipBump = new TextureBase();
+			TextureBase* spaceShipMetallic = new TextureBase();
+			TextureBase* spaceShipRoughness = new TextureBase();
+			TextureBase* spaceShipHeightMap = new TextureBase();
+			TextureBase* spaceShipEmissionMap = new TextureBase();
+			TextureBase* spaceShipAOMap = new TextureBase();
+			TextureBase* spaceShipOpacityMap = new TextureBase();
+			TextureBase* spaceShipGlossMap = new TextureBase();
 
 			PBRTextures* crystalPBR;
 			PBRTextures* spaceShipPBR;

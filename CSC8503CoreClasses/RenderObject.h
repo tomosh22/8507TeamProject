@@ -13,15 +13,15 @@ namespace NCL {
 		using namespace Maths;
 
 		struct PBRTextures {
-			TextureBase* base = nullptr;
-			TextureBase* bump = nullptr;
-			TextureBase* metallic = nullptr;
-			TextureBase* roughness = nullptr;
-			TextureBase* heightMap = nullptr;
-			TextureBase* emission = nullptr;
-			TextureBase* ao = nullptr;
-			TextureBase* opacity = nullptr;
-			TextureBase* gloss = nullptr;
+			TextureBase* base = new TextureBase();
+			TextureBase* bump = new TextureBase();
+			TextureBase* metallic = new TextureBase();
+			TextureBase* roughness = new TextureBase();
+			TextureBase* heightMap = new TextureBase();
+			TextureBase* emission = new TextureBase();
+			TextureBase* ao = new TextureBase();
+			TextureBase* opacity = new TextureBase();
+			TextureBase* gloss = new TextureBase();
 		};
 
 		class RenderObject

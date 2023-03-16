@@ -411,7 +411,8 @@ void TutorialGame::InitialiseAssets() {
 	}
 	for (TextureThing& thing : things)
 	{
-		thing.myPointer = OGLTexture::RGBATextureFromData(thing.texData, thing.width, thing.height, thing.channels);
+		TextureBase* tex = OGLTexture::RGBATextureFromData(thing.texData, thing.width, thing.height, thing.channels);
+		thing.myPointer = (tex);
 		free(thing.texData);
 	}
 	threads.clear();

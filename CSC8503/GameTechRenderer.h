@@ -86,8 +86,8 @@ namespace NCL {
 			GLuint sceneColor;
 			GLuint sceneDepth;
 
-			void CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex);
-			void CreateFBOColor(GLuint& fbo, GLuint& colorTex);
+			void CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex, GLenum colorFormat = GL_RGBA8);
+			void CreateFBOColor(GLuint& fbo, GLuint& colorTex, GLenum colorFormat = GL_RGBA8);
 
 			GLuint edgesFBO;
 			GLuint edgesTex;
@@ -115,10 +115,17 @@ namespace NCL {
 
 			void SMAA();
 
+			GLuint fxaaFBO;
 			OGLShader* fxaaShader;
 			void FXAA();
 			bool useFXAA = true;
 			bool edgeDetection = true;
+
+			GLuint hdrFBO;
+			OGLShader* hdrShader;
+			GLuint tonemappedTexture;
+			bool toneMap = true;
+			float exposure = 1;
 
 		protected:
 			void NewRenderLines();
@@ -137,7 +144,7 @@ namespace NCL {
 			void RenderSkybox();
 
 			//this was me
-			void RenderFullScreenQuadWithTexture(GLuint texture, bool rotated = false);
+			void RenderFullScreenQuadWithTexture(GLuint texture);
 			void ImGui();
 
 			void LoadSkybox();

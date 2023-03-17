@@ -291,6 +291,8 @@ void TutorialGame::InitialiseAssets() {
 #pragma endregion
 
 	basicTex	= renderer->LoadTexture("checkerboard.png");
+	wallTex		= renderer->LoadTexture("corridor_wall_c.tga");
+	
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc","scene.tese");
 	metalTex = renderer->LoadTexture("metal.png");
@@ -855,6 +857,8 @@ void TutorialGame::InitPhysicalTest() {
 
 	InitGameExamples();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	AddWallToWorld({0, 0, 0}, {10, 5, 1});
+	//AddMapToWorld();
 	InitPaintableTextureOnObject(floor);
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
@@ -1173,7 +1177,7 @@ GameObject* TutorialGame::AddWallToWorld(const Vector3& position, Vector3 dimens
 		.SetPosition(position)
 		.SetScale(dimensions * 2);
 
-	wall->SetRenderObject(new RenderObject(&wall->GetTransform(), basicWallMesh, nullptr, basicShader));
+	wall->SetRenderObject(new RenderObject(&wall->GetTransform(), basicWallMesh, wallTex, basicShader));
 	wall->SetPhysicsObject(new PhysicsObject(&wall->GetTransform(), wall->GetBoundingVolume()));
 
 	wall->GetPhysicsObject()->SetInverseMass(inverseMass);
@@ -1277,14 +1281,14 @@ void TutorialGame::AddMapToWorld() {
 	floor = AddFloorToWorld(Vector3(0, -20, 0), Vector3(250, 1, 400));
 	
 	//back cover walls
-	walls.push_back(AddWallToWorld(Vector3(0, -22, 300), Vector3(30, 2, 1), 0));
-	walls.push_back(AddWallToWorld(Vector3(0, -22, -300), Vector3(30, 2, 1), 0));
+	walls.push_back(AddWallToWorld(Vector3(0, -22, 300), Vector3(30, 2, 1), 0.0f));      
+	walls.push_back(AddWallToWorld(Vector3(0, -22, -300), Vector3(30, 2, 1), 0.0f));
 
 	//middle cover walls
-	walls.push_back(AddWallToWorld(Vector3(175, -22, 200), Vector3(20, 2, 1), 0));
-	walls.push_back(AddWallToWorld(Vector3(175, -22, -200), Vector3(20, 2, 1), 0));
-	walls.push_back(AddWallToWorld(Vector3(-175, -22, 200), Vector3(20, 2, 1), 0));
-	walls.push_back(AddWallToWorld(Vector3(-175, -22, -200), Vector3(20, 2, 1), 0));
+	walls.push_back(AddWallToWorld(Vector3(175, -22, 200), Vector3(20, 2, 1), 0.0f));
+	walls.push_back(AddWallToWorld(Vector3(175, -22, -200), Vector3(20, 2, 1), 0.0f));
+	walls.push_back(AddWallToWorld(Vector3(-175, -22, 200), Vector3(20, 2, 1), 0.0f));
+	walls.push_back(AddWallToWorld(Vector3(-175, -22, -200), Vector3(20, 2, 1), 0.0f));
 
 	//low middle cover walls
 	walls.push_back(AddWallToWorld(Vector3(50, -22, 200), Vector3(15, 1, 5), 0));
@@ -1561,11 +1565,11 @@ void TutorialGame::InitGameExamples() {
 	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
 	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 2.5, 2.5);
 	
-	RespawnPoint* respawnPoint = new RespawnPoint(Vector3(40, 5, 6));
-	respawnPoint->AddRespawnPoint(respawnPoint);
+	//RespawnPoint* respawnPoint = new RespawnPoint(Vector3(40, 5, 6));
+	//respawnPoint->AddRespawnPoint(respawnPoint);
 	//TODO
 	auto q = Quaternion();
-	testPlayer = AddPlayerToWorld(Vector3(0, 5.0f, 20.0f), q, Team::team1, respawnPoint);
+	testPlayer = AddPlayerToWorld(Vector3(0, 6.0f, 20.0f), q, Team::team1/*, respawnPoint*/);
 	lockedObject = testPlayer; 
 	//TestCode of Item
 	Item* p;

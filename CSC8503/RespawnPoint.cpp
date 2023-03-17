@@ -17,7 +17,7 @@ NCL::CSC8503::RespawnPoint::RespawnPoint(Vector3 pos)
 		.SetScale(size)
 		.SetPosition(pos);
 
-	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->cubeMesh, nullptr, NetworkedGame::GetInstance()->basicShader));
+	//SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->cubeMesh, nullptr, NetworkedGame::GetInstance()->basicShader));
 	SetPhysicsObject(new PhysicsObject(&GetTransform(), GetBoundingVolume()));
 	GetPhysicsObject()->SetInverseMass(0.0f);
 	

@@ -29,17 +29,17 @@ in Vertex
 	vec3 worldPos;
 } IN;
 
-out vec4 fragColor;
+out vec4 fragColor[2];
 
 
 void main(void)
 {
 	if(hasTexture){
-		fragColor = texture(mainTex,IN.texCoord);
+		fragColor[0] = texture(mainTex,IN.texCoord);
 		
 	}
-	else{fragColor = IN.colour;}
-	
+	else{fragColor[0] = IN.colour;}
+	fragColor[1] = vec4(0,0,0,0);//todo why do i need to do this???
 }
 
 

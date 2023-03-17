@@ -45,8 +45,10 @@ uniform float noiseOffsetSize;
 uniform float noiseNormalStrength;
 uniform float noiseNormalNoiseMult;
 
-uniform bool toneMap = false;
-uniform float exposure = 1;
+uniform int emissionStrength;
+
+
+
 
 layout(std430, binding = 4) buffer PaintSSBO{
 	int paintData[];
@@ -63,7 +65,7 @@ in Vertex
 	vec3 binormal;
 } IN;
 
-out vec4 fragColor;
+out vec4 fragColor[2];
 
 bool isAdjacentToInk(){
 	float ut = (IN.texCoord.x * width) - floor(IN.texCoord.x * width);
@@ -364,7 +366,7 @@ void main(void)
 	point(baseColor,diffuse,bumpNormal,metallic.r,roughness.r,reflectivity);
 	baseColor.rgb += diffuse.rgb * 0.5 * pow(AO,2);
 	baseColor.rgb *= shadow;
-	baseColor.rgb += emission * 100;
+	baseColor.rgb += emission * emissionStrength;
 	baseColor.a = 1;
 
 	//Paint stuff
@@ -387,26 +389,18 @@ void main(void)
 		point(paintColor,paintColor,bumpNormal,0,0.1,0.5);
 		paintColor *= shadow;
 
-		fragColor.rgb = mix(baseColor.rgb, paintColor.rgb, opacity);
-		fragColor.a = 1;
+		fragColor[0].rgb = mix(baseColor.rgb, paintColor.rgb, opacity);
+		fragColor[0].a = 1;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 	//fragColor.a = opacity;//todo add back in
-	//fragColor = vec4(bumpNormal,1);
-	//fragColor = vec4(bumpNormal,1);
+	
 
-	if(toneMap){
-		const float gamma = 2.2;
-		vec3 hdrColor = fragColor.rgb;
-  
-		// exposure tone mapping
-		vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);
-		// gamma correction 
-		//mapped = pow(mapped, vec3(1.0 / gamma));
-  
-		fragColor = vec4(mapped, 1.0);
+	
+	if(fragColor[0].r > 1 || fragColor[0].g > 1 || fragColor[0].b > 1){
+		fragColor[1] = clamp(fragColor[0],vec4(0),vec4(100));
 	}
 }
 

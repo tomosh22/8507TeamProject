@@ -14,7 +14,7 @@ in Vertex
 	vec2 texCoord;
 } IN;
 
-out vec4 fragColor;
+out vec4 fragColor[2];
 
 void main( void ) {
     
@@ -25,7 +25,7 @@ void main( void ) {
         vec3 edge = texture2D(edgesTex,IN.texCoord).xyz;
         bool isOnEdge = length(edge) > 0.1;
         if(!isOnEdge){
-            fragColor = texture2D(mainTex,IN.texCoord);
+            fragColor[0] = texture2D(mainTex,IN.texCoord);
         return;
         }
     }
@@ -76,8 +76,10 @@ void main( void ) {
     
     
     if((lumaB < lumaMin) || (lumaB > lumaMax)){
-        fragColor=vec4(rgbA,1);
+        fragColor[0]=vec4(rgbA,1);
     }else{
-        fragColor=vec4(rgbB,1);
+        fragColor[0]=vec4(rgbB,1);
     }
+    fragColor[1] =vec4(0);
+    fragColor[0] = vec4(1);
 }

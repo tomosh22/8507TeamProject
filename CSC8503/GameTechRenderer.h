@@ -78,6 +78,8 @@ namespace NCL {
 			bool useOpacityMap = true;
 			bool useGlossMap = true;
 
+			int emissionStrength = 100;
+
 			float timePassed = 0;
 			float timeScale = 0.419;
 
@@ -204,12 +206,15 @@ namespace NCL {
 			std::array<GameTechRenderer::BloomMip, numBloomMips> upsampleChain;
 			GLuint downsampleFBO;
 			GLuint upsampleFBO;
-			void Downsample();
-			bool downsample = true;
+			void Blur();
+			bool blur = true;
 			float upsampleFilterRadius = 0.005f;
 			OGLComputeShader* downsampleComputeShader;
 			OGLComputeShader* upsampleComputeShader;
-			
+
+			OGLShader* bloomShader;
+			void RenderBloom();
+			bool bloom = true;
 			
 		};
 	}

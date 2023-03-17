@@ -139,6 +139,8 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 
 	downsampleComputeShader = new OGLComputeShader("bloom/downsample.comp");
 	upsampleComputeShader = new OGLComputeShader("bloom/upsample.comp");
+
+	bloomShader = new OGLShader("bloom/bloom.vert", "bloom/bloom.frag");
 	 
 	//hdrShader = new OGLShader();
 	//CreateFBOColor(hdrFBO, tonemappedTexture, GL_RGBA16F);
@@ -270,7 +272,10 @@ void GameTechRenderer::RenderFrame() {
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	if (downsample)Downsample();
+	if (bloom) {
+		Blur();
+		RenderBloom();
+	}
 	
 	if(useFXAA)FXAA();
 	RenderFullScreenQuadWithTexture(sceneColor);//todo fix rotation
@@ -542,6 +547,7 @@ void GameTechRenderer::RenderCamera() {
 
 		glUniform1i(glGetUniformLocation(shader->GetProgramID(), "toneMap"), toneMap);
 		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "exposure"), exposure);
+		glUniform1i(glGetUniformLocation(shader->GetProgramID(), "emissionStrength"), emissionStrength);
 
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
@@ -616,6 +622,25 @@ void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture) {
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glDepthMask(true);
+}
+
+void GameTechRenderer::RenderBloom() {
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "bloom");
+
+	BindShader(bloomShader);
+
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(glGetUniformLocation(bloomShader->GetProgramID(), "sceneTex"), 0);
+	glBindTexture(GL_TEXTURE_2D, sceneColor);
+
+	glActiveTexture(GL_TEXTURE1);
+	glUniform1i(glGetUniformLocation(bloomShader->GetProgramID(), "hdrTex"), 1);
+	glBindTexture(GL_TEXTURE_2D, sceneHdrTex);
+
+	BindMesh(quad->GetMesh());
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+	glPopDebugGroup();
 }
 
 void GameTechRenderer::FXAA() {
@@ -737,7 +762,7 @@ void GameTechRenderer::NeighborhoodBlending() {
 	glPopDebugGroup();
 }
 
-void GameTechRenderer::Downsample() {
+void GameTechRenderer::Blur() {
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 10, "downsample");
 #pragma region old
 	/*glBindFramebuffer(GL_FRAMEBUFFER, downsampleFBO);
@@ -774,8 +799,8 @@ void GameTechRenderer::Downsample() {
 
 		glUniform1i(glGetUniformLocation(downsampleComputeShader->GetProgramID(), "width"), width);
 		glUniform1i(glGetUniformLocation(downsampleComputeShader->GetProgramID(), "height"), height);
-		glBindImageTexture(0, sceneColor, i, GL_FALSE, NULL, GL_READ_ONLY, GL_RGBA32F);
-		glBindImageTexture(1, sceneColor, i+1, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA32F);
+		glBindImageTexture(0, sceneHdrTex, i, GL_FALSE, NULL, GL_READ_ONLY, GL_RGBA32F);
+		glBindImageTexture(1, sceneHdrTex, i+1, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA32F);
 		downsampleComputeShader->Execute(width / 8 + 1, height / 8 + 1, 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	}
@@ -792,8 +817,8 @@ void GameTechRenderer::Downsample() {
 		glUniform1i(glGetUniformLocation(upsampleComputeShader->GetProgramID(), "dstHeight"), dstHeight);
 		glUniform1f(glGetUniformLocation(upsampleComputeShader->GetProgramID(), "filterRadius"), upsampleFilterRadius);
 
-		glBindImageTexture(0, sceneColor, i, GL_FALSE, NULL, GL_READ_ONLY, GL_RGBA32F);
-		glBindImageTexture(1, sceneColor, i - 1, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA32F);
+		glBindImageTexture(0, sceneHdrTex, i, GL_FALSE, NULL, GL_READ_ONLY, GL_RGBA32F);
+		glBindImageTexture(1, sceneHdrTex, i - 1, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA32F);
 		upsampleComputeShader->Execute(dstWidth / 8 + 1, dstHeight / 8 + 1, 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
@@ -1024,6 +1049,7 @@ void GameTechRenderer::ImGui() {
 		ImGui::Checkbox("Opacity Map", &useOpacityMap);
 		ImGui::Checkbox("Gloss Map", &useGlossMap);
 		ImGui::SliderFloat("Heightmap Strength", &heightMapStrength, 0, 10);
+		ImGui::SliderInt("Emission Strength", &emissionStrength, 0, 10000);
 
 		ImGui::TreePop();
 	}
@@ -1041,13 +1067,8 @@ void GameTechRenderer::ImGui() {
 
 		ImGui::TreePop();
 	}
-	if (ImGui::TreeNode("HDR")) {
-		ImGui::Checkbox("Tone map", &toneMap);
-		ImGui::SliderFloat("Exposure", &exposure, -10, 10);
-		ImGui::TreePop();
-	}
 	if (ImGui::TreeNode("Bloom")) {
-		ImGui::Checkbox("Downsample", &downsample);
+		ImGui::Checkbox("Render Bloom", &bloom);
 		ImGui::SliderFloat("Filter radius", &upsampleFilterRadius, 0, 0.01f, "%.10f");
 		ImGui::TreePop();
 	}
@@ -1099,6 +1120,15 @@ void GameTechRenderer::CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, colorFormat, windowWidth, windowHeight, 0, formats[colorFormat], GL_FLOAT, NULL);
+
+	
+	glGenTextures(1, &hdrTex);
+	glBindTexture(GL_TEXTURE_2D, hdrTex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, colorFormat, windowWidth, windowHeight, 0, formats[colorFormat], GL_FLOAT, NULL);
 	if (withMips) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, numBloomMips);
@@ -1125,7 +1155,10 @@ void GameTechRenderer::CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, hdrTex, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTex, 0);
+	GLenum buffers[2] = { GL_COLOR_ATTACHMENT0 ,GL_COLOR_ATTACHMENT1 };
+	glDrawBuffers(2,buffers );
 	glObjectLabel(GL_FRAMEBUFFER, fbo, -1, std::string("colorDepthFBO").c_str());
 	
 

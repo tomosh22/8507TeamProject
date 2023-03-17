@@ -65,6 +65,7 @@ set(Source_Files
 	"Item.cpp"
 	"GameManager.cpp"
     "AudioSystem.cpp"
+    "RespawnPoint.cpp"
 
 )
 

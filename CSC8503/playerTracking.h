@@ -140,6 +140,15 @@ namespace NCL {
 			void ResetBullet(Projectile* bullet);
 			void ReTurnBullet(Projectile* bullet);
 
+			void WeaponUp(Gun newGun);
+
+
+			void HealthUp(Gun newGun);
+
+			 std::string id()
+			{
+				return "character";
+			}
 
 		protected:
 			bool canJump; 

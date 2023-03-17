@@ -11,9 +11,10 @@
 #include<cmath>
 #include "Projectile.h"
 
-#include <iostream>
-#include "PropSystem.h"
-#include "RespawnPoint.h"
+#include<iostream>
+#include"PropSystem.h"
+#include <chrono>
+
 
 
 using namespace NCL;
@@ -115,6 +116,14 @@ TutorialGame::TutorialGame()	{
 
 	renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
 
+	playerIdle = new MeshAnimation("BasicCharacter.anm");
+	playerMaterial = new MeshMaterial("BasicCharacter.mat");
+
+
+
+	currentFrame = 0;
+	frameTime = 0.0f;
+
 	return;
 
 	
@@ -126,17 +135,18 @@ void TutorialGame::InitQuadTexture() {
 	int width = (renderer->GetWindowWidth());
 	int height = (renderer->GetWindowHeight());
 	//std::array<float, 1280 * 720 * 4>* data = new std::array<float, 1280 * 720 * 4>();//todo dont hardcode
-	quadTex = new OGLTexture();
-	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), quadTex, quadShader);
+	
+	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), nullptr, quadShader);
 	//for (int i = 0; i < 1280*720*4; i++)
 	//{ 
 	//	data->at(i) = (float)rand() / (float)RAND_MAX;
 	//}
 	
-	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()));
+	renderer->rayMarchTexture = new OGLTexture();
+	glBindTexture(GL_TEXTURE_2D, (renderer->rayMarchTexture->GetObjectID()));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 	//todo maybe move this somewhere else? still somewhat related
 
@@ -172,19 +182,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	Matrix4 projMatrix = GameWorld::GetInstance()->GetMainCamera()->BuildProjectionMatrix(screenAspect);
 	Vector3 cameraPos = GameWorld::GetInstance()->GetMainCamera()->GetPosition();
 	
-	std::vector<float> buffer;
-	buffer.resize(width * height);
-	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, buffer.data());
-	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
-	glTexImage2D(GL_TEXTURE_2D, 0,
-		GL_DEPTH_COMPONENT,
-		renderer->GetWindowWidth(),
-		renderer->GetWindowHeight(),
-		0,
-		GL_DEPTH_COMPONENT,
-		GL_FLOAT,
-		buffer.data());
-	glBindTexture(GL_TEXTURE_2D, 0);
+	
 	
 
 	int projLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "projMatrix");
@@ -219,13 +217,13 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16F);
+	glBindImageTexture(0, renderer->rayMarchTexture->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16);
 
 
 
 	glUniform1i(depthTexLocation, 1);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
+	glBindTexture(GL_TEXTURE_2D, renderer->sceneDepth);
 
 	rayMarchComputeShader->Execute(width/8+1, height/8+1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -244,20 +242,58 @@ and the same texture and shader. There's no need to ever load in anything else
 for this module, even in the coursework, but you can add it if you like!
 
 */
+
+#include <thread>
+#include <mutex>
+struct TextureThing {
+	char* texData = nullptr;
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	int flags = 0;
+
+	TextureBase** myPointer;
+
+	TextureThing(char* texData, int width, int height, int channels, int flags, TextureBase** myPointer) : texData(texData), width(width), height(height), channels(channels), flags(flags),myPointer(myPointer) {}
+};
+std::vector<TextureThing> things;
+std::mutex texturesMutex;
+
+void LoadTextureThread(const std::string& name, TextureBase** ptr) {
+	char* texData = nullptr;
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	int flags = 0;
+	TextureLoader::LoadTexture(name, texData, width, height, channels, flags);
+
+	TextureThing thing(texData, width, height, channels, flags, ptr);
+	texturesMutex.lock();
+	things.push_back(thing);
+	texturesMutex.unlock();
+}
+
+
+
+
 void TutorialGame::InitialiseAssets() {
 	std::vector<MeshGeometry*> meshes;
-	cubeMesh	= renderer->LoadMesh("cube.msh",&meshes);
-	sphereMesh	= renderer->LoadMesh("sphere.msh", &meshes);
-	charMesh	= renderer->LoadMesh("goat.msh", &meshes);
-	enemyMesh	= renderer->LoadMesh("Keeper.msh", &meshes);
-	bonusMesh	= renderer->LoadMesh("apple.msh", &meshes);
+	cubeMesh = renderer->LoadMesh("cube.msh", &meshes);
+	sphereMesh = renderer->LoadMesh("sphere.msh", &meshes);
+	charMesh = renderer->LoadMesh("goat.msh", &meshes);
+	enemyMesh = renderer->LoadMesh("Keeper.msh", &meshes);
+	bonusMesh = renderer->LoadMesh("apple.msh", &meshes);
 	capsuleMesh = renderer->LoadMesh("capsule.msh", &meshes);
+
 	//this was me
 	triangleMesh = OGLMesh::GenerateTriangleWithIndices();
 	monkeyMesh = renderer->LoadMesh("newMonkey.msh", &meshes);
 	floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh", &meshes);
 	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh", &meshes);
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
+	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
+
+	playerMesh = renderer->LoadMesh("BasicCharacter.msh", &meshes);
 
 	for (MeshGeometry*& mesh : meshes) {
 		if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
@@ -294,8 +330,16 @@ void TutorialGame::InitialiseAssets() {
 	wallTex		= renderer->LoadTexture("corridor_wall_c.tga");
 	
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
-	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc","scene.tese");
+
+	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc", "scene.tese");
+
+	std::vector<std::thread> threads;
+
+
+	
+	characterShader = renderer->LoadShader("SkinningVertex.vert", "SkinningFrag.frag");
 	metalTex = renderer->LoadTexture("metal.png");
+
 	testBumpTex = renderer->LoadTexture("testBump.jpg");
 
 
@@ -304,61 +348,84 @@ void TutorialGame::InitialiseAssets() {
 	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
 	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
 
+	
+
 	crystalPBR = new PBRTextures();
-	crystalPBR->base = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_diffuse.jpg");
-	crystalPBR->bump = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_normal.jpg");
-	crystalPBR->metallic = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_metallic.jpg");
-	crystalPBR->roughness = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_roughness.jpg");
-	crystalPBR->heightMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_height.jpg");
-	crystalPBR->emission = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_emissive.jpg");
-	crystalPBR->ao = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_ao.jpg");
-	crystalPBR->opacity = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_opacity.jpg");
-	crystalPBR->gloss = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_glossiness.jpg");
+	TextureBase** test = &(crystalPBR->base);
+	//crystalPBR->base = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_diffuse.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_diffuse.jpg", &(crystalPBR->base)));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_normal.jpg", &crystalPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_metallic.jpg", &crystalPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_roughness.jpg", &crystalPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_height.jpg", &crystalPBR->heightMap));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_emissive.jpg", &crystalPBR->emission));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_ao.jpg", &crystalPBR->ao));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_opacity.jpg", &crystalPBR->opacity));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_glossiness.jpg", &crystalPBR->gloss));
 
 	spaceShipPBR = new PBRTextures();
-	spaceShipPBR->base = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_diffuse.jpg");
-	spaceShipPBR->bump = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_normal.jpg");
-	spaceShipPBR->metallic = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_metalness.jpg");
-	spaceShipPBR->roughness = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_roughness.jpg");
-	spaceShipPBR->heightMap = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_height.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_diffuse.jpg", &spaceShipPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_normal.jpg", &spaceShipPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_metalness.jpg", &spaceShipPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_roughness.jpg", &spaceShipPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_height.jpg", &spaceShipPBR->heightMap));
 	spaceShipPBR->emission = nullptr;
-	spaceShipPBR->ao = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_ao.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_ao.jpg", &spaceShipPBR->ao));
 	spaceShipPBR->opacity = nullptr;
-	spaceShipPBR->gloss = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_glossiness.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_glossiness.jpg", &spaceShipPBR->gloss));
 
 	rockPBR = new PBRTextures();
-	rockPBR->base = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_diffuse.jpg");
-	rockPBR->bump = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_normal.jpg");
-	rockPBR->metallic = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_metallic.jpg");
-	rockPBR->roughness = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_roughness.jpg");
-	rockPBR->heightMap = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_height.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_diffuse.jpg", &rockPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_normal.jpg", &rockPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_metallic.jpg", &rockPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_roughness.jpg", &rockPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_height.jpg", &rockPBR->heightMap));
 	rockPBR->emission = nullptr;
-	rockPBR->ao = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_ao.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_ao.jpg", &rockPBR->ao));
 	rockPBR->opacity = nullptr;
-	rockPBR->gloss = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_glossiness.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_glossiness.jpg", &rockPBR->gloss));
 
 	grassWithWaterPBR = new PBRTextures();
-	grassWithWaterPBR->base = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_diffuse.jpg");
-	grassWithWaterPBR->bump = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_normal.jpg");
-	grassWithWaterPBR->metallic = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_metallic.jpg");
-	grassWithWaterPBR->roughness = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_roughness.jpg");
-	grassWithWaterPBR->heightMap = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_height.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_diffuse.jpg", &grassWithWaterPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_normal.jpg", &grassWithWaterPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_metallic.jpg", &grassWithWaterPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_roughness.jpg", &grassWithWaterPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_height.jpg", &grassWithWaterPBR->heightMap));
 	grassWithWaterPBR->emission = nullptr;
-	grassWithWaterPBR->ao = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_ao.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_ao.jpg", &grassWithWaterPBR->ao));
 	grassWithWaterPBR->opacity = nullptr;
-	grassWithWaterPBR->gloss = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_glossiness.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_glossiness.jpg", &grassWithWaterPBR->gloss));
 
 	fencePBR = new PBRTextures();
-	fencePBR->base = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_diffuse.jpg");
-	fencePBR->bump = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_normal.jpg");
-	fencePBR->metallic = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_metallic.jpg");
-	fencePBR->roughness = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_roughness.jpg");
-	fencePBR->heightMap = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_height.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_diffuse.jpg", &fencePBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_normal.jpg", &fencePBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_metallic.jpg", &fencePBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_roughness.jpg", &fencePBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_height.jpg", &fencePBR->heightMap));
 	fencePBR->emission = nullptr;
-	fencePBR->ao = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_ao.jpg");
-	fencePBR->opacity = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg");
-	fencePBR->gloss = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_ao.jpg", &fencePBR->ao));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg", &fencePBR->opacity));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg", &fencePBR->gloss));
+
 	
+	
+	
+
+	for (std::thread& thread : threads) {
+		thread.join();
+	}
+	
+	for (TextureThing& thing : things)
+	{
+		TextureBase* tex = OGLTexture::RGBATextureFromData(thing.texData, thing.width, thing.height, thing.channels);
+		*(thing.myPointer) = (tex);
+		free(thing.texData);
+	}
+	threads.clear();
+
+	
+
+
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
 	quadShader = new OGLShader("quad.vert", "quad.frag");
@@ -369,11 +436,12 @@ void TutorialGame::InitialiseAssets() {
 
 	rayMarchComputeShader = new OGLComputeShader("rayMarchCompute.glsl");
 
-	
+
 	InitQuadTexture();
-	
+
 	InitCamera();
 	InitWorld();
+
 
 	//InitMixedGridWorldtest(1, 1, 1, 1);
 	/*AddFloorToWorld({ 0, 0, 0 });
@@ -510,6 +578,13 @@ void TutorialGame::UpdateGame(float dt) {
 	if (GAME_MODE_PHISICAL_TEST == gameMode) {
 		Debug::Print("Health: " + std::to_string(testPlayer->GetHealth()), Vector2(5, 95));
 		Debug::Print("Shield: " + std::to_string(testPlayer->GetShield()), Vector2(5, 100));
+
+		frameTime -= dt;
+		while (frameTime < 0.0f) {
+			currentFrame = (currentFrame + 1) % playerIdle-> GetFrameCount();
+			frameTime += 1.0f / playerIdle-> GetFrameRate();
+		}
+
 	}
 
 	GameWorld::GetInstance()->UpdateWorld(dt);
@@ -833,6 +908,10 @@ void TutorialGame::InitGraphicTest() {
 	walls.back()->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(90, 0, 0));
 	walls.back()->SetName(std::string("back"));
 
+	bunny = AddBunnyToWorld({ 0,20,50 }, { 5,5,5 },false);
+	bunny->GetRenderObject()->pbrTextures = rockPBR;
+	bunny->GetRenderObject()->useHeightMap = true;
+
 	//max = AddMaxToWorld({ 10,10,-10 }, { 10,10,10 });
 
 #ifdef TRI_DEBUG
@@ -860,6 +939,8 @@ void TutorialGame::InitPhysicalTest() {
 	AddWallToWorld({0, 0, 0}, {10, 5, 1});
 	//AddMapToWorld();
 	InitPaintableTextureOnObject(floor);
+
+
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
 #endif
@@ -1099,7 +1180,7 @@ GameObject* TutorialGame::AddRayMarchSphereToWorld(const Vector3& position, floa
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* cube = new GameObject();
 
-	OBBVolume* volume = new OBBVolume(dimensions);
+	AABBVolume* volume = new AABBVolume(dimensions);
 	cube->SetBoundingVolume((CollisionVolume*)volume);
 
 	cube->GetTransform().SetPosition(position).SetScale(dimensions * 2.0f);
@@ -1211,6 +1292,32 @@ GameObject* TutorialGame::AddMaxToWorld(const Vector3& position, Vector3 dimensi
 	GameWorld::GetInstance()->AddGameObject(max);
 
 	return max;
+}
+
+GameObject* TutorialGame::AddBunnyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, bool physics) {
+	GameObject* bunny = new GameObject();
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+	bunny->SetBoundingVolume((CollisionVolume*)volume);
+
+	bunny->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2);
+
+	bunny->SetRenderObject(new RenderObject(&bunny->GetTransform(), bunnyMesh, nullptr, basicShader));
+	if (physics) {
+		bunny->SetPhysicsObject(new PhysicsObject(&bunny->GetTransform(), bunny->GetBoundingVolume()));
+
+		bunny->GetPhysicsObject()->SetInverseMass(inverseMass);
+		bunny->GetPhysicsObject()->InitCubeInertia();
+	}
+	
+
+	InitPaintableTextureOnObject(bunny);
+
+	GameWorld::GetInstance()->AddGameObject(bunny);
+
+	return bunny;
 }
 
 void TutorialGame::setLockedObjectNull() {
@@ -1347,7 +1454,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
+	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, basicShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
 	character->GetPhysicsObject()->setTorqueFriction(0.005f);
@@ -1785,7 +1892,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	
 #ifdef TRI_DEBUG
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16F);
+	glBindImageTexture(0, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16);
 #endif
 
 	glActiveTexture(GL_TEXTURE1);
@@ -1958,7 +2065,7 @@ void TutorialGame::AddDebugTriangleInfoToObject(GameObject* object) {
 	glBindTexture(GL_TEXTURE_1D, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID());
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, MAX_TRIS, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16, MAX_TRIS, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glBindTexture(GL_TEXTURE_1D, 0);
 
 	

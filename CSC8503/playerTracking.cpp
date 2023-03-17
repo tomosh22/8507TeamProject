@@ -229,7 +229,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	Vector3 fireDir = (aimPos - bullet->GetTransform().GetPosition()).Normalised();
 	std::cout << "FireDir is :" << fireDir << std::endl;
 
-
+	bullet->GetPhysicsObject()->SetLinearVelocity({ 0,0,0 });
 	bullet->GetPhysicsObject()->ClearForces();
 	bullet->GetPhysicsObject()->AddForce(fireDir*weaponType.projectileForce);
 }
@@ -240,5 +240,15 @@ void playerTracking::ReTurnBullet(Projectile* bullet)
 	bulletPool->ReturnObject(bullet);
 }
 
+void playerTracking::WeaponUp(Gun newGun)
+{
+	weaponType = newGun;
+}
 
+
+
+void playerTracking::HealthUp(Gun newGun)
+{
+	
+}
 

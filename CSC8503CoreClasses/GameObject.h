@@ -159,6 +159,11 @@ namespace NCL::CSC8503 {
 			return 0;
 		}
 
+		virtual std::string id()
+		{
+		    return "Object";
+	    }
+
 		//unsigned int ssbo;
 		//unsigned int texture;
 		bool isPaintable;

@@ -44,6 +44,13 @@ set(Header_Files
     "Item.h"
     "RespawnPoint.h"
 
+    "AreaTex.h"
+    "SearchTex.h"
+
+	"GameManager.h"
+	"AudioSystem.h"
+
+
 )
 source_group("Header Files" FILES ${Header_Files})
 
@@ -54,9 +61,11 @@ set(Source_Files
     "TutorialGame.cpp"
     "playerTracking.cpp"
     "Projectile.cpp"
-    "PropSystem.cpp"
-    "Item.cpp"
-    "RespawnPoint.cpp"
+	"PropSystem.cpp"
+	"Item.cpp"
+	"GameManager.cpp"
+    "AudioSystem.cpp"
+
 )
 
 if(USE_VULKAN)
@@ -240,15 +249,25 @@ endif()
 ################################################################################
 if(MSVC)
     target_link_libraries(${PROJECT_NAME} LINK_PUBLIC  "Winmm.lib")
+    target_link_libraries(${PROJECT_NAME} LINK_PUBLIC  "fmodstudio_vc.lib")
+    target_link_libraries(${PROJECT_NAME} LINK_PUBLIC  "fmodstudioL_vc.lib")
+    target_link_libraries(${PROJECT_NAME} LINK_PUBLIC  "fmod_vc.lib")
+    target_link_libraries(${PROJECT_NAME} LINK_PUBLIC  "fmodL_vc.lib")
 endif()
 
 include_directories("../OpenGLRendering/")
 include_directories("../NCLCoreClasses/")
 include_directories("../CSC8503CoreClasses/")
+include_directories("../FMOD/core/inc")
+include_directories("../FMOD/studio/inc")
+
+target_link_directories(${PROJECT_NAME} PUBLIC "../FMOD/studio/lib/x64")
+target_link_directories(${PROJECT_NAME} PUBLIC "../FMOD/core/lib/x64")
 
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC NCLCoreClasses)
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC CSC8503CoreClasses)
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC OpenGLRendering)
+
 
 if(USE_VULKAN)
 include_directories("../VulkanRendering/")

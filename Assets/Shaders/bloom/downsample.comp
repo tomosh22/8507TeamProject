@@ -1,0 +1,73 @@
+#version 450 core
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(rgba32f, binding = 0) uniform image2D currentTex;
+layout(rgba32f, binding = 1) uniform image2D nextTex;
+
+uniform int width;
+uniform int height;
+
+vec3 imageLoadClamped(ivec2 pos, ivec2 size) {
+    pos = clamp(pos, ivec2(0), size - ivec2(1));
+
+    return imageLoad(currentTex, pos).rgb;
+}
+
+
+void main( void ) {
+
+    ivec2 IMAGE_COORD = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+    if(IMAGE_COORD.x >= width || IMAGE_COORD.y >= height){return;}
+
+    int x = 1;
+    int y = 1;
+
+    ivec2 targetSize = imageSize(currentTex);
+
+    // Take 13 samples around current currentTexel:
+    // a - b - c
+    // - j - k -
+    // d - e - f
+    // - l - m -
+    // g - h - i
+    // === ('e' is the current currentTexel) ===
+    IMAGE_COORD *= 2;
+    vec3 a = imageLoadClamped(ivec2(IMAGE_COORD.x - 2*x, IMAGE_COORD.y + 2*y), targetSize).rgb;
+    vec3 b = imageLoadClamped(ivec2(IMAGE_COORD.x,       IMAGE_COORD.y + 2*y), targetSize).rgb;
+    vec3 c = imageLoadClamped(ivec2(IMAGE_COORD.x + 2*x, IMAGE_COORD.y + 2*y), targetSize).rgb;
+    
+    vec3 d = imageLoadClamped(ivec2(IMAGE_COORD.x - 2*x, IMAGE_COORD.y), targetSize).rgb;
+    vec3 e = imageLoadClamped(ivec2(IMAGE_COORD.x,       IMAGE_COORD.y), targetSize).rgb;
+    vec3 f = imageLoadClamped(ivec2(IMAGE_COORD.x + 2*x, IMAGE_COORD.y), targetSize).rgb;
+    
+    vec3 g = imageLoadClamped(ivec2(IMAGE_COORD.x - 2*x, IMAGE_COORD.y - 2*y), targetSize).rgb;
+    vec3 h = imageLoadClamped(ivec2(IMAGE_COORD.x,       IMAGE_COORD.y - 2*y), targetSize).rgb;
+    vec3 i = imageLoadClamped(ivec2(IMAGE_COORD.x + 2*x, IMAGE_COORD.y - 2*y), targetSize).rgb;
+    
+    vec3 j = imageLoadClamped(ivec2(IMAGE_COORD.x - x, IMAGE_COORD.y + y), targetSize).rgb;
+    vec3 k = imageLoadClamped(ivec2(IMAGE_COORD.x + x, IMAGE_COORD.y + y), targetSize).rgb;
+    vec3 l = imageLoadClamped(ivec2(IMAGE_COORD.x - x, IMAGE_COORD.y - y), targetSize).rgb;
+    vec3 m = imageLoadClamped(ivec2(IMAGE_COORD.x + x, IMAGE_COORD.y - y), targetSize).rgb;
+
+    IMAGE_COORD /=2;
+
+    // Apply weighted distribution:
+    // 0.5 + 0.125 + 0.125 + 0.125 + 0.125 = 1
+    // a,b,d,e * 0.125
+    // b,c,e,f * 0.125
+    // d,e,g,h * 0.125
+    // e,f,h,i * 0.125
+    // j,k,l,m * 0.5
+    // This shows 5 square areas that are being sampled. But some of them overlap,
+    // so to have an energy preserving downsample we need to make some adjustments.
+    // The weights are the distributed, so that the sum of j,k,l,m (e.g.)
+    // contribute 0.5 to the final color output. The code below is written
+    // to effectively yield this sum. We get:
+    // 0.125*5 + 0.03125*4 + 0.0625*4 = 1
+    vec3 fragColor = e*0.125;
+    fragColor += (a+c+g+i)*0.03125;
+    fragColor += (b+d+f+h)*0.0625;
+    fragColor += (j+k+l+m)*0.125;
+    imageStore(nextTex, IMAGE_COORD, vec4(fragColor,1));
+    
+}

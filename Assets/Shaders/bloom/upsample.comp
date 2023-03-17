@@ -1,0 +1,64 @@
+#version 450 core
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(rgba32f, binding = 0) uniform image2D currentTex;
+layout(rgba32f, binding = 1) uniform image2D nextTex;
+
+uniform int srcWidth;
+uniform int srcHeight;
+uniform int dstWidth;
+uniform int dstHeight;
+
+// This shader performs upsampling on a texture,
+// as taken from Call Of Duty method, presented at ACM Siggraph 2014.
+
+// Remember to add bilinear minification filter for this texture!
+// Remember to use a floating-point texture format (for HDR)!
+// Remember to use edge clamping for this texture!
+uniform float filterRadius = 0.005f;
+
+vec3 imageLoadClamped(ivec2 pos) {
+    pos = clamp(pos, ivec2(0), ivec2(srcWidth - 1, srcHeight - 1));
+
+    return imageLoad(currentTex, pos).rgb;
+}
+
+
+void main()
+{
+    ivec2 IMAGE_COORD = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
+    if(IMAGE_COORD.x >= dstWidth || IMAGE_COORD.y >= dstHeight){return;}
+    // The filter kernel is applied with a radius, specified in texture
+    // coordinates, so that the radius will vary across mip resolutions.
+    int x = max(int(filterRadius * srcWidth), 1);
+    int y = max(int(filterRadius * srcHeight), 1);
+
+    // Take 9 samples around current texel:
+    // a - b - c
+    // d - e - f
+    // g - h - i
+    // === ('e' is the current texel) ===
+    vec2 uv = vec2(IMAGE_COORD) / vec2(dstWidth, dstHeight);
+    ivec2 srcCoords = ivec2(uv * vec2(srcWidth, srcHeight));
+    vec3 a = imageLoadClamped(ivec2(srcCoords.x - x, srcCoords.y + y)).rgb;
+    vec3 b = imageLoadClamped(ivec2(srcCoords.x,     srcCoords.y + y)).rgb;
+    vec3 c = imageLoadClamped(ivec2(srcCoords.x + x, srcCoords.y + y)).rgb;
+    
+    vec3 d = imageLoadClamped(ivec2(srcCoords.x - x, srcCoords.y)).rgb;
+    vec3 e = imageLoadClamped(ivec2(srcCoords.x,     srcCoords.y)).rgb;
+    vec3 f = imageLoadClamped(ivec2(srcCoords.x + x, srcCoords.y)).rgb;
+    
+    vec3 g = imageLoadClamped(ivec2(srcCoords.x - x, srcCoords.y - y)).rgb;
+    vec3 h = imageLoadClamped(ivec2(srcCoords.x,     srcCoords.y - y)).rgb;
+    vec3 i = imageLoadClamped(ivec2(srcCoords.x + x, srcCoords.y - y)).rgb;
+
+    // Apply weighted distribution, by using a 3x3 tent filter:
+    //  1   | 1 2 1 |
+    // -- * | 2 4 2 |
+    // 16   | 1 2 1 |
+    vec3 upsample = e*4.0;
+    upsample += (b+d+f+h)*2.0;
+    upsample += (a+c+g+i);
+    upsample *= 1.0 / 16.0;
+    imageStore(nextTex, IMAGE_COORD, vec4(upsample,1));
+}

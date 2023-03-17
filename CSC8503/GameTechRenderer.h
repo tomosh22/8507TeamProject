@@ -13,6 +13,10 @@
 #include "imgui_impl_win32.h"
 #include "AreaTex.h"
 #include "SearchTex.h"
+#include <array>
+#include <unordered_map>
+
+//#define numBloomMips 500
 
 namespace NCL {
 	class Maths::Vector3;
@@ -85,8 +89,9 @@ namespace NCL {
 			GLuint sceneFBO;
 			GLuint sceneColor;
 			GLuint sceneDepth;
+			GLuint sceneHdrTex;
 
-			void CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex, GLenum colorFormat = GL_RGBA8);
+			void CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex,GLuint& hdrTex, GLenum colorFormat = GL_RGBA8, bool withMips = false);
 			void CreateFBOColor(GLuint& fbo, GLuint& colorTex, GLenum colorFormat = GL_RGBA8);
 
 			GLuint edgesFBO;
@@ -191,14 +196,20 @@ namespace NCL {
 			OGLShader* upsampleShader;
 			static const int numBloomMips = 5;
 			struct BloomMip {
-				int width;
-				int height;
-				GLuint texture;
+				int width = 0;
+				int height = 0;
+				GLuint texture = 0;
 			};
-			std::array<BloomMip, numBloomMips> downsampleChain;
-			std::array<BloomMip, numBloomMips> upsampleChain;
+			std::array<GameTechRenderer::BloomMip, numBloomMips> downsampleChain;
+			std::array<GameTechRenderer::BloomMip, numBloomMips> upsampleChain;
 			GLuint downsampleFBO;
 			GLuint upsampleFBO;
+			void Downsample();
+			bool downsample = true;
+			float upsampleFilterRadius = 0.005f;
+			OGLComputeShader* downsampleComputeShader;
+			OGLComputeShader* upsampleComputeShader;
+			
 			
 		};
 	}

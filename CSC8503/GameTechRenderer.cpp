@@ -70,7 +70,8 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 
 	//this was me
 
-	CreateFBOColorDepth(sceneFBO, sceneColor, sceneDepth, GL_RGBA16F);
+	CreateFBOColorDepth(sceneFBO, sceneColor, sceneDepth, sceneHdrTex, GL_RGBA32F,true);
+
 
 	edgesShader = new OGLShader("smaaEdgeDetection.vert", "smaaEdgeDetectionColor.frag");
 	CreateFBOColor(edgesFBO, edgesTex);
@@ -80,10 +81,65 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 
 	neighborhoodBlendingShader = new OGLShader("smaaNeighborhoodBlending.vert", "smaaNeighborhoodBlending.frag");
 	CreateFBOColor(neighborhoodBlendingFBO, smaaOutput);
+#pragma region oldBloom
+	//https://learnopengl.com/Guest-Articles/2022/Phys.-Based-Bloom
+	//downsampleShader = new OGLShader("bloom/downsample.vert", "bloom/downsample.frag");
+	//downsampleChain[0].width = windowWidth;
+	//downsampleChain[0].height = windowHeight;
+	//CreateFBOColor(downsampleFBO, downsampleChain[0].texture);
+	//
+	//
+	//int mipWidth = windowWidth;
+	//int mipHeight = windowHeight;
+	//bool skipFirst = true;
+	//for (BloomMip& mip : downsampleChain) {//todo will need to redo on screen resize
+	//	mip.width = mipWidth;
+	//	mip.height = mipHeight;
+	//	if (skipFirst) {
+	//		mip.texture = sceneColor;
+	//		skipFirst = false;
+	//	}
+	//	else {
+	//		glGenTextures(1, &(mip.texture));
+	//		glBindTexture(GL_TEXTURE_2D, mip.texture);
+	//		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	//		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	//		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, mip.width, mip.height, 0, GL_RGB, GL_FLOAT, NULL);
+	//	}
+	//	
+	//	mipWidth /= 2;
+	//	mipHeight /= 2;
+	//	if (mipWidth == 0 || mipHeight == 0) {
+	//		break;
+	//	}
+	//}
+	//mipWidth *= 2;
+	//mipHeight *= 2;
+	//
+	//for (int i = 0; i < upsampleChain.size();i++) {//todo will need to redo on screen resize
+	//	BloomMip& mip = upsampleChain[i];
+	//	mip.width = downsampleChain[upsampleChain.size() - (i+1)].width;
+	//	mip.height = downsampleChain[upsampleChain.size() - (i+1)].height;
+	//	glGenTextures(1, &(mip.texture));
+	//	glBindTexture(GL_TEXTURE_2D, mip.texture);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, mip.width, mip.height, 0, GL_RGB, GL_FLOAT, NULL);
+	//	mipWidth *= 2;
+	//	mipHeight *= 2;
+	//	if (mipWidth > windowWidth || windowHeight == 0) {
+	//		break;
+	//	}
+	//}
+#pragma endregion
 
-
-
-
+	downsampleComputeShader = new OGLComputeShader("bloom/downsample.comp");
+	upsampleComputeShader = new OGLComputeShader("bloom/upsample.comp");
+	 
 	//hdrShader = new OGLShader();
 	//CreateFBOColor(hdrFBO, tonemappedTexture, GL_RGBA16F);
 
@@ -214,6 +270,7 @@ void GameTechRenderer::RenderFrame() {
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	if (downsample)Downsample();
 	
 	if(useFXAA)FXAA();
 	RenderFullScreenQuadWithTexture(sceneColor);//todo fix rotation
@@ -680,6 +737,71 @@ void GameTechRenderer::NeighborhoodBlending() {
 	glPopDebugGroup();
 }
 
+void GameTechRenderer::Downsample() {
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 10, "downsample");
+#pragma region old
+	/*glBindFramebuffer(GL_FRAMEBUFFER, downsampleFBO);
+	BindShader(downsampleShader);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, downsampleChain[1].texture, 0);
+	for (int i = 0; i < numBloomMips - 1; i++)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, downsampleChain[i].texture);
+		glUniform1i(glGetUniformLocation(downsampleShader->GetProgramID(), "tex"), 0);
+
+		glUniform1i(glGetUniformLocation(downsampleShader->GetProgramID(), "width"), downsampleChain[i].width);
+		glUniform1i(glGetUniformLocation(downsampleShader->GetProgramID(), "height"), downsampleChain[i].height);
+		glViewport(0, 0, downsampleChain[i].width, downsampleChain[i].height);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, downsampleChain[i+1].texture, 0);
+
+		BindMesh(quad->GetMesh());
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
+#pragma endregion
+
+	downsampleComputeShader->Bind();
+
+	int width = windowWidth, height = windowHeight;
+	std::array<std::pair<int, int>, numBloomMips> sizes;
+	for (int i = 0; i < numBloomMips; i++) {
+		sizes[i] = std::make_pair(width, height);
+
+		width = max(1, width / 2);
+		height = max(1, height / 2);
+		if (width == 1 && height == 1) break;
+
+		glUniform1i(glGetUniformLocation(downsampleComputeShader->GetProgramID(), "width"), width);
+		glUniform1i(glGetUniformLocation(downsampleComputeShader->GetProgramID(), "height"), height);
+		glBindImageTexture(0, sceneColor, i, GL_FALSE, NULL, GL_READ_ONLY, GL_RGBA32F);
+		glBindImageTexture(1, sceneColor, i+1, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA32F);
+		downsampleComputeShader->Execute(width / 8 + 1, height / 8 + 1, 1);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	}
+
+	upsampleComputeShader->Bind();
+
+	for (int i = numBloomMips - 1; i > 0; i--) {
+		auto [ srcWidth, srcHeight ] = sizes[i];
+		auto [ dstWidth, dstHeight ] = sizes[i - 1];
+
+		glUniform1i(glGetUniformLocation(upsampleComputeShader->GetProgramID(), "srcWidth"), srcWidth);
+		glUniform1i(glGetUniformLocation(upsampleComputeShader->GetProgramID(), "srcHeight"), srcHeight);
+		glUniform1i(glGetUniformLocation(upsampleComputeShader->GetProgramID(), "dstWidth"), dstWidth);
+		glUniform1i(glGetUniformLocation(upsampleComputeShader->GetProgramID(), "dstHeight"), dstHeight);
+		glUniform1f(glGetUniformLocation(upsampleComputeShader->GetProgramID(), "filterRadius"), upsampleFilterRadius);
+
+		glBindImageTexture(0, sceneColor, i, GL_FALSE, NULL, GL_READ_ONLY, GL_RGBA32F);
+		glBindImageTexture(1, sceneColor, i - 1, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA32F);
+		upsampleComputeShader->Execute(dstWidth / 8 + 1, dstHeight / 8 + 1, 1);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+	}
+
+	glPopDebugGroup();
+}
+
 MeshGeometry* GameTechRenderer::LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes) {
 	OGLMesh* mesh = new OGLMesh(name);
 	mesh->SetPrimitiveType(GeometryPrimitive::Patches);
@@ -921,7 +1043,12 @@ void GameTechRenderer::ImGui() {
 	}
 	if (ImGui::TreeNode("HDR")) {
 		ImGui::Checkbox("Tone map", &toneMap);
-		ImGui::SliderFloat("Edge Threshold", &exposure, -10, 10);
+		ImGui::SliderFloat("Exposure", &exposure, -10, 10);
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Bloom")) {
+		ImGui::Checkbox("Downsample", &downsample);
+		ImGui::SliderFloat("Filter radius", &upsampleFilterRadius, 0, 0.01f, "%.10f");
 		ImGui::TreePop();
 	}
 	
@@ -951,12 +1078,13 @@ void GameTechRenderer::DrawCrossHair() {
 	glEnable(GL_DEPTH_TEST);
 }
 
-void GameTechRenderer::CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex, GLenum colorFormat)
+void GameTechRenderer::CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex, GLuint& hdrTex,  GLenum colorFormat, bool withMips)
 {
-	std::map<GLenum, GLenum> formats{
+	std::unordered_map<GLenum, GLenum> formats{
 		{GL_RGBA8,GL_RGBA},
 		{GL_RGBA16,GL_RGBA},
 		{GL_RGBA16F,GL_RGBA},
+		{GL_RGBA32F,GL_RGBA},
 	};
 	if (!formats.contains(colorFormat)) {
 		std::cout << "missing fbo format!!!";
@@ -971,6 +1099,19 @@ void GameTechRenderer::CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, colorFormat, windowWidth, windowHeight, 0, formats[colorFormat], GL_FLOAT, NULL);
+	if (withMips) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, numBloomMips);
+
+		int width = windowWidth, height = windowHeight;
+		for (int i = 0; i < numBloomMips; i++) {
+			width = max(1, width / 2);
+			height = max(1, height / 2);
+			glTexImage2D(GL_TEXTURE_2D, i + 1, colorFormat, width, height, 0, formats[colorFormat], GL_FLOAT, NULL);
+			if (width == 1 && height == 1)break;
+		}
+		//glGenerateMipmap(GL_TEXTURE_2D);
+	}
 
 	glGenTextures(1, &depthTex);
 	glBindTexture(GL_TEXTURE_2D, depthTex);
@@ -1029,3 +1170,4 @@ void GameTechRenderer::CreateFBOColor(GLuint& fbo, GLuint& colorTex, GLenum colo
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glPopDebugGroup();
 }
+

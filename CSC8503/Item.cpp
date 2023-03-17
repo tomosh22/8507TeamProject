@@ -40,7 +40,7 @@ NCL::CSC8503::PowerUpItem::PowerUpItem(const Vector3 pos)
 	SetPhysicsObject(new PhysicsObject(&GetTransform(), GetBoundingVolume()));
 
 	GetPhysicsObject()->SetInverseMass(0.0f);
-	//GetPhysicsObject()->SetAffectedByGravity(true);
+	
 	GetPhysicsObject()->InitSphereInertia();
 	SetName("Item");
 	

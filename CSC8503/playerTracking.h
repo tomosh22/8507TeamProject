@@ -140,15 +140,6 @@ namespace NCL {
 			void ResetBullet(Projectile* bullet);
 			void ReTurnBullet(Projectile* bullet);
 
-			void OnCollisionBegin(GameObject* otherObject)
-			{
-				if (otherObject->GetName() == "floor")
-				{
-					std::cout << "Hit Floor" << std::endl;
-				}
-				std::cout << "Hit Something" << std::endl;
-			}
-
 
 		protected:
 			bool canJump; 

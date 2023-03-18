@@ -114,13 +114,6 @@ TutorialGame::TutorialGame()	{
 
 	renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
 
-	playerIdle = new MeshAnimation("BasicCharacter.anm");
-	playerMaterial = new MeshMaterial("BasicCharacter.mat");
-
-
-
-	currentFrame = 0;
-	frameTime = 0.0f;
 
 	return;
 
@@ -293,7 +286,6 @@ void TutorialGame::InitialiseAssets() {
 	basicTex	= renderer->LoadTexture("checkerboard.png");
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc","scene.tese");
-	characterShader = renderer->LoadShader("SkinningVertex.vert", "SkinningFrag.frag");
 	metalTex = renderer->LoadTexture("metal.png");
 	testBumpTex = renderer->LoadTexture("testBump.jpg");
 
@@ -510,10 +502,10 @@ void TutorialGame::UpdateGame(float dt) {
 		Debug::Print("Health: " + std::to_string(testPlayer->GetHealth()), Vector2(5, 95));
 		Debug::Print("Shield: " + std::to_string(testPlayer->GetShield()), Vector2(5, 100));
 
-		frameTime -= dt;
-		while (frameTime < 0.0f) {
-			currentFrame = (currentFrame + 1) % playerIdle-> GetFrameCount();
-			frameTime += 1.0f / playerIdle-> GetFrameRate();
+		renderer->frameTime -= dt;
+		while (renderer->frameTime < 0.0f) {
+			renderer->currentFrame = (renderer->currentFrame + 1) % renderer->playerIdle->GetFrameCount();
+			renderer->frameTime += 1.0f / renderer->playerIdle->GetFrameRate();
 		}
 
 	}
@@ -1382,7 +1374,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, renderer->characterShader));
+	character->SetRenderObject(new RenderObject(&character->GetTransform(), renderer->playerMesh, nullptr, renderer->characterShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
 	character->GetPhysicsObject()->setTorqueFriction(0.005f);

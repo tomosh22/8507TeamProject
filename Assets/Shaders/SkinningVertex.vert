@@ -29,5 +29,5 @@ void main (void) {
 	}
 	mat4 mvp = projMatrix * viewMatrix * modelMatrix ;
 	gl_Position = mvp * vec4 (skelPos.xyz , 1.0);
-	OUT.texCoord = texCoord ;
+	OUT.texCoord = texCoord;
 }

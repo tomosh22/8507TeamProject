@@ -460,6 +460,7 @@ bool MeshGeometry::ValidateMeshData() {
 		return false;
 	}
 	if (!GetTextureCoordData().empty() && GetTextureCoordData().size() != GetVertexCount()) {
+
 		std::cout << __FUNCTION__ << " mesh " << debugName << " has an incorrect texture coordinate attribute count!\n";
 		return false;
 	}

@@ -10,8 +10,8 @@
 namespace NCL {
 	namespace CSC8503 {
 
-#define MAX_CLIENT_NUM 4
-#define CONNECT_CHECK_OFFSET 10
+		const int MAX_CLIENT_NUM = 4;
+		const int CONNECT_CHECK_OFFSET = 10;
 
 		struct ConnectInfo {
 			ENetPeer* peer;

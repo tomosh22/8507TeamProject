@@ -6,8 +6,6 @@
 using namespace NCL;
 using namespace CSC8503;
 
-
-
 playerTracking::playerTracking() 
 {
 		playerYawOrientation = 0.0f;
@@ -33,11 +31,8 @@ playerTracking::playerTracking()
 
 void NCL::CSC8503::playerTracking::Update(float dt)
 {
-	Rotate();
-	Shoot(dt);
-	Move(dt);
-	Jump();
-
+	UpdateSpeed(dt);
+	UpdateCoolDownTime(dt);
 	//test damage
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::L))
 	{
@@ -54,94 +49,106 @@ void NCL::CSC8503::playerTracking::Rotate()
 
 }
 
-void NCL::CSC8503::playerTracking::Move(float dt)
-{
-	int a = Window::GetKeyboard()->KeyDown(KeyboardKeys::A) ? 1 : 0;
-	int b = Window::GetKeyboard()->KeyDown(KeyboardKeys::D) ? 1 : 0;
-	int w = Window::GetKeyboard()->KeyDown(KeyboardKeys::W) ? 1 : 0;
-	int s = Window::GetKeyboard()->KeyDown(KeyboardKeys::S) ? 1 : 0;
+void playerTracking::SpeedUp() {
+	if (sprintTimer > 0.0f) {
+		moveSpeed = PLAYER_SPEED_UP;
+	}
+}
 
-	int Dup = w - s;
-	int Dright = b - a;
+void playerTracking::SpeedDown() {
+	moveSpeed = PLAYER_MOVE_SPEED;
+}
 
-	Vector3 moveDir;
-
-	//std::cout << "up:" << Dup << " Dright:" << Dright << std::endl;
-
-	Matrix4 view = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
-	Matrix4 camWorld = view.Inverse();
-
-	right = Vector3(camWorld.GetColumn(0));
-	forwad = Vector3::Cross(Vector3(0, 1, 0), right);
-
+void playerTracking::UpdateSpeed(float dt) {
 	//sprint
 	if (speedUp)
 	{
-		moveSpeed = 35;
+		moveSpeed = PLYAER_ITEM_SPEED_UP;
 		speedUpTimer = speedUpTimer - 10 * dt;
 		if (speedUpTimer <= 0)
 			speedUp = false;
 	}
-	else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W) && Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && sprintTimer > 0) 
+	else if (MINIMAL_NUMBER > moveSpeed - PLYAER_ITEM_SPEED_UP || MINIMAL_NUMBER < moveSpeed - PLYAER_ITEM_SPEED_UP)
 	{
-		moveSpeed = 30;
 		sprintTimer = sprintTimer - 20 * dt;
 	}
-	else 
+	else
 	{
-		moveSpeed = 10;
 		sprintTimer = sprintTimer + 10 * dt;
 	}
-
-
-
-	transform.SetPosition(transform.GetPosition()+(forwad * Dup + right * Dright)*dt*moveSpeed);
-
 }
 
-void NCL::CSC8503::playerTracking::Shoot(float dt)
-{
-	//Plane plane = Plane::PlaneFromVector(Vector3(0.0f, 1000.0f, 0.0f), transform.GetDirVector());
-	//aimPos = plane.GetIntersection(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetForward());
-	//Debug::DrawLine(transform.GetPosition(), aimPos, Vector4(1.0f, 0.0f, 0.0f, 1.0f));
-	if (Window::GetMouse()->DoubleClicked(MouseButtons::LEFT)&&coolDownTimer<=0)
-	{
-		//Find the intersection of the plane in the player's direction and the camera ray
-		Plane plane = Plane::PlaneFromVector(Vector3(0.0f, 1000.0f, 0.0f), transform.GetDirVector());
-		aimPos = plane.GetIntersection(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetForward());
-
-		Projectile* newBullet = bulletPool->GetObject2();
-		ResetBullet(newBullet);
-		coolDownTimer = weaponType.rateOfFire;
-	}
-	else if (coolDownTimer > 0)
-	{
-		coolDownTimer -= dt;
-	}
+void playerTracking::UpdateAimPosition(Camera* camera) {
+	if (!camera) { return; }
+	Plane plane = Plane::PlaneFromVector(Vector3(0.0f, 100.0f, 0.0f), transform.GetDirVector());
+	aimPos = plane.GetIntersection(camera->GetPosition(), camera->GetForward());
 }
 
-void NCL::CSC8503::playerTracking::Jump()
+bool playerTracking::CanShoot() {
+	return coolDownTimer <= 0.0f;
+}
+
+void playerTracking::UpdateCoolDownTime(float dt) {
+	coolDownTimer -= dt;
+}
+
+//Targets are passed in from outside and can be reused for network players
+void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 {
+	Projectile* newBullet = bulletPool->GetObject2();
+	ResetBullet(newBullet);
+	coolDownTimer = weaponType.rateOfFire;
+	Shooting(newBullet, target);
+}
+
+//Call this function to init a new Bullet
+void playerTracking::ResetBullet(Projectile* bullet)
+{
+
+	CapsuleVolume* volume = new CapsuleVolume(weaponType.ProjectileSize * 2.0f, weaponType.ProjectileSize);
+	bullet->SetBoundingVolume((CollisionVolume*)volume);
+
+	if (bulletMesh && bulletShader) {
+		bullet->SetRenderObject(new RenderObject(&bullet->GetTransform(), bulletMesh, nullptr, bulletShader));
+	}
+
+	bullet->GetTransform().SetScale(Vector3(weaponType.ProjectileSize, weaponType.ProjectileSize*2.0, weaponType.ProjectileSize)).SetPosition(transform.GetPosition() + transform.GetDirVector().Normalised() * 2.5f + Vector3(0.0f, 1.8f, 0.0f));
+
+	bullet->SetPhysicsObject(new PhysicsObject(&bullet->GetTransform(), bullet->GetBoundingVolume()));
+
+	bullet->GetPhysicsObject()->SetInverseMass(weaponType.weight);
+	bullet->GetPhysicsObject()->InitSphereInertia();
+	bullet->SetTeamID(teamID);
+	bullet->SetPlayer(this);
+	bullet->setExplosionRadius(weaponType.radius);
+	bullet->SetActive(true);
+	bullet->GetPhysicsObject()->SetLinearVelocity({ 0,0,0 });
+	bullet->GetPhysicsObject()->ClearForces();
+}
+
+void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
+	Vector3 fireDir = (target - bullet->GetTransform().GetPosition());
+	fireDir.Normalise();
+	bullet->GetPhysicsObject()->AddForce(fireDir * weaponType.projectileForce);
+}
+
+bool NCL::CSC8503::playerTracking::CanJump(){
 	RayCollision closetCollision;
 
 	Vector3 rayPos;
 	Vector3 rayDir;
 
+	Vector3 pos = this->GetTransform().GetPosition();
 	rayDir = Vector3(0, -1, 0);
-	rayPos = this->GetTransform().GetPosition();
+	rayPos = pos;
 
 	Ray r = Ray(rayPos, rayDir);
 
-	if (GameWorld::GetInstance()->Raycast(r, closetCollision, true, this) && closetCollision.rayDistance < 2.0f)
-		canJump = true;
+	if (GameWorld::GetInstance()->Raycast(r, closetCollision, true, this) && closetCollision.rayDistance < 0.8f)
+		return true;
 	else
-		canJump = false;
+		return false;
 
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SPACE) && canJump)
-	{
-		this->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, 20, 0));
-	}
-	
 }
 
 
@@ -173,28 +180,6 @@ void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 	}
 }
 
-//Call this function to init a new Bullet
-void playerTracking::ResetBullet(Projectile* bullet)
-{
-	bullet->GetTransform()
-		.SetScale(Vector3(weaponType.ProjectileSize, weaponType.ProjectileSize, weaponType.ProjectileSize))
-		.SetPosition(transform.GetPosition() + forwad * fireOffset + Vector3(0, 1.8, 0));
-	//std::cout << "Bullet pos:"<< transform.GetPosition() + forwad * fireOffset << std::endl;
-
-	bullet->GetPhysicsObject()->SetInverseMass(weaponType.weight);
-	bullet->GetPhysicsObject()->InitSphereInertia();
-	bullet->SetTeamID(teamID);
-	bullet->SetPlayer(this);
-	bullet->setExplosionRadius(weaponType.radius);
-	bullet->SetActive(true);
-	
-	Vector3 fireDir = (aimPos - bullet->GetTransform().GetPosition()).Normalised();
-	std::cout << "FireDir is :" << fireDir << std::endl;
-
-	bullet->GetPhysicsObject()->SetLinearVelocity({ 0,0,0 });
-	bullet->GetPhysicsObject()->ClearForces();
-	bullet->GetPhysicsObject()->AddForce(fireDir*weaponType.projectileForce);
-}
 void playerTracking::ReTurnBullet(Projectile* bullet)
 {
 	bullet->SetActive(false);

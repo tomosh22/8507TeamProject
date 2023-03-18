@@ -1,3 +1,8 @@
+#include<iostream>
+#include<cmath>
+#include <chrono>
+#include <corecrt_math_defines.h>
+
 #include "TutorialGame.h"
 #include "GameWorld.h"
 #include "PhysicsObject.h"
@@ -8,12 +13,10 @@
 #include "OrientationConstraint.h"
 #include "StateGameObject.h"
 
-#include<cmath>
+#include"PropSystem.h"
 #include "Projectile.h"
 
-#include<iostream>
-#include"PropSystem.h"
-#include <chrono>
+
 
 
 
@@ -129,7 +132,25 @@ TutorialGame::TutorialGame()	{
 	
 }
 
+TutorialGame::~TutorialGame() {
+	delete cubeMesh;
+	delete sphereMesh;
+	delete charMesh;
+	delete enemyMesh;
+	delete bonusMesh;
 
+	delete basicTex;
+	delete basicShader;
+
+	delete physics;
+	delete renderer;
+
+
+	delete objectpool;
+
+	//todo delete texture array
+	//todo delete compute shader
+}
 
 void TutorialGame::InitQuadTexture() {
 	int width = (renderer->GetWindowWidth());
@@ -439,32 +460,38 @@ void TutorialGame::InitialiseAssets() {
 
 	InitCamera();
 	InitWorld();
-
-
-	//InitMixedGridWorldtest(1, 1, 1, 1);
-	/*AddFloorToWorld({ 0, 0, 0 });
-	AddPlayerToWorld({ 0, 1, 0 });*/
 }
 
-TutorialGame::~TutorialGame()	{
-	delete cubeMesh;
-	delete sphereMesh;
-	delete charMesh;
-	delete enemyMesh;
-	delete bonusMesh;
+void TutorialGame::UpdateWorldCamera(float dt) {
+	if (!playerObject) {
+		GameWorld::GetInstance()->GetMainCamera()->UpdateCamera(dt);
+		return;
+	}
+	CameraLockOnPlayer();
+}
 
-	delete basicTex;
-	delete basicShader;
+void TutorialGame::CameraLockOnPlayer() {
+	if (!playerObject) { return; }
+	auto world = GameWorld::GetInstance();
+	Vector3 objPos = playerObject->GetTransform().GetPosition();
+	//find object orientation
+	float yrot = playerObject->GetTransform().GetOrientation().ToEuler().y;
+	//set camera position
+	Vector3 offSet = Vector3(viewOffset.x * cos((yrot + 270.0f) * M_PI / 180), viewOffset.y, viewOffset.z * sin((yrot - 270.0f) * M_PI / 180));
 
-	delete physics;
-	delete renderer;
+	Vector3 camPos = objPos + offSet + Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), offSet).Normalised() * 2.0f;
+	//targeting in front of the object
+	Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos - offSet * Vector3(10.0f, 0.0f, 10.0f), Vector3(0, 1, 0));
+	Matrix4 modelMat = temp.Inverse();
+	Quaternion q(modelMat);
+	Vector3 angles = q.ToEuler(); //nearly there now!
+
+	world->GetMainCamera()->SetPosition(camPos);
+	world->GetMainCamera()->SetYaw(angles.y);
+	world->GetMainCamera()->UpdateObjectViewPitch();
 	
-
-	delete objectpool;
-
-	//todo delete texture array
-	//todo delete compute shader
 }
+
 
 
 
@@ -505,44 +532,38 @@ void TutorialGame::UpdateGame(float dt) {
 	if(floor != nullptr)
 	Debug::DrawAxisLines(floor->GetTransform().GetMatrix());
 
-	if (!inSelectionMode) {
-		GameWorld::GetInstance()->GetMainCamera()->UpdateCamera(dt);
-	}
-	if (lockedObject != nullptr) {
+	UpdateWorldCamera(dt);
 
-		Matrix4 view = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
-		Matrix4 camWorld = view.Inverse();
-		Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
-		Vector3 objPos = lockedObject->GetTransform().GetPosition();
-		
-		
+	ControlPlayer(dt);
 
-		//right Click to got to aim mode
-		if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT))
-		{
-			renderer->drawCrosshair = true;
-			objPos += rightAxis * 4.5 + Vector3(0, 1, 0) * 2;   //offset of the character
-		}
-		else
-		{
-			renderer->drawCrosshair = false;
-			objPos += rightAxis * 3.5 + Vector3(0, 1, 0) * 1.5;   //offset of the character
-		}
-		Vector3 camPos = objPos + lockedOffset;
+	//if (lockedObject != nullptr) {
 
-		//Debug::DrawLine(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetPosition() + GameWorld::GetInstance()->GetMainCamera()->GetForward() * 100, Vector4(1, 0, 1, 1), 10.0f);
+	//	Matrix4 view = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
+	//	Matrix4 camWorld = view.Inverse();
+	//	Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
+	//	Vector3 objPos = lockedObject->GetTransform().GetPosition();
+	//	
+	//	
 
-		GameWorld::GetInstance()->GetMainCamera()->SetTargetPosition(objPos);
-	}
+	//	//right Click to got to aim mode
+	//	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT))
+	//	{
+	//		renderer->drawCrosshair = true;
+	//		objPos += rightAxis * 4.5 + Vector3(0, 1, 0) * 2;   //offset of the character
+	//	}
+	//	else
+	//	{
+	//		renderer->drawCrosshair = false;
+	//		objPos += rightAxis * 3.5 + Vector3(0, 1, 0) * 1.5;   //offset of the character
+	//	}
+	//	Vector3 camPos = objPos + lockedOffset;
+
+	//	//Debug::DrawLine(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetPosition() + GameWorld::GetInstance()->GetMainCamera()->GetForward() * 100, Vector4(1, 0, 1, 1), 10.0f);
+
+	//	GameWorld::GetInstance()->GetMainCamera()->SetTargetPosition(objPos);
+	//}
 
 	UpdateKeys();
-
-	/*if (useGravity) {
-		Debug::Print("(G)ravity on", Vector2(5, 95), Debug::RED);
-	}
-	else {
-		Debug::Print("(G)ravity off", Vector2(5, 95), Debug::RED);
-	}*/
 
 	RayCollision closestCollision;
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::K) && selectionObject) {
@@ -574,8 +595,8 @@ void TutorialGame::UpdateGame(float dt) {
 	//movePlayer(goatCharacter);
 
 	if (GAME_MODE_PHISICAL_TEST == gameMode) {
-		Debug::Print("Health: " + std::to_string(testPlayer->GetHealth()), Vector2(5, 95));
-		Debug::Print("Shield: " + std::to_string(testPlayer->GetShield()), Vector2(5, 100));
+		Debug::Print("Health: " + std::to_string(playerObject->GetHealth()), Vector2(5, 95));
+		Debug::Print("Shield: " + std::to_string(playerObject->GetShield()), Vector2(5, 100));
 
 		frameTime -= dt;
 		while (frameTime < 0.0f) {
@@ -601,9 +622,6 @@ void TutorialGame::UpdateGame(float dt) {
 		UpdateRayMarchSpheres();
 		SendRayMarchData();
 	}
-
-	
-	
 }
 
 void TutorialGame::SelectMode() {
@@ -731,30 +749,6 @@ void TutorialGame::UpdateKeys() {
 		GameWorld::GetInstance()->ShuffleObjects(false);
 	}
 
-	if (lockedObject) {
-		LockedObjectMovement();
-	}
-	else {
-		DebugObjectMovement();
-	}
-	/*if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
-		for (int i = 0; i < 1; i++)
-		{
-			Vector3 halfDims = worldFloor->GetTransform().GetScale() / 2;
-			float randX = (rand() % 200) - 100;
-			float randY = (rand() % 200) - 100;
-			Vector3 randVec(randX, 2, randY);
-			Vector2 center;
-			int radius = 10;
-			int startIndex, numInts, leftS, rightS, topT, bottomT;
-
-			//worldFloor->ApplyPaintAtPosition(randVec, halfDims, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-			//RunComputeShader(worldFloor,200,200, leftS, rightS, topT, bottomT, radius, center);
-
-
-		}
-		
-	}*/
   if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
 		float randX = (rand() % 200) - 100;
 		float randZ = (rand() % 200) - 100;
@@ -766,6 +760,61 @@ void TutorialGame::UpdateKeys() {
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F)) {
 		renderer->renderFullScreenQuad = !renderer->renderFullScreenQuad;
 
+	}
+}
+
+void TutorialGame::ControlPlayer(float dt) {
+	if (!playerObject) { return; }
+
+	Transform& transform = playerObject->GetTransform();
+
+	Vector3 fwdAxis = transform.GetDirVector().Normalised();
+	Vector3 rightAxis = Vector3::Cross(Vector3(0.0f, -1.0f, 0.0f), fwdAxis);
+
+	//orientation
+	float dirVal = Window::GetMouse()->GetRelativePosition().x;
+	while (180.0f <= dirVal) { dirVal -= 180.0f; }
+	Quaternion orientation = transform.GetOrientation();
+	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
+	transform.SetOrientation(orientation.Normalised());
+
+	//speed
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT)) {
+		playerObject->SpeedUp();
+	}
+	else {
+		playerObject->SpeedDown();
+	}
+
+	float speed = playerObject->GetSpeed();
+	Vector3 position = transform.GetPosition();
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
+	}
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - fwdAxis * dt * speed);
+	}
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - rightAxis * dt * speed);
+	}
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + rightAxis * dt * speed);
+	}
+	//jump
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump()) {
+		playerObject->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, PLAYER_JUMP_FORCE, 0));
+	}
+	//Aiming
+	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT)){
+		renderer->drawCrosshair = true;
+		playerObject->UpdateAimPosition(GameWorld::GetInstance()->GetMainCamera());
+		//shoot
+		if (Window::GetMouse()->ButtonHeld(MouseButtons::LEFT) && playerObject->CanShoot()) {
+			playerObject->StartShooting(playerObject->GetAimedTarget());
+		}
+	}
+	else {
+		renderer->drawCrosshair = false;
 	}
 }
 
@@ -1176,7 +1225,7 @@ GameObject* TutorialGame::AddRayMarchSphereToWorld(const Vector3& position, floa
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* cube = new GameObject();
 
-	AABBVolume* volume = new AABBVolume(dimensions);
+	OBBVolume* volume = new OBBVolume(dimensions);
 	cube->SetBoundingVolume((CollisionVolume*)volume);
 
 	cube->GetTransform().SetPosition(position).SetScale(dimensions * 2.0f);
@@ -1197,7 +1246,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inverseMass) {
 	GameObject* capsule = new GameObject();
 
-	CapsuleVolume* volume = new CapsuleVolume(halfHeight, radius);
+	CapsuleVolume* volume = new CapsuleVolume(halfHeight * 0.5f, radius * 0.5f);
 	capsule->SetBoundingVolume((CollisionVolume*)volume);
 
 	capsule->GetTransform().SetScale(Vector3(radius, halfHeight, radius)).SetPosition(position);
@@ -1345,29 +1394,6 @@ GameObject* TutorialGame::AddEnemyGoatToWorld(const Vector3& position) {
 	return BadGoat;
 }
 
-//GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position) { //Origonal
-//	float meshSize		= 1.0f;
-//	float inverseMass	= 0.5f;
-//
-//	GameObject* character = new GameObject();
-//	SphereVolume* volume  = new SphereVolume(1.0f);
-//
-//	character->SetBoundingVolume((CollisionVolume*)volume);
-//
-//	character->GetTransform()
-//		.SetScale(Vector3(meshSize, meshSize, meshSize))
-//		.SetPosition(position);
-//
-//	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
-//	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
-//
-//	character->GetPhysicsObject()->SetInverseMass(inverseMass);
-//	character->GetPhysicsObject()->InitSphereInertia();
-//
-//	GameWorld::GetInstance()->AddGameObject(character);
-//
-//	return character;
-//}
 GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	GameObject* triangle = new GameObject();
 
@@ -1442,7 +1468,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	float inverseMass = 0.8f;
 
 	playerTracking* character = new playerTracking();
-	AABBVolume* volume = new AABBVolume(Vector3{ 2,2,2 });
+	AABBVolume* volume = new AABBVolume(Vector3(1.0f, 0.3f, 1.0f) * meshSize);
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -1457,7 +1483,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->setCoeficient(0.55f);
 	character->GetPhysicsObject()->InitSphereInertia();
-	setGoatCharacter(character);
+	character->AddBulletInfo(capsuleMesh, basicShader);
 	InitPaintableTextureOnObject(character);
 
 	GameWorld::GetInstance()->AddGameObject(character);
@@ -1532,9 +1558,9 @@ Projectile* TutorialGame::FireBullet(playerTracking* selectedPlayerCharacter) {
 
 
 
-void TutorialGame::setGoatCharacter(playerTracking* assignCharcter) {
-	goatCharacter = assignCharcter;
-}
+//void TutorialGame::setGoatCharacter(playerTracking* assignCharcter) {
+//	goatCharacter = assignCharcter;
+//}
 
 void TutorialGame::setEnemyGoat(GameObject* assignCharcter) {
 	EnemyGoat = assignCharcter;
@@ -1659,13 +1685,15 @@ void TutorialGame::InitDefaultFloorRunway() {
 }
 
 void TutorialGame::InitGameExamples() {
-	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
-	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 2.5, 2.5);
+	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.1f);
+	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 1.5, 1.5);
 	
 	//TODO
 	auto q = Quaternion();
-	testPlayer = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
-	lockedObject = testPlayer; 
+	
+	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+
+	//lockedObject = playerObject;
 	//TestCode of Item
 	PropSystem::GetInstance()->SpawnItem();
 	PropSystem::GetInstance()->SpawnSpeedUp();

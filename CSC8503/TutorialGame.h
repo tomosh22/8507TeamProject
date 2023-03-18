@@ -120,10 +120,13 @@ namespace NCL {
 			void InitDefaultFloor();
 			void InitDefaultFloorRunway();
 
+			void UpdateWorldCamera(float dt);
+			void CameraLockOnPlayer();
 			bool SelectObject();
 			void MoveSelectedObject();
 			void DebugObjectMovement();
 			void LockedObjectMovement();
+			void ControlPlayer(float dt);
 			void movePlayer(playerTracking* unitGoat);
 			void setLockedObject(GameObject* goatPlayer);
 
@@ -180,6 +183,8 @@ namespace NCL {
 
 			float		forceMagnitude;
 
+			Vector3 viewOffset = Vector3(10.0f, 3.0f, 10.0f);
+
 			GameObject* selectionObject = nullptr;
 			GameObject* phantomCubeOutput = nullptr;
 
@@ -199,9 +204,9 @@ namespace NCL {
 
 			GameObject* objClosest = nullptr;
 
-			playerTracking* goatCharacter = nullptr;
+			//playerTracking* goatCharacter = nullptr;
 			GameObject* EnemyGoat = nullptr;
-			playerTracking* testPlayer = nullptr;
+			playerTracking* playerObject = nullptr;
 
 			const int bulletLifeLimit = 2;
 			const int bulletDeletionLimit = 5;

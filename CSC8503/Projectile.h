@@ -12,26 +12,26 @@ namespace NCL {
 			float radius;  //exlopsion radius 
 			float ProjectileSize; // size of bullet
 			float projectileForce; // Fire force
-			float weight;// keep a >0 weight on instances. Otherwise applied forces will have no effect
+			float weight;// keep a >0 weight on instances. Otherwise applied forces will have no effect //Do not exceed 1.0, otherwise additional forces will be generated
 			float rateOfFire; // time in seconds between consecuative bullets shot
 			bool affectedByGravity;
 		};
 
 		static Gun pistol{
 			10.0f,
-			0.2f,
-			100.0f,
-			10.0f,
+			0.02f,
+			8000.0f,
+			1.0f,
 			0.5f,
 			true,
 		};
 
 		static Gun rocket{
 			6.0f,
+			0.05f,
+			6000.0f,
+			0.9f,
 			0.5f,
-			20.0f,
-			5.0f,
-			1.5f,
 			true,
 		};
 

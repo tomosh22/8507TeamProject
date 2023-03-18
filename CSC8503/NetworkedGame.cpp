@@ -53,6 +53,13 @@ void NetworkedGame::CloseClient() {
 }
 
 void NetworkedGame::UpdateGame(float dt) {
+	if (online) {
+		Debug::Print("Network: on, Press F10 to exit network.", Vector2(1, 5));
+	}
+	else {
+		Debug::Print("Network: off, Press F9 to start network.", Vector2(1, 5));
+	}
+	
 	if (!client && Window::GetKeyboard()->KeyPressed(KeyboardKeys::F9)) { StartClient(127, 0, 0, 1); }
 	if (client && Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) { CloseClient(); }
 	if (client) {

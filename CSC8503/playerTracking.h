@@ -6,9 +6,15 @@
 #include"Vector4.h"
 #include"ObjectPool.h"
 #include "GameWorld.h"
+#include "RenderObject.h"
+
 
 namespace NCL {
 	namespace CSC8503 {
+		const float PLAYER_MOVE_SPEED = 10.0f;
+		const float PLYAER_ITEM_SPEED_UP = 35.0f;
+		const float PLAYER_SPEED_UP = 30.0f;
+		const float PLAYER_JUMP_FORCE = 20.0f;
 
 		class Team;
 		class playerTracking :public GameObject {
@@ -26,10 +32,24 @@ namespace NCL {
 			void Update(float dt) override;
 
 			void Move(float dt);
+			void UpdateCoolDownTime(float dt);
+
 			void Rotate();
-			void Shoot(float dt);
-			void Jump(); 
+			bool CanShoot();
+			void StartShooting(Vector3 target);
+			void Shooting(Projectile* bullet, Vector3 target);
+			bool CanJump();
+			void SpeedUp();
+			void SpeedDown();
+			void UpdateSpeed(float dt);
 			float SmoothDamp(float current, float target, float& currentVelocity, float smoothTime, float maxSpeed, float deltaTime);
+
+			void UpdateAimPosition(Camera* camera);
+
+			void AddBulletInfo(MeshGeometry* mesh, ShaderBase* shader) {
+				bulletMesh = mesh;
+				bulletShader = shader;
+			}
 
 			void setplayerID(int assignedPlayerID) {
 				playerID = assignedPlayerID;
@@ -48,6 +68,8 @@ namespace NCL {
 			{
 				teamID = team;
 			}
+
+			Vector3 GetAimedTarget() const { return aimPos; }
 
 			void resetPlayerProjectile() {
 				playerProjectile = nullptr;
@@ -102,7 +124,7 @@ namespace NCL {
 				hp = 100; 
 			}
 
-			void SpeedUp()
+			void TakeSpeedUpItem()
 			{
 				speedUp = true;
 				speedUpTimer = 300.0f; 
@@ -170,6 +192,8 @@ namespace NCL {
 			Vector3 right;
 			Vector3 aimPos;
 			//This is me 
+			MeshGeometry* bulletMesh;
+			ShaderBase* bulletShader;
 			ObjectPool<Projectile> *bulletPool;
 			float coolDownTimer;   //this is timer of firing
 

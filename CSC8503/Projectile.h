@@ -22,7 +22,7 @@ namespace NCL {
 			0.02f,
 			8000.0f,
 			1.0f,
-			0.5f,
+			0.7f,
 			true,
 		};
 

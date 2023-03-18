@@ -6,7 +6,6 @@
 #include"Vector4.h"
 #include"ObjectPool.h"
 #include "GameWorld.h"
-#include "RenderObject.h"
 
 
 namespace NCL {
@@ -45,11 +44,6 @@ namespace NCL {
 			float SmoothDamp(float current, float target, float& currentVelocity, float smoothTime, float maxSpeed, float deltaTime);
 
 			void UpdateAimPosition(Camera* camera);
-
-			void AddBulletInfo(MeshGeometry* mesh, ShaderBase* shader) {
-				bulletMesh = mesh;
-				bulletShader = shader;
-			}
 
 			void setplayerID(int assignedPlayerID) {
 				playerID = assignedPlayerID;
@@ -192,8 +186,7 @@ namespace NCL {
 			Vector3 right;
 			Vector3 aimPos;
 			//This is me 
-			MeshGeometry* bulletMesh;
-			ShaderBase* bulletShader;
+
 			ObjectPool<Projectile> *bulletPool;
 			float coolDownTimer;   //this is timer of firing
 

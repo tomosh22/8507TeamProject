@@ -1483,7 +1483,6 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->setCoeficient(0.55f);
 	character->GetPhysicsObject()->InitSphereInertia();
-	character->AddBulletInfo(capsuleMesh, basicShader);
 	InitPaintableTextureOnObject(character);
 
 	GameWorld::GetInstance()->AddGameObject(character);
@@ -1686,7 +1685,7 @@ void TutorialGame::InitDefaultFloorRunway() {
 
 void TutorialGame::InitGameExamples() {
 	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.1f);
-	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 1.5, 1.5);
+	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 1.5, 1.5, 0.2f);
 	
 	//TODO
 	auto q = Quaternion();

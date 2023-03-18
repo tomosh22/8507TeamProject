@@ -203,7 +203,8 @@ void GameTechRenderer::RenderFrame() {
 	
 	RenderSkybox();
 	RenderCamera();
-	
+	RenderPlayerAnimation();
+
 	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture->GetObjectID());//raymarching
 	
 	
@@ -223,11 +224,6 @@ void GameTechRenderer::RenderFrame() {
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	
-
-	
-	
 
 	ImGui();
 	if(drawCrosshair)DrawCrossHair();
@@ -1020,7 +1016,7 @@ void GameTechRenderer::LoadPlayerAniamtion()
 	frameTime = 0.0f;
 }
 
-void GameTechRenderer::RenderPlayerAnimation(OGLTexture* tex)
+void GameTechRenderer::RenderPlayerAnimation()
 {
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "anim");
 	BindShader(characterShader);

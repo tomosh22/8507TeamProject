@@ -130,7 +130,7 @@ namespace NCL {
 			OGLShader* characterShader;
 
 			void LoadPlayerAniamtion();
-			void RenderPlayerAnimation(OGLTexture* tex);
+			void RenderPlayerAnimation();
 			OGLMesh* playerMesh;
 
 			MeshAnimation* playerIdle;

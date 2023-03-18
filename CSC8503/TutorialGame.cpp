@@ -526,8 +526,7 @@ void TutorialGame::UpdateGame(float dt) {
 		UpdateRayMarchSpheres();
 		SendRayMarchData();
 	}
-	if (gameMode == GAME_MODE_PHISICAL_TEST)renderer->RenderPlayerAnimation((OGLTexture*)(crystalPBR->base));
-	
+
 }
 
 void TutorialGame::SelectMode() {

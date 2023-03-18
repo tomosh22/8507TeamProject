@@ -6,6 +6,7 @@
 #include"Vector4.h"
 #include"ObjectPool.h"
 #include "GameWorld.h"
+#include "NetworkObject.h"
 
 
 namespace NCL {
@@ -15,8 +16,17 @@ namespace NCL {
 		const float PLAYER_SPEED_UP = 30.0f;
 		const float PLAYER_JUMP_FORCE = 20.0f;
 
+		const enum PlayerAction {
+			PLAYER_ACTION_NONE,
+			PLAYER_ACTION_SWITCH_WEAPON,
+			PLAYER_ACTION_SHOOT,
+			//New behaviour added to previous
+			PLAYER_ACTION_MAX = 8,
+		};
+			
+
 		class Team;
-		class playerTracking :public GameObject {
+		class playerTracking :public NetworkObject {
 		public:
 
 			playerTracking();
@@ -25,7 +35,6 @@ namespace NCL {
 				delete playerProjectile;
 				bulletsUsed.clear();
 				bulletsUsedAndMoved.clear();
-
 			}
 
 			void Update(float dt) override;
@@ -53,16 +62,6 @@ namespace NCL {
 				playerID = assignedTeamID;
 			}
 
-			int GetTeamId()
-			{
-				return teamID;
-			}
-
-			void SetTeamId(int team)
-			{
-				teamID = team;
-			}
-
 			Vector3 GetAimedTarget() const { return aimPos; }
 
 			void resetPlayerProjectile() {
@@ -70,7 +69,7 @@ namespace NCL {
 			}
 
 			void setWeponType(Gun newWeponType) {
-				weaponType = newWeponType; 
+				weaponInUse = newWeponType; 
 			}
 
 
@@ -86,7 +85,7 @@ namespace NCL {
 
 
 			Gun getWeponType() {
-				return weaponType;
+				return weaponInUse;
 			}
 
 			float GetSpeed()
@@ -126,7 +125,7 @@ namespace NCL {
 
 			void WeaponUp()
 			{
-				weaponType = rocket;
+				weaponInUse = rocket;
 				weaponUp = true; 
 				weaponUpTimer = 300.0f; 
 			}
@@ -154,10 +153,20 @@ namespace NCL {
 
 			void HealthUp(Gun newGun);
 
+			void SwitchWeapon() {
+				int index = weaponInUse.type + 1;
+				index = index >= GUN_TYPE_MAX ? index - GUN_TYPE_MAX : index;
+				weaponInUse = weaponPool[index];
+			}
+
 			 std::string id()
 			{
 				return "character";
 			}
+
+			void UpdateAction(bool buttonstates[8], Vector3 param) override;
+
+			void PrintPlayerInfo();
 
 		protected:
 			bool canJump; 
@@ -170,10 +179,10 @@ namespace NCL {
 			int hp;
 			int shield; 
 			int playerID;
-			int teamID;
 			int IndividualplayerScore;
 			Projectile *playerProjectile;
-			Gun weaponType;
+			Gun weaponInUse;
+			vector<Gun> weaponPool;
 			//Vector4 paintColor;
 		
 			float moveSpeed;

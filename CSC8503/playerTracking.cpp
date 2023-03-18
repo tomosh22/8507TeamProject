@@ -13,7 +13,7 @@ playerTracking::playerTracking()
 		playerID = 1;
 		teamID = 0;
 		IndividualplayerScore = 0;
-		weaponType = pistol;
+		
 		moveSpeed = 10;
 		sprintTimer = 5.0f; 
 		speedUp = false; 
@@ -26,7 +26,10 @@ playerTracking::playerTracking()
 		coolDownTimer = 0;
 		bulletsUsed = {};
 		bulletsUsedAndMoved = {};
-
+		//weapon
+		weaponInUse = pistol;
+		weaponPool.push_back(pistol);
+		weaponPool.push_back(rocket);
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
@@ -97,7 +100,7 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 {
 	Projectile* newBullet = bulletPool->GetObject2();
 	ResetBullet(newBullet);
-	coolDownTimer = weaponType.rateOfFire;
+	coolDownTimer = weaponInUse.rateOfFire;
 	Shooting(newBullet, target);
 }
 
@@ -105,18 +108,18 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 void playerTracking::ResetBullet(Projectile* bullet)
 {
 
-	CapsuleVolume* volume = new CapsuleVolume(weaponType.ProjectileSize * 2.0f, weaponType.ProjectileSize);
+	CapsuleVolume* volume = new CapsuleVolume(weaponInUse.ProjectileSize * 2.0f, weaponInUse.ProjectileSize);
 	bullet->SetBoundingVolume((CollisionVolume*)volume);
 
-	bullet->GetTransform().SetScale(Vector3(weaponType.ProjectileSize, weaponType.ProjectileSize*2.0, weaponType.ProjectileSize)).SetPosition(transform.GetPosition() + transform.GetDirVector().Normalised() * 2.5f + Vector3(0.0f, 1.8f, 0.0f));
+	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize*2.0, weaponInUse.ProjectileSize)).SetPosition(transform.GetPosition() + transform.GetDirVector().Normalised() * 2.5f + Vector3(0.0f, 1.8f, 0.0f));
 
 	bullet->SetPhysicsObject(new PhysicsObject(&bullet->GetTransform(), bullet->GetBoundingVolume()));
 
-	bullet->GetPhysicsObject()->SetInverseMass(weaponType.weight);
+	bullet->GetPhysicsObject()->SetInverseMass(weaponInUse.weight);
 	bullet->GetPhysicsObject()->InitSphereInertia();
 	bullet->SetTeamID(teamID);
 	bullet->SetPlayer(this);
-	bullet->setExplosionRadius(weaponType.radius);
+	bullet->setExplosionRadius(weaponInUse.radius);
 	bullet->SetActive(true);
 	bullet->GetPhysicsObject()->SetLinearVelocity({ 0,0,0 });
 	bullet->GetPhysicsObject()->ClearForces();
@@ -125,7 +128,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
 	Vector3 fireDir = (target - bullet->GetTransform().GetPosition());
 	fireDir.Normalise();
-	bullet->GetPhysicsObject()->AddForce(fireDir * weaponType.projectileForce);
+	bullet->GetPhysicsObject()->AddForce(fireDir * weaponInUse.projectileForce);
 }
 
 bool NCL::CSC8503::playerTracking::CanJump(){
@@ -185,7 +188,7 @@ void playerTracking::ReTurnBullet(Projectile* bullet)
 
 void playerTracking::WeaponUp(Gun newGun)
 {
-	weaponType = newGun;
+	weaponInUse = newGun;
 }
 
 
@@ -193,5 +196,28 @@ void playerTracking::WeaponUp(Gun newGun)
 void playerTracking::HealthUp(Gun newGun)
 {
 	
+}
+
+void playerTracking::PrintPlayerInfo() {
+	Debug::Print("Health: " + std::to_string(hp), Vector2(5, 90), Debug::RED);
+	Debug::Print("Shield: " + std::to_string(shield), Vector2(5, 95), Debug::CYAN);
+
+	string text;
+	if (weaponInUse.type == GUN_TYPE_PISTOL) {
+		text = "WEAPON: PISTOL";
+	} 
+	else if (weaponInUse.type == GUN_TYPE_ROCKET) {
+		text = "WEAPON: ROCKET";
+	}
+	Debug::Print(text, Vector2(70, 95), Debug::WHITE);
+}
+
+void playerTracking::UpdateAction(bool buttonstates[8], Vector3 param) {
+	if (buttonstates[PLAYER_ACTION_SWITCH_WEAPON]) {
+		SwitchWeapon();
+	}
+	if (buttonstates[PLAYER_ACTION_SHOOT]) {
+		StartShooting(param);
+	}
 }
 

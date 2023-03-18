@@ -103,11 +103,18 @@ namespace NCL::CSC8503 {
 			this->name = name;
 		}
 
+		int GetTeamId()
+		{
+			return teamID;
+		}
+
+		void SetTeamId(int team)
+		{
+			teamID = team;
+		}
+
 		virtual void OnCollisionBegin(GameObject* otherObject) {
 			//std::cout << "OnCollisionBegin event occured!\n";
-
-		
-			
 		}
 
 		virtual void OnCollisionEnd(GameObject* otherObject)
@@ -187,6 +194,7 @@ namespace NCL::CSC8503 {
 		bool        isAlpha = false;
 		bool		isActive;
 		int			worldID;
+		int			teamID;
 		float impactAbsorbtionAmount;
 		std::string	name;
 

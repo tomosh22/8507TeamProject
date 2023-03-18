@@ -33,7 +33,7 @@ void ServerObject::UpdateServer() {
 		}
 		enet_packet_destroy(event.packet);
 	}
-	CheckConnectExpire();
+	//CheckConnectExpire();
 }
 
 //check if exception has occurred on clients 
@@ -122,14 +122,12 @@ GamePacket* ServerObject::DeepCopyPacket(GamePacket* packet) {
 	switch (packet->type) {
 	case Message:
 		return new MessagePacket(*(MessagePacket*)packet);
-	case Add_Object:
-		return new AddObjectPacket(*(AddObjectPacket*)packet);
 	case Full_State:
 		return new FullPacket(*(FullPacket*)packet);
 	case Delta_State:
 		return new DeltaPacket(*(DeltaPacket*)packet);
-	case Received_State:
-		return new ClientPacket(*(ClientPacket*)packet);
+	case Player_Action:
+		return new ActionPacket(*(ActionPacket*)packet);
 	default:
 		return new GamePacket(*packet);
 	}

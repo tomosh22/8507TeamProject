@@ -17,15 +17,42 @@
 #include "Projectile.h"
 
 
-
-
-
 using namespace NCL;
 using namespace CSC8503;
 
 //#define TRI_DEBUG
 //#define OLD_PAINT
 //#define DEBUG_SHADOW
+
+struct TextureThing {
+	char* texData = nullptr;
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	int flags = 0;
+
+	TextureBase** myPointer;
+
+	TextureThing(char* texData, int width, int height, int channels, int flags, TextureBase** myPointer) : texData(texData), width(width), height(height), channels(channels), flags(flags), myPointer(myPointer) {}
+};
+
+std::vector<TextureThing> things;
+std::mutex texturesMutex;
+
+
+void LoadTextureThread(const std::string& name, TextureBase** ptr) {
+	char* texData = nullptr;
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	int flags = 0;
+	TextureLoader::LoadTexture(name, texData, width, height, channels, flags);
+
+	TextureThing thing(texData, width, height, channels, flags, ptr);
+	texturesMutex.lock();
+	things.push_back(thing);
+	texturesMutex.unlock();
+}
 
 TutorialGame::TutorialGame()	{
 	
@@ -256,45 +283,6 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 
 }
 
-/*
-
-Each of the little demo scenarios used in the game uses the same 2 meshes, 
-and the same texture and shader. There's no need to ever load in anything else
-for this module, even in the coursework, but you can add it if you like!
-
-*/
-
-#include <thread>
-#include <mutex>
-struct TextureThing {
-	char* texData = nullptr;
-	int width = 0;
-	int height = 0;
-	int channels = 0;
-	int flags = 0;
-
-	TextureBase** myPointer;
-
-	TextureThing(char* texData, int width, int height, int channels, int flags, TextureBase** myPointer) : texData(texData), width(width), height(height), channels(channels), flags(flags),myPointer(myPointer) {}
-};
-std::vector<TextureThing> things;
-std::mutex texturesMutex;
-
-void LoadTextureThread(const std::string& name, TextureBase** ptr) {
-	char* texData = nullptr;
-	int width = 0;
-	int height = 0;
-	int channels = 0;
-	int flags = 0;
-	TextureLoader::LoadTexture(name, texData, width, height, channels, flags);
-
-	TextureThing thing(texData, width, height, channels, flags, ptr);
-	texturesMutex.lock();
-	things.push_back(thing);
-	texturesMutex.unlock();
-}
-
-
 
 
 void TutorialGame::InitialiseAssets() {
@@ -502,109 +490,74 @@ void TutorialGame::UpdateGame(float dt) {
 
 	renderer->timePassed += dt * renderer->timeScale;
 
-	if (GAME_MODE_DEFAULT == gameMode) {
+	switch (gameMode) {
+	case GAME_MODE_DEFAULT:
+	{
 		SelectMode();
 		renderer->Update(dt);
 		renderer->Render();
 		Debug::UpdateRenderables(dt);
 		return;
 	}
-	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
+	case GAME_MODE_GRAPHIC_TEST:
+	{
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "cube");
 		//DispatchComputeShaderForEachTriangle(testCube);
 		//glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
-		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, Team::team2);
+		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, TEAM_RED);
 		glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius, Team::team2);
+		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED);
 		glPopDebugGroup();
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
 		//for (GameObject*& wall : walls) {
 			//DispatchComputeShaderForEachTriangle(wall);
 		//}
 		//glPopDebugGroup();
+		UpdateRayMarchSpheres();
+		SendRayMarchData();
+		break;
 	}
-	
+	case GAME_MODE_PHISICAL_TEST:
+	case GAME_MODE_GAME:
+	{
+		frameTime -= dt;
+		while (frameTime < 0.0f) {
+			currentFrame = (currentFrame + 1) % playerIdle->GetFrameCount();
+			frameTime += 1.0f / playerIdle->GetFrameRate();
+		}
+		break;
+	}
+	case GAME_MODE_SELECT_TEAM:
+	{
+		int teamID = SelectTeam();
+		if (teamID != 0) {
+			gameMode = GAME_MODE_GAME;
+			InitGame(teamID);
+			break;
+		}
+		renderer->Update(dt);
+		renderer->Render();
+		Debug::UpdateRenderables(dt);
+		return;
+	}
+	default:
+		std::cout << "Game mode error" << std::endl;
+		return;
+	}
+
 	timePassed += dt;
-	
-	if(rayMarch)DispatchComputeShaderForEachPixel();
-	if(floor != nullptr)
-	Debug::DrawAxisLines(floor->GetTransform().GetMatrix());
+
+	if (rayMarch)DispatchComputeShaderForEachPixel();
+	if (floor != nullptr)
+		Debug::DrawAxisLines(floor->GetTransform().GetMatrix());
 
 	UpdateWorldCamera(dt);
 
 	ControlPlayer(dt);
 
-	//if (lockedObject != nullptr) {
-
-	//	Matrix4 view = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
-	//	Matrix4 camWorld = view.Inverse();
-	//	Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
-	//	Vector3 objPos = lockedObject->GetTransform().GetPosition();
-	//	
-	//	
-
-	//	//right Click to got to aim mode
-	//	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT))
-	//	{
-	//		renderer->drawCrosshair = true;
-	//		objPos += rightAxis * 4.5 + Vector3(0, 1, 0) * 2;   //offset of the character
-	//	}
-	//	else
-	//	{
-	//		renderer->drawCrosshair = false;
-	//		objPos += rightAxis * 3.5 + Vector3(0, 1, 0) * 1.5;   //offset of the character
-	//	}
-	//	Vector3 camPos = objPos + lockedOffset;
-
-	//	//Debug::DrawLine(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetPosition() + GameWorld::GetInstance()->GetMainCamera()->GetForward() * 100, Vector4(1, 0, 1, 1), 10.0f);
-
-	//	GameWorld::GetInstance()->GetMainCamera()->SetTargetPosition(objPos);
-	//}
-
 	UpdateKeys();
-
-	RayCollision closestCollision;
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::K) && selectionObject) {
-		Vector3 rayPos;
-		Vector3 rayDir;
-
-		rayDir = selectionObject->GetTransform().GetOrientation() * Vector3(0, 0, -1);
-
-		rayPos = selectionObject->GetTransform().GetPosition();
-
-		Ray r = Ray(rayPos, rayDir);
-
-		if (GameWorld::GetInstance()->Raycast(r, closestCollision, true, selectionObject)) {
-			if (objClosest) {
-				objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
-			}
-			objClosest = (GameObject*)closestCollision.node;
-
-			objClosest->GetRenderObject()->SetColour(Vector4(1, 0, 1, 1));
-		}
-
-
-	}
-
-	//Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
-
-	SelectObject();
-	MoveSelectedObject();
-	//movePlayer(goatCharacter);
-
-	if (GAME_MODE_PHISICAL_TEST == gameMode) {
-		Debug::Print("Health: " + std::to_string(playerObject->GetHealth()), Vector2(5, 95));
-		Debug::Print("Shield: " + std::to_string(playerObject->GetShield()), Vector2(5, 100));
-
-		frameTime -= dt;
-		while (frameTime < 0.0f) {
-			currentFrame = (currentFrame + 1) % playerIdle-> GetFrameCount();
-			frameTime += 1.0f / playerIdle-> GetFrameRate();
-		}
-
-	}
 
 	GameWorld::GetInstance()->UpdateWorld(dt);
 
@@ -613,30 +566,53 @@ void TutorialGame::UpdateGame(float dt) {
 	renderer->Render();
 	Debug::UpdateRenderables(dt);
 
-	/*float testFloat = float(1000) / float(55);
-	if (1000 * dt > testFloat)std::cout << "fps drop\n";*/
 
-	//timePassed = 0;
-
-	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
-		UpdateRayMarchSpheres();
-		SendRayMarchData();
-	}
+	//if (GAME_MODE_GRAPHIC_TEST == gameMode) {
+	//	UpdateRayMarchSpheres();
+	//	SendRayMarchData();
+	//}
 }
 
 void TutorialGame::SelectMode() {
 	string text = "1. Graphic Test Mode.";
-	Debug::Print(text, Vector2(35, 30), Debug::GREEN);
+	Debug::Print(text, Vector2(30, 30), Debug::GREEN);
 	text = "2. Physical Test Mode.";
-	Debug::Print(text, Vector2(35, 50), Debug::GREEN);
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM1)) {
+	Debug::Print(text, Vector2(30, 40), Debug::GREEN);
+	text = "3. Game Start";
+	Debug::Print(text, Vector2(30, 50), Debug::GREEN);
+
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
 		gameMode = GAME_MODE_GRAPHIC_TEST;
 		InitGraphicTest();
 	}
-	else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM2)) {
+	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
 		gameMode = GAME_MODE_PHISICAL_TEST;
-		InitPhysicalTest();
+		InitPhysicTest();
 	}
+	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM3)) {
+		gameMode = GAME_MODE_SELECT_TEAM;
+	}
+}
+
+int TutorialGame::SelectTeam() {
+	Debug::Print("Please choose your team.", Vector2(30, 30));
+	Debug::Print("1. RED.", Vector2(30, 35), Debug::RED);
+	Debug::Print("2. BLUE.", Vector2(30, 40), Debug::BLUE);
+	Debug::Print("3. GREEN.", Vector2(30, 45), Debug::GREEN);
+	Debug::Print("4. YELLOW.", Vector2(30, 50), Debug::YELLOW);
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
+		return TEAM_RED;
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
+		return TEAM_BLUE;
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM3)) {
+		return TEAM_GREEN;
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM4)) {
+		return TEAM_YELLOW;
+	}
+	return 0;
 }
 
 void TutorialGame::UpdateRayMarchSpheres() {
@@ -754,7 +730,7 @@ void TutorialGame::UpdateKeys() {
 		float randZ = (rand() % 200) - 100;
 		Vector3 randVec(randX, 2, randZ);
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10, Team::team1);
+		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10, TEAM_DEFAULT);
 		glPopDebugGroup();
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F)) {
@@ -804,6 +780,11 @@ void TutorialGame::ControlPlayer(float dt) {
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump()) {
 		playerObject->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, PLAYER_JUMP_FORCE, 0));
 	}
+	//switch weapon
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::TAB)) {
+		playerObject->SwitchWeapon();
+		playerObject->AddSendMessage(ActionPacket(PLAYER_ACTION_SWITCH_WEAPON));
+	}
 	//Aiming
 	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT)){
 		renderer->drawCrosshair = true;
@@ -811,11 +792,13 @@ void TutorialGame::ControlPlayer(float dt) {
 		//shoot
 		if (Window::GetMouse()->ButtonHeld(MouseButtons::LEFT) && playerObject->CanShoot()) {
 			playerObject->StartShooting(playerObject->GetAimedTarget());
+			playerObject->AddSendMessage(ActionPacket(PLAYER_ACTION_SHOOT, playerObject->GetAimedTarget()));
 		}
 	}
 	else {
 		renderer->drawCrosshair = false;
 	}
+	playerObject->PrintPlayerInfo();
 }
 
 void TutorialGame::LockedObjectMovement() {
@@ -847,40 +830,6 @@ void TutorialGame::LockedObjectMovement() {
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::DOWN)) {
 		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, 10));
-	}
-}
-
-void TutorialGame::DebugObjectMovement() {
-//If we've selected an object, we can manipulate it with some key presses
-	if (inSelectionMode && selectionObject) {
-		//Twist the selected object!
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::LEFT)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(-10, 0, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::RIGHT)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(10, 0, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::UP)) {
-			selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, -10));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::DOWN)) {
-			selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, 10));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM7)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(0, 10, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM8)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(0, -10, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM5)) {
-			selectionObject->GetPhysicsObject()->AddForce(Vector3(0, -10, 0));
-		}
 	}
 }
 
@@ -974,17 +923,37 @@ void TutorialGame::InitGraphicTest() {
 	return;
 }
 
-void TutorialGame::InitPhysicalTest() {
-
+void TutorialGame::InitPhysicTest() {
 	renderer->drawCrosshair = false;
 	GameWorld::GetInstance()->ClearAndErase();
 	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
+	//add player
+	auto q = Quaternion();
+	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 
-	InitGameExamples();
+	InitGameObjects();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
 
+#ifdef TRI_DEBUG
+	AddDebugTriangleInfoToObject(floor);
+#endif
+}
+
+void TutorialGame::InitGame(int teamID) {
+	renderer->drawCrosshair = false;
+	GameWorld::GetInstance()->ClearAndErase();
+	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
+	physics->Clear();
+	//add player
+	auto q = Quaternion();
+	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	playerObject->SetTeamId(teamID);
+
+	InitGameObjects();
+	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	InitPaintableTextureOnObject(floor);
 
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
@@ -1465,10 +1434,10 @@ void TutorialGame::AddMapToWorld() {
 
 playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation) {
 	float meshSize = 2.0f;
-	float inverseMass = 0.8f;
+	float inverseMass = 0.3f;
 
 	playerTracking* character = new playerTracking();
-	AABBVolume* volume = new AABBVolume(Vector3(1.0f, 0.3f, 1.0f) * meshSize);
+	AABBVolume* volume = new AABBVolume(Vector3(1.0f, 0.2f, 1.0f) * meshSize);
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -1479,15 +1448,12 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, basicShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
-	character->GetPhysicsObject()->setTorqueFriction(0.005f);
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->setCoeficient(0.55f);
-	character->GetPhysicsObject()->InitSphereInertia();
 	InitPaintableTextureOnObject(character);
 
 	GameWorld::GetInstance()->AddGameObject(character);
 	character->SetName("character");
-	character->SetTeamId(Team::team1);
 	return character;
 }
 
@@ -1683,14 +1649,9 @@ void TutorialGame::InitDefaultFloorRunway() {
 	AddRunwayToWorld(Vector3(0, -20, 0));
 }
 
-void TutorialGame::InitGameExamples() {
+void TutorialGame::InitGameObjects() {
 	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.1f);
 	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 1.5, 1.5, 0.2f);
-	
-	//TODO
-	auto q = Quaternion();
-	
-	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 
 	//lockedObject = playerObject;
 	//TestCode of Item
@@ -1752,10 +1713,6 @@ void TutorialGame::InitMixedGridWorldtest(int numRows, int numCols, float rowSpa
 
 }
 
-
-
-
-
 void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims) {
 	for (int x = 1; x < numCols+1; ++x) {
 		for (int z = 1; z < numRows+1; ++z) {
@@ -1764,94 +1721,6 @@ void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing,
 		}
 	}
 }
-
-/*
-Every frame, this code will let you perform a raycast, to see if there's an object
-underneath the cursor, and if so 'select it' into a pointer, so that it can be 
-manipulated later. Pressing Q will let you toggle between this behaviour and instead
-letting you move the camera around. 
-
-*/
-bool TutorialGame::SelectObject() {
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
-		inSelectionMode = !inSelectionMode;
-		if (inSelectionMode) {
-			Window::GetWindow()->ShowOSPointer(true);
-			Window::GetWindow()->LockMouseToWindow(false);
-		}
-		else {
-			Window::GetWindow()->ShowOSPointer(false);
-			Window::GetWindow()->LockMouseToWindow(true);
-		}
-	}
-	if (inSelectionMode) {
-		Debug::Print("Press Q to change to camera mode!", Vector2(5, 85));
-
-		if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT)) {
-			if (selectionObject) {	//set colour to deselected;
-				if (selectionObject->GetRenderObject() != nullptr)selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
-				selectionObject = nullptr;
-			}
-
-			Ray ray = CollisionDetection::BuildRayFromMouse(*GameWorld::GetInstance()->GetMainCamera());
-
-			RayCollision closestCollision;
-			if (GameWorld::GetInstance()->Raycast(ray, closestCollision, true)) {
-				selectionObject = (GameObject*)closestCollision.node;
-
-				if(selectionObject->GetRenderObject() != nullptr)selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-		if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
-			if (selectionObject) {
-				if (lockedObject == selectionObject) {
-					lockedObject = nullptr;
-				}
-				else {
-					lockedObject = selectionObject;
-				}
-			}
-		}
-	}
-	else {
-		Debug::Print("Press Q to change to select mode!", Vector2(5, 85));
-	}
-	return false;
-}
-
-/*
-If an object has been clicked, it can be pushed with the right mouse button, by an amount
-determined by the scroll wheel. In the first tutorial this won't do anything, as we haven't
-added linear motion into our physics system. After the second tutorial, objects will move in a straight
-line - after the third, they'll be able to twist under torque aswell.
-*/
-
-void TutorialGame::MoveSelectedObject() {
-	Debug::Print("Click Force:" + std::to_string(forceMagnitude), Vector2(5, 90));
-	forceMagnitude += Window::GetMouse()->GetWheelMovement() * 100.0f;
-
-	if (!selectionObject) {
-		return;//we haven't selected anything!
-	}
-	//Push the selected object!
-	/*if (Window::GetMouse()->ButtonPressed(NCL::MouseButtons::RIGHT)) {
-		Ray ray = CollisionDetection::BuildRayFromMouse(*GameWorld::GetInstance()->GetMainCamera());
-
-		RayCollision closestCollision;
-		if (GameWorld::GetInstance()->Raycast(ray, closestCollision, true)) {
-			if (closestCollision.node == selectionObject) {
-				selectionObject->GetPhysicsObject()->AddForceAtPosition(ray.GetDirection() * forceMagnitude, closestCollision.collidedAt);
-			}
-		}
-	}*/
-}
-
-
-
 
 
 StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
@@ -2031,7 +1900,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	
 }
 
-void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
+void TutorialGame::SetUpTriangleSSBOAndDataTexture()
 {
 	
 

@@ -203,6 +203,8 @@ void GameTechRenderer::RenderFrame() {
 	
 	RenderSkybox();
 	RenderCamera();
+
+	if(currentAniamtion!=nullptr)
 	RenderPlayerAnimation();
 
 	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture->GetObjectID());//raymarching
@@ -847,11 +849,6 @@ void GameTechRenderer::SetDebugLineBufferSizes(size_t newVertCount) {
 	}
 }
 
-void NCL::CSC8503::GameTechRenderer::Update(float dt)
-{
-	
-}
-
 
 //this was me
 void GameTechRenderer::ImGui() {
@@ -1000,7 +997,6 @@ void GameTechRenderer::CreateFBOColor(GLuint& fbo, GLuint& colorTex)
 void GameTechRenderer::LoadPlayerAniamtion()
 {
 	characterShader = new OGLShader("SkinningVertex.vert","SkinningFrag.frag");
-	playerIdle = new MeshAnimation("Role_T.anm");
 	playerMaterial = new MeshMaterial("Role_T.mat");
 	playerMesh = (OGLMesh*)LoadMesh("Role_T.msh");
 	playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
@@ -1026,7 +1022,7 @@ void GameTechRenderer::RenderPlayerAnimation()
 	//glUniformMatrix4fv(glGetUniformLocation(characterShader->GetProgramID(), "textureMatrix"), 1, false, textureMatrix.values);
 	vector <Matrix4 > frameMatrices;
 	const Matrix4 * invBindPose = playerMesh->GetInverseBindPose().data();
-	const Matrix4 * frameData = playerIdle->GetJointData(currentFrame);
+	const Matrix4 * frameData = currentAniamtion->GetJointData(currentFrame);
 	for (unsigned int i = 0; i < playerMesh-> GetJointCount(); ++i) {
 		 frameMatrices.emplace_back(frameData[i] * invBindPose[i]);
 	}

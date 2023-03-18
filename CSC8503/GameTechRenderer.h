@@ -29,8 +29,6 @@ namespace NCL {
 			GameTechRenderer(GameWorld& world);
 			~GameTechRenderer();
 
-			void Update(float dt) override;
-
 			MeshGeometry*	LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes = nullptr);
 			TextureBase*	LoadTexture(const string& name);
 			ShaderBase*		LoadShader(const string& vertex, const string& fragment);
@@ -133,9 +131,19 @@ namespace NCL {
 			void RenderPlayerAnimation();
 			OGLMesh* playerMesh;
 
-			MeshAnimation* playerIdle;
+			NCL::MeshAnimation* playerIdle;
+			NCL::MeshAnimation* currentAniamtion;
 			MeshMaterial* playerMaterial;
 			vector<OGLTexture*> matTextures;
+			void SetCurrentAniamtion(NCL::MeshAnimation* anim)
+			{
+				if (anim != currentAniamtion)
+				{
+					currentFrame = 0;
+					frameTime = 0.0f;
+				}
+				currentAniamtion = anim;
+			}
 			int currentFrame;
 			float frameTime;
 		protected:

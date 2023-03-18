@@ -504,10 +504,10 @@ void TutorialGame::UpdateGame(float dt) {
 
 		renderer->frameTime -= dt;
 		while (renderer->frameTime < 0.0f) {
-			renderer->currentFrame = (renderer->currentFrame + 1) % renderer->playerIdle->GetFrameCount();
-			renderer->frameTime += 1.0f / renderer->playerIdle->GetFrameRate();
+			renderer->currentFrame = (renderer->currentFrame + 1) % testPlayer->GetCurrentAnimation()->GetFrameCount();
+			renderer->frameTime += 1.0f / testPlayer->GetCurrentAnimation()->GetFrameRate();
 		}
-
+		renderer->SetCurrentAniamtion(testPlayer->GetCurrentAnimation());
 	}
 
 	GameWorld::GetInstance()->UpdateWorld(dt);

@@ -6,10 +6,13 @@
 #include"Vector4.h"
 #include"ObjectPool.h"
 #include "GameWorld.h"
+#include <map>
+#include "MeshAnimation.h"
 
 namespace NCL {
 	namespace CSC8503 {
 
+		class MeshAnimation;
 		class Team;
 		class playerTracking :public GameObject {
 		public:
@@ -20,7 +23,9 @@ namespace NCL {
 				delete playerProjectile;
 				bulletsUsed.clear();
 				bulletsUsedAndMoved.clear();
-
+				delete bulletPool;
+				animationMap.clear();
+				delete currentAniamtion;
 			}
 
 			void Update(float dt) override;
@@ -139,9 +144,14 @@ namespace NCL {
 			void HealthUp(Gun newGun);
 
 			 std::string id()
-			{
+			 {
 				return "character";
-			}
+			 }
+
+			 NCL::MeshAnimation* GetCurrentAnimation()
+			 {
+				 return currentAniamtion;
+			 }
 
 		protected:
 			bool canJump; 
@@ -175,6 +185,10 @@ namespace NCL {
 
 			vector<Projectile*> bulletsUsed;
 			vector<Projectile*> bulletsUsedAndMoved;
+
+			std::map<std::string, NCL::MeshAnimation*> animationMap;
+			NCL::MeshAnimation* currentAniamtion;
+			void TransferAnimation(std::string animationName);
 		};
 
 

@@ -3,6 +3,7 @@
 #include"PhysicsObject.h"
 #include "TutorialGame.h"
 
+
 using namespace NCL;
 using namespace CSC8503;
 
@@ -29,7 +30,11 @@ playerTracking::playerTracking()
 		bulletsUsed = {};
 		bulletsUsedAndMoved = {};
 
+		animationMap["Idle"] = new  NCL::MeshAnimation("Role_T0.anm");
+		animationMap["Move"] = new  NCL::MeshAnimation("Role_T.anm");
+		currentAniamtion = animationMap["Idle"];
 }
+
 
 void NCL::CSC8503::playerTracking::Update(float dt)
 {
@@ -93,10 +98,16 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 		sprintTimer = sprintTimer + 10 * dt;
 	}
 
-
-
 	transform.SetPosition(transform.GetPosition()+(forwad * Dup + right * Dright)*dt*moveSpeed);
 
+	if (Dup == 0 && Dright == 0)
+	{
+		TransferAnimation("Idle");
+	}
+	else
+	{
+		TransferAnimation("Move");
+	}
 }
 
 void NCL::CSC8503::playerTracking::Shoot(float dt)
@@ -212,5 +223,16 @@ void playerTracking::WeaponUp(Gun newGun)
 void playerTracking::HealthUp(Gun newGun)
 {
 	
+}
+
+void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
+{
+
+	if (currentAniamtion == animationMap[animationName])
+	{
+		return;
+	}
+
+	currentAniamtion = animationMap[animationName];
 }
 

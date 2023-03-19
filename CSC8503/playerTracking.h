@@ -6,15 +6,30 @@
 #include"Vector4.h"
 #include"ObjectPool.h"
 #include "GameWorld.h"
+
 #include <map>
 #include "MeshAnimation.h"
+#include "NetworkObject.h"
 
 namespace NCL {
 	namespace CSC8503 {
+		const float PLAYER_MOVE_SPEED = 10.0f;
+		const float PLYAER_ITEM_SPEED_UP = 35.0f;
+		const float PLAYER_SPEED_UP = 30.0f;
+		const float PLAYER_JUMP_FORCE = 20.0f;
+
+		const enum PlayerAction {
+			PLAYER_ACTION_NONE,
+			PLAYER_ACTION_SWITCH_WEAPON,
+			PLAYER_ACTION_SHOOT,
+			//New behaviour added to previous
+			PLAYER_ACTION_MAX = 8,
+		};
+			
 
 		class MeshAnimation;
 		class Team;
-		class playerTracking :public GameObject {
+		class playerTracking :public NetworkObject {
 		public:
 
 			playerTracking();
@@ -23,18 +38,29 @@ namespace NCL {
 				delete playerProjectile;
 				bulletsUsed.clear();
 				bulletsUsedAndMoved.clear();
+
 				delete bulletPool;
 				animationMap.clear();
 				delete currentAniamtion;
+
 			}
 
 			void Update(float dt) override;
 
 			void Move(float dt);
+			void UpdateCoolDownTime(float dt);
+
 			void Rotate();
-			void Shoot(float dt);
-			void Jump(); 
+			bool CanShoot();
+			void StartShooting(Vector3 target);
+			void Shooting(Projectile* bullet, Vector3 target);
+			bool CanJump(GameObject* floor);
+			void SpeedUp();
+			void SpeedDown();
+			void UpdateSpeed(float dt);
 			float SmoothDamp(float current, float target, float& currentVelocity, float smoothTime, float maxSpeed, float deltaTime);
+
+			void UpdateAimPosition(Camera* camera);
 
 			void setplayerID(int assignedPlayerID) {
 				playerID = assignedPlayerID;
@@ -44,22 +70,14 @@ namespace NCL {
 				playerID = assignedTeamID;
 			}
 
-			int GetTeamId()
-			{
-				return teamID;
-			}
-
-			void SetTeamId(int team)
-			{
-				teamID = team;
-			}
+			Vector3 GetAimedTarget() const { return aimPos; }
 
 			void resetPlayerProjectile() {
 				playerProjectile = nullptr;
 			}
 
 			void setWeponType(Gun newWeponType) {
-				weaponType = newWeponType; 
+				weaponInUse = newWeponType; 
 			}
 
 
@@ -75,7 +93,7 @@ namespace NCL {
 
 
 			Gun getWeponType() {
-				return weaponType;
+				return weaponInUse;
 			}
 
 			float GetSpeed()
@@ -107,7 +125,7 @@ namespace NCL {
 				hp = 100; 
 			}
 
-			void SpeedUp()
+			void TakeSpeedUpItem()
 			{
 				speedUp = true;
 				speedUpTimer = 300.0f; 
@@ -115,7 +133,7 @@ namespace NCL {
 
 			void WeaponUp()
 			{
-				weaponType = rocket;
+				weaponInUse = rocket;
 				weaponUp = true; 
 				weaponUpTimer = 300.0f; 
 			}
@@ -143,6 +161,12 @@ namespace NCL {
 
 			void HealthUp(Gun newGun);
 
+			void SwitchWeapon() {
+				int index = weaponInUse.type + 1;
+				index = index >= GUN_TYPE_MAX ? index - GUN_TYPE_MAX : index;
+				weaponInUse = weaponPool[index];
+			}
+
 			 std::string id()
 			 {
 				return "character";
@@ -152,6 +176,12 @@ namespace NCL {
 			 {
 				 return currentAniamtion;
 			 }
+
+			void UpdateAction(ActionPacket packet) override;
+
+			bool WritePacket(GamePacket** p, int packetTp, int stateID) override;
+
+			void PrintPlayerInfo();
 
 		protected:
 			bool canJump; 
@@ -164,10 +194,10 @@ namespace NCL {
 			int hp;
 			int shield; 
 			int playerID;
-			int teamID;
 			int IndividualplayerScore;
 			Projectile *playerProjectile;
-			Gun weaponType;
+			Gun weaponInUse;
+			vector<Gun> weaponPool;
 			//Vector4 paintColor;
 		
 			float moveSpeed;
@@ -180,6 +210,7 @@ namespace NCL {
 			Vector3 right;
 			Vector3 aimPos;
 			//This is me 
+
 			ObjectPool<Projectile> *bulletPool;
 			float coolDownTimer;   //this is timer of firing
 

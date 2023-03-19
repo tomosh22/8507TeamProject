@@ -185,6 +185,9 @@ bool CollisionDetection::RayCapsuleIntersection(const Ray& r, const Transform& w
 }
 
 bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, CollisionInfo& collisionInfo) {
+	//No collision detection for the same team
+	if (a->GetTeamId() != 0 && a->GetTeamId() == b->GetTeamId()) { return false; }
+
 	const CollisionVolume* volA = a->GetBoundingVolume();
 	const CollisionVolume* volB = b->GetBoundingVolume();
 

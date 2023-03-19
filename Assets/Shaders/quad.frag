@@ -15,6 +15,7 @@ uniform bool hasTexture;
 
 uniform bool isPaintable;
 
+
 uniform int width;
 uniform int height;
 
@@ -33,8 +34,12 @@ out vec4 fragColor;
 
 void main(void)
 {
-	if(hasTexture)fragColor = texture(mainTex,IN.texCoord);
-	else fragColor = IN.colour;
+	if(hasTexture){
+		fragColor = texture(mainTex,IN.texCoord);
+		
+	}
+	else{fragColor = IN.colour;}
+	
 }
 
 

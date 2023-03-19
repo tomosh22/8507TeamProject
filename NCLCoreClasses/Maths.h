@@ -11,6 +11,8 @@ https://research.ncl.ac.uk/game/
 
 namespace NCL {
 	namespace Maths {
+#define MINIMAL_NUMBER 0.000001f
+
 		class Vector2;
 		class Vector3;
 

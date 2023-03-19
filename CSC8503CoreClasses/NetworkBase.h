@@ -9,10 +9,9 @@ enum BasicNetworkMessages {
 	Message,
 	Connect_Confirmed,
 	Player_Disconnected,
-	Add_Object,
 	Full_State,		//Full transform etc
 	Delta_State,
-	Received_State, //received from a client
+	Player_Action, //received from a client
 	Shutdown,
 
 	MessageTypeMax

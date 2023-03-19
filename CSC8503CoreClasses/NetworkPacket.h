@@ -14,17 +14,8 @@ namespace NCL::CSC8503 {
 		}
 	};
 
-	struct AddObjectPacket :public GamePacket {
-		int objectID = -1;
-		NetworkState fullState;
-
-		AddObjectPacket() {
-			type = Add_Object;
-			size = sizeof(AddObjectPacket) - sizeof(GamePacket);
-		}
-	};
-
 	struct FullPacket : public GamePacket {
+		int teamId = -1;
 		int		objectID = -1;
 		NetworkState fullState;
 
@@ -34,7 +25,7 @@ namespace NCL::CSC8503 {
 		}
 	};
 
-	struct DeltaPacket : public GamePacket {
+	struct DeltaPacket : public GamePacket { 
 		int		fullID = -1;
 		int		objectID = -1;
 		char	pos[3];
@@ -46,12 +37,19 @@ namespace NCL::CSC8503 {
 		}
 	};
 
-	struct ClientPacket : public GamePacket {
-		int		lastID;
-		char	buttonstates[8];
+	struct ActionPacket : public GamePacket {
+		bool buttonstates[8] = {false, false, false, false, false, false, false, false};
+		Vector3 param;
+		NetworkState state;
 
-		ClientPacket() {
-			size = sizeof(ClientPacket) - sizeof(GamePacket);
+		ActionPacket(int index, Vector3 info = Vector3(), NetworkState st = NetworkState()) {
+			type = Player_Action;
+			if (index < 8) {
+				buttonstates[index] = true;
+			}
+			param = info;
+			state = st;
+			size = sizeof(ActionPacket) - sizeof(GamePacket);
 		}
 	};
 }

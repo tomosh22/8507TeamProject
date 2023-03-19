@@ -1,3 +1,8 @@
+#include<iostream>
+#include<cmath>
+#include <chrono>
+#include <corecrt_math_defines.h>
+
 #include "TutorialGame.h"
 #include "GameWorld.h"
 #include "PhysicsObject.h"
@@ -8,11 +13,8 @@
 #include "OrientationConstraint.h"
 #include "StateGameObject.h"
 
-#include<cmath>
-#include "Projectile.h"
-
-#include<iostream>
 #include"PropSystem.h"
+#include "Projectile.h"
 
 
 using namespace NCL;
@@ -21,6 +23,36 @@ using namespace CSC8503;
 //#define TRI_DEBUG
 //#define OLD_PAINT
 //#define DEBUG_SHADOW
+
+struct TextureThing {
+	char* texData = nullptr;
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	int flags = 0;
+
+	TextureBase** myPointer;
+
+	TextureThing(char* texData, int width, int height, int channels, int flags, TextureBase** myPointer) : texData(texData), width(width), height(height), channels(channels), flags(flags), myPointer(myPointer) {}
+};
+
+std::vector<TextureThing> things;
+std::mutex texturesMutex;
+
+
+void LoadTextureThread(const std::string& name, TextureBase** ptr) {
+	char* texData = nullptr;
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	int flags = 0;
+	TextureLoader::LoadTexture(name, texData, width, height, channels, flags);
+
+	TextureThing thing(texData, width, height, channels, flags, ptr);
+	texturesMutex.lock();
+	things.push_back(thing);
+	texturesMutex.unlock();
+}
 
 TutorialGame::TutorialGame()	{
 	
@@ -120,7 +152,25 @@ TutorialGame::TutorialGame()	{
 	
 }
 
+TutorialGame::~TutorialGame() {
+	delete cubeMesh;
+	delete sphereMesh;
+	delete charMesh;
+	delete enemyMesh;
+	delete bonusMesh;
 
+	delete basicTex;
+	delete basicShader;
+
+	delete physics;
+	delete renderer;
+
+
+	delete objectpool;
+
+	//todo delete texture array
+	//todo delete compute shader
+}
 
 void TutorialGame::InitQuadTexture() {
 	int width = (renderer->GetWindowWidth());
@@ -137,7 +187,7 @@ void TutorialGame::InitQuadTexture() {
 	glBindTexture(GL_TEXTURE_2D, (renderer->rayMarchTexture->GetObjectID()));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 	//todo maybe move this somewhere else? still somewhat related
 
@@ -208,7 +258,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, renderer->rayMarchTexture->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16F);
+	glBindImageTexture(0, renderer->rayMarchTexture->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16);
 
 
 
@@ -226,22 +276,17 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 
 }
 
-/*
 
-Each of the little demo scenarios used in the game uses the same 2 meshes, 
-and the same texture and shader. There's no need to ever load in anything else
-for this module, even in the coursework, but you can add it if you like!
 
-*/
 void TutorialGame::InitialiseAssets() {
 	std::vector<MeshGeometry*> meshes;
-	cubeMesh	= renderer->LoadMesh("cube.msh",&meshes);
-	sphereMesh	= renderer->LoadMesh("sphere.msh", &meshes);
-	charMesh	= renderer->LoadMesh("goat.msh", &meshes);
-	enemyMesh	= renderer->LoadMesh("Keeper.msh", &meshes);
-	bonusMesh	= renderer->LoadMesh("apple.msh", &meshes);
+	cubeMesh = renderer->LoadMesh("cube.msh", &meshes);
+	sphereMesh = renderer->LoadMesh("sphere.msh", &meshes);
+	charMesh = renderer->LoadMesh("goat.msh", &meshes);
+	enemyMesh = renderer->LoadMesh("Keeper.msh", &meshes);
+	bonusMesh = renderer->LoadMesh("apple.msh", &meshes);
 	capsuleMesh = renderer->LoadMesh("capsule.msh", &meshes);
-	
+
 	//this was me
 	triangleMesh = OGLMesh::GenerateTriangleWithIndices();
 	monkeyMesh = renderer->LoadMesh("newMonkey.msh", &meshes);
@@ -283,10 +328,15 @@ void TutorialGame::InitialiseAssets() {
 	}*/
 #pragma endregion
 
-	basicTex	= renderer->LoadTexture("checkerboard.png");
+	basicTex = renderer->LoadTexture("checkerboard.png");
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
-	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc","scene.tese");
+
+	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc", "scene.tese");
+
+	std::vector<std::thread> threads;
+
 	metalTex = renderer->LoadTexture("metal.png");
+
 	testBumpTex = renderer->LoadTexture("testBump.jpg");
 
 
@@ -295,61 +345,84 @@ void TutorialGame::InitialiseAssets() {
 	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
 	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
 
+	
+
 	crystalPBR = new PBRTextures();
-	crystalPBR->base = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_diffuse.jpg");
-	crystalPBR->bump = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_normal.jpg");
-	crystalPBR->metallic = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_metallic.jpg");
-	crystalPBR->roughness = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_roughness.jpg");
-	crystalPBR->heightMap = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_height.jpg");
-	crystalPBR->emission = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_emissive.jpg");
-	crystalPBR->ao = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_ao.jpg");
-	crystalPBR->opacity = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_opacity.jpg");
-	crystalPBR->gloss = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_glossiness.jpg");
+	TextureBase** test = &(crystalPBR->base);
+	//crystalPBR->base = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_diffuse.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_diffuse.jpg", &(crystalPBR->base)));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_normal.jpg", &crystalPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_metallic.jpg", &crystalPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_roughness.jpg", &crystalPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_height.jpg", &crystalPBR->heightMap));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_emissive.jpg", &crystalPBR->emission));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_ao.jpg", &crystalPBR->ao));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_opacity.jpg", &crystalPBR->opacity));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_glossiness.jpg", &crystalPBR->gloss));
 
 	spaceShipPBR = new PBRTextures();
-	spaceShipPBR->base = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_diffuse.jpg");
-	spaceShipPBR->bump = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_normal.jpg");
-	spaceShipPBR->metallic = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_metalness.jpg");
-	spaceShipPBR->roughness = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_roughness.jpg");
-	spaceShipPBR->heightMap = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_height.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_diffuse.jpg", &spaceShipPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_normal.jpg", &spaceShipPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_metalness.jpg", &spaceShipPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_roughness.jpg", &spaceShipPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_height.jpg", &spaceShipPBR->heightMap));
 	spaceShipPBR->emission = nullptr;
-	spaceShipPBR->ao = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_ao.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_ao.jpg", &spaceShipPBR->ao));
 	spaceShipPBR->opacity = nullptr;
-	spaceShipPBR->gloss = renderer->LoadTexture("PBR/spaceShip1k/white_space_ship_wall_28_66_glossiness.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_glossiness.jpg", &spaceShipPBR->gloss));
 
 	rockPBR = new PBRTextures();
-	rockPBR->base = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_diffuse.jpg");
-	rockPBR->bump = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_normal.jpg");
-	rockPBR->metallic = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_metallic.jpg");
-	rockPBR->roughness = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_roughness.jpg");
-	rockPBR->heightMap = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_height.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_diffuse.jpg", &rockPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_normal.jpg", &rockPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_metallic.jpg", &rockPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_roughness.jpg", &rockPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_height.jpg", &rockPBR->heightMap));
 	rockPBR->emission = nullptr;
-	rockPBR->ao = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_ao.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_ao.jpg", &rockPBR->ao));
 	rockPBR->opacity = nullptr;
-	rockPBR->gloss = renderer->LoadTexture("PBR/rock1k/dirt_with_large_rocks_38_46_glossiness.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_glossiness.jpg", &rockPBR->gloss));
 
 	grassWithWaterPBR = new PBRTextures();
-	grassWithWaterPBR->base = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_diffuse.jpg");
-	grassWithWaterPBR->bump = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_normal.jpg");
-	grassWithWaterPBR->metallic = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_metallic.jpg");
-	grassWithWaterPBR->roughness = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_roughness.jpg");
-	grassWithWaterPBR->heightMap = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_height.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_diffuse.jpg", &grassWithWaterPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_normal.jpg", &grassWithWaterPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_metallic.jpg", &grassWithWaterPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_roughness.jpg", &grassWithWaterPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_height.jpg", &grassWithWaterPBR->heightMap));
 	grassWithWaterPBR->emission = nullptr;
-	grassWithWaterPBR->ao = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_ao.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_ao.jpg", &grassWithWaterPBR->ao));
 	grassWithWaterPBR->opacity = nullptr;
-	grassWithWaterPBR->gloss = renderer->LoadTexture("PBR/grassWithWater1k/grass_with_water_39_67_glossiness.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_glossiness.jpg", &grassWithWaterPBR->gloss));
 
 	fencePBR = new PBRTextures();
-	fencePBR->base = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_diffuse.jpg");
-	fencePBR->bump = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_normal.jpg");
-	fencePBR->metallic = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_metallic.jpg");
-	fencePBR->roughness = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_roughness.jpg");
-	fencePBR->heightMap = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_height.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_diffuse.jpg", &fencePBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_normal.jpg", &fencePBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_metallic.jpg", &fencePBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_roughness.jpg", &fencePBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_height.jpg", &fencePBR->heightMap));
 	fencePBR->emission = nullptr;
-	fencePBR->ao = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_ao.jpg");
-	fencePBR->opacity = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg");
-	fencePBR->gloss = renderer->LoadTexture("PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_ao.jpg", &fencePBR->ao));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg", &fencePBR->opacity));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg", &fencePBR->gloss));
+
 	
+	
+	
+
+	for (std::thread& thread : threads) {
+		thread.join();
+	}
+	
+	for (TextureThing& thing : things)
+	{
+		TextureBase* tex = OGLTexture::RGBATextureFromData(thing.texData, thing.width, thing.height, thing.channels);
+		*(thing.myPointer) = (tex);
+		free(thing.texData);
+	}
+	threads.clear();
+
+	
+
+
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
 	quadShader = new OGLShader("quad.vert", "quad.frag");
@@ -360,36 +433,43 @@ void TutorialGame::InitialiseAssets() {
 
 	rayMarchComputeShader = new OGLComputeShader("rayMarchCompute.glsl");
 
-	
+
 	InitQuadTexture();
-	
+
 	InitCamera();
 	InitWorld();
-
-	//InitMixedGridWorldtest(1, 1, 1, 1);
-	/*AddFloorToWorld({ 0, 0, 0 });
-	AddPlayerToWorld({ 0, 1, 0 });*/
 }
 
-TutorialGame::~TutorialGame()	{
-	delete cubeMesh;
-	delete sphereMesh;
-	delete charMesh;
-	delete enemyMesh;
-	delete bonusMesh;
+void TutorialGame::UpdateWorldCamera(float dt) {
+	if (!playerObject) {
+		GameWorld::GetInstance()->GetMainCamera()->UpdateCamera(dt);
+		return;
+	}
+	CameraLockOnPlayer();
+}
 
-	delete basicTex;
-	delete basicShader;
+void TutorialGame::CameraLockOnPlayer() {
+	if (!playerObject) { return; }
+	auto world = GameWorld::GetInstance();
+	Vector3 objPos = playerObject->GetTransform().GetPosition();
+	//find object orientation
+	float yrot = playerObject->GetTransform().GetOrientation().ToEuler().y;
+	//set camera position
+	Vector3 offSet = Vector3(viewOffset.x * cos((yrot + 270.0f) * M_PI / 180), viewOffset.y, viewOffset.z * sin((yrot - 270.0f) * M_PI / 180));
 
-	delete physics;
-	delete renderer;
+	Vector3 camPos = objPos + offSet + Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), offSet).Normalised() * 2.0f;
+	//targeting in front of the object
+	Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos - offSet * Vector3(10.0f, 0.0f, 10.0f), Vector3(0, 1, 0));
+	Matrix4 modelMat = temp.Inverse();
+	Quaternion q(modelMat);
+	Vector3 angles = q.ToEuler(); //nearly there now!
+
+	world->GetMainCamera()->SetPosition(camPos);
+	world->GetMainCamera()->SetYaw(angles.y);
+	world->GetMainCamera()->UpdateObjectViewPitch();
 	
-
-	delete objectpool;
-
-	//todo delete texture array
-	//todo delete compute shader
 }
+
 
 
 
@@ -400,107 +480,73 @@ void TutorialGame::UpdateGame(float dt) {
 
 	renderer->timePassed += dt * renderer->timeScale;
 
-	if (GAME_MODE_DEFAULT == gameMode) {
+	switch (gameMode) {
+	case GAME_MODE_DEFAULT:
+	{
 		SelectMode();
 		renderer->Update(dt);
 		renderer->Render();
 		Debug::UpdateRenderables(dt);
 		return;
 	}
-	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
+	case GAME_MODE_GRAPHIC_TEST:
+	{
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "cube");
 		//DispatchComputeShaderForEachTriangle(testCube);
 		//glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
-		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, Team::team2);
+		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, TEAM_RED);
 		glPopDebugGroup();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor,testSphereCenter,testSphereRadius, Team::team2);
+		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED);
 		glPopDebugGroup();
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
 		//for (GameObject*& wall : walls) {
 			//DispatchComputeShaderForEachTriangle(wall);
 		//}
 		//glPopDebugGroup();
+		UpdateRayMarchSpheres();
+		SendRayMarchData();
+		break;
 	}
-	
+	case GAME_MODE_PHISICAL_TEST:
+	case GAME_MODE_GAME:
+	{
+		frameTime -= dt;
+		while (frameTime < 0.0f) {
+			currentFrame = (currentFrame + 1) % playerIdle->GetFrameCount();
+			frameTime += 1.0f / playerIdle->GetFrameRate();
+		}
+		break;
+	}
+	case GAME_MODE_SELECT_TEAM:
+	{
+		int teamID = SelectTeam();
+		if (teamID != 0) {
+			gameMode = GAME_MODE_GAME;
+			InitGame(teamID);
+			break;
+		}
+		renderer->Update(dt);
+		renderer->Render();
+		Debug::UpdateRenderables(dt);
+		return;
+	}
+	default:
+		std::cout << "Game mode error" << std::endl;
+		return;
+	}
+
 	timePassed += dt;
-	
-	if(rayMarch)DispatchComputeShaderForEachPixel();
-	if(floor != nullptr)
-	Debug::DrawAxisLines(floor->GetTransform().GetMatrix());
 
-	if (!inSelectionMode) {
-		GameWorld::GetInstance()->GetMainCamera()->UpdateCamera(dt);
-	}
-	if (lockedObject != nullptr) {
+	if (rayMarch)DispatchComputeShaderForEachPixel();
+	if (floor != nullptr)
+		Debug::DrawAxisLines(floor->GetTransform().GetMatrix());
 
-		Matrix4 view = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
-		Matrix4 camWorld = view.Inverse();
-		Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
-		Vector3 objPos = lockedObject->GetTransform().GetPosition();
-		
-		
+	UpdateWorldCamera(dt);
 
-		//right Click to got to aim mode
-		if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT))
-		{
-			renderer->drawCrosshair = true;
-			objPos += rightAxis * 4.5 + Vector3(0, 1, 0) * 2;   //offset of the character
-		}
-		else
-		{
-			renderer->drawCrosshair = false;
-			objPos += rightAxis * 3.5 + Vector3(0, 1, 0) * 1.5;   //offset of the character
-		}
-		Vector3 camPos = objPos + lockedOffset;
+	ControlPlayer(dt);
 
-		//Debug::DrawLine(GameWorld::GetInstance()->GetMainCamera()->GetPosition(), GameWorld::GetInstance()->GetMainCamera()->GetPosition() + GameWorld::GetInstance()->GetMainCamera()->GetForward() * 100, Vector4(1, 0, 1, 1), 10.0f);
-
-		GameWorld::GetInstance()->GetMainCamera()->SetTargetPosition(objPos);
-	}
-
-	UpdateKeys();
-
-	/*if (useGravity) {
-		Debug::Print("(G)ravity on", Vector2(5, 95), Debug::RED);
-	}
-	else {
-		Debug::Print("(G)ravity off", Vector2(5, 95), Debug::RED);
-	}*/
-
-	RayCollision closestCollision;
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::K) && selectionObject) {
-		Vector3 rayPos;
-		Vector3 rayDir;
-
-		rayDir = selectionObject->GetTransform().GetOrientation() * Vector3(0, 0, -1);
-
-		rayPos = selectionObject->GetTransform().GetPosition();
-
-		Ray r = Ray(rayPos, rayDir);
-
-		if (GameWorld::GetInstance()->Raycast(r, closestCollision, true, selectionObject)) {
-			if (objClosest) {
-				objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
-			}
-			objClosest = (GameObject*)closestCollision.node;
-
-			objClosest->GetRenderObject()->SetColour(Vector4(1, 0, 1, 1));
-		}
-
-
-	}
-
-	//Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
-
-	SelectObject();
-	MoveSelectedObject();
-	//movePlayer(goatCharacter);
-
-	if (GAME_MODE_PHISICAL_TEST == gameMode) {
-		Debug::Print("Health: " + std::to_string(testPlayer->GetHealth()), Vector2(5, 95));
-		Debug::Print("Shield: " + std::to_string(testPlayer->GetShield()), Vector2(5, 100));
 
 		renderer->frameTime -= dt;
 		while (renderer->frameTime < 0.0f) {
@@ -510,6 +556,9 @@ void TutorialGame::UpdateGame(float dt) {
 		renderer->SetCurrentAniamtion(testPlayer->GetCurrentAnimation());
 	}
 
+	UpdateKeys();
+
+
 	GameWorld::GetInstance()->UpdateWorld(dt);
 
 	renderer->Update(dt);
@@ -517,31 +566,55 @@ void TutorialGame::UpdateGame(float dt) {
 	renderer->Render();
 	Debug::UpdateRenderables(dt);
 
-	/*float testFloat = float(1000) / float(55);
-	if (1000 * dt > testFloat)std::cout << "fps drop\n";*/
 
-	//timePassed = 0;
 
-	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
-		UpdateRayMarchSpheres();
-		SendRayMarchData();
-	}
+	//if (GAME_MODE_GRAPHIC_TEST == gameMode) {
+	//	UpdateRayMarchSpheres();
+	//	SendRayMarchData();
+	//}
 
 }
 
 void TutorialGame::SelectMode() {
 	string text = "1. Graphic Test Mode.";
-	Debug::Print(text, Vector2(35, 30), Debug::GREEN);
+	Debug::Print(text, Vector2(30, 30), Debug::GREEN);
 	text = "2. Physical Test Mode.";
-	Debug::Print(text, Vector2(35, 50), Debug::GREEN);
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM1)) {
+	Debug::Print(text, Vector2(30, 40), Debug::GREEN);
+	text = "3. Game Start";
+	Debug::Print(text, Vector2(30, 50), Debug::GREEN);
+
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
 		gameMode = GAME_MODE_GRAPHIC_TEST;
 		InitGraphicTest();
 	}
-	else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM2)) {
+	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
 		gameMode = GAME_MODE_PHISICAL_TEST;
-		InitPhysicalTest();
+		InitPhysicTest();
 	}
+	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM3)) {
+		gameMode = GAME_MODE_SELECT_TEAM;
+	}
+}
+
+int TutorialGame::SelectTeam() {
+	Debug::Print("Please choose your team.", Vector2(30, 30));
+	Debug::Print("1. RED.", Vector2(30, 35), Debug::RED);
+	Debug::Print("2. BLUE.", Vector2(30, 40), Debug::BLUE);
+	Debug::Print("3. GREEN.", Vector2(30, 45), Debug::GREEN);
+	Debug::Print("4. YELLOW.", Vector2(30, 50), Debug::YELLOW);
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
+		return TEAM_RED;
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
+		return TEAM_BLUE;
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM3)) {
+		return TEAM_GREEN;
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM4)) {
+		return TEAM_YELLOW;
+	}
+	return 0;
 }
 
 void TutorialGame::UpdateRayMarchSpheres() {
@@ -654,42 +727,85 @@ void TutorialGame::UpdateKeys() {
 		GameWorld::GetInstance()->ShuffleObjects(false);
 	}
 
-	if (lockedObject) {
-		LockedObjectMovement();
-	}
-	else {
-		DebugObjectMovement();
-	}
-	/*if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
-		for (int i = 0; i < 1; i++)
-		{
-			Vector3 halfDims = worldFloor->GetTransform().GetScale() / 2;
-			float randX = (rand() % 200) - 100;
-			float randY = (rand() % 200) - 100;
-			Vector3 randVec(randX, 2, randY);
-			Vector2 center;
-			int radius = 10;
-			int startIndex, numInts, leftS, rightS, topT, bottomT;
-
-			//worldFloor->ApplyPaintAtPosition(randVec, halfDims, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-			//RunComputeShader(worldFloor,200,200, leftS, rightS, topT, bottomT, radius, center);
-
-
-		}
-		
-	}*/
   if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
 		float randX = (rand() % 200) - 100;
 		float randZ = (rand() % 200) - 100;
 		Vector3 randVec(randX, 2, randZ);
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10, Team::team1);
+		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10, TEAM_DEFAULT);
 		glPopDebugGroup();
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F)) {
 		renderer->renderFullScreenQuad = !renderer->renderFullScreenQuad;
 
 	}
+}
+
+void TutorialGame::ControlPlayer(float dt) {
+	if (!playerObject) { return; }
+
+	Transform& transform = playerObject->GetTransform();
+
+	Vector3 fwdAxis = transform.GetDirVector().Normalised();
+	Vector3 rightAxis = Vector3::Cross(Vector3(0.0f, -1.0f, 0.0f), fwdAxis);
+
+	//orientation
+	float dirVal = Window::GetMouse()->GetRelativePosition().x;
+	while (180.0f <= dirVal) { dirVal -= 180.0f; }
+	Quaternion orientation = transform.GetOrientation();
+	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
+	transform.SetOrientation(orientation.Normalised());
+
+	//speed
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT)) {
+		playerObject->SpeedUp();
+	}
+	else {
+		playerObject->SpeedDown();
+	}
+
+	float speed = playerObject->GetSpeed();
+	Vector3 position = transform.GetPosition();
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
+	}
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - fwdAxis * dt * speed);
+	}
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - rightAxis * dt * speed);
+	}
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + rightAxis * dt * speed);
+	}
+	//jump
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump(floor)) {
+		playerObject->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, PLAYER_JUMP_FORCE, 0));
+	}
+	//switch weapon
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::TAB)) {
+		playerObject->SwitchWeapon();
+		auto packet = new ActionPacket(PLAYER_ACTION_SWITCH_WEAPON);
+		playerObject->AddSendMessage(packet);
+	}
+	//Aiming
+	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT)){
+		renderer->drawCrosshair = true;
+		playerObject->UpdateAimPosition(GameWorld::GetInstance()->GetMainCamera());
+		//shoot
+		if (Window::GetMouse()->ButtonHeld(MouseButtons::LEFT) && playerObject->CanShoot()) {
+			playerObject->StartShooting(playerObject->GetAimedTarget());
+			auto state = NetworkState();
+			state.position = transform.GetPosition();
+			state.orientation = transform.GetOrientation();
+			auto packet = new ActionPacket(PLAYER_ACTION_SHOOT, playerObject->GetAimedTarget(), state);
+			playerObject->AddSendMessage(packet);
+		}
+	}
+	else {
+		renderer->drawCrosshair = false;
+	}
+	playerObject->PrintPlayerInfo();
 }
 
 void TutorialGame::LockedObjectMovement() {
@@ -721,40 +837,6 @@ void TutorialGame::LockedObjectMovement() {
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::DOWN)) {
 		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, 10));
-	}
-}
-
-void TutorialGame::DebugObjectMovement() {
-//If we've selected an object, we can manipulate it with some key presses
-	if (inSelectionMode && selectionObject) {
-		//Twist the selected object!
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::LEFT)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(-10, 0, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::RIGHT)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(10, 0, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::UP)) {
-			selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, -10));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::DOWN)) {
-			selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, 10));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM7)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(0, 10, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM8)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(0, -10, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM5)) {
-			selectionObject->GetPhysicsObject()->AddForce(Vector3(0, -10, 0));
-		}
 	}
 }
 
@@ -848,17 +930,37 @@ void TutorialGame::InitGraphicTest() {
 	return;
 }
 
-void TutorialGame::InitPhysicalTest() {
-
+void TutorialGame::InitPhysicTest() {
 	renderer->drawCrosshair = false;
 	GameWorld::GetInstance()->ClearAndErase();
 	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
+	//add player
+	auto q = Quaternion();
+	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 
-	InitGameExamples();
+	InitGameObjects();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
 
+#ifdef TRI_DEBUG
+	AddDebugTriangleInfoToObject(floor);
+#endif
+}
+
+void TutorialGame::InitGame(int teamID) {
+	renderer->drawCrosshair = false;
+	GameWorld::GetInstance()->ClearAndErase();
+	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
+	physics->Clear();
+	//add player
+	auto q = Quaternion();
+	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	playerObject->SetTeamId(teamID);
+
+	InitGameObjects();
+	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	InitPaintableTextureOnObject(floor);
 
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
@@ -1120,7 +1222,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inverseMass) {
 	GameObject* capsule = new GameObject();
 
-	CapsuleVolume* volume = new CapsuleVolume(halfHeight, radius);
+	CapsuleVolume* volume = new CapsuleVolume(halfHeight * 0.5f, radius * 0.5f);
 	capsule->SetBoundingVolume((CollisionVolume*)volume);
 
 	capsule->GetTransform().SetScale(Vector3(radius, halfHeight, radius)).SetPosition(position);
@@ -1268,29 +1370,6 @@ GameObject* TutorialGame::AddEnemyGoatToWorld(const Vector3& position) {
 	return BadGoat;
 }
 
-//GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position) { //Origonal
-//	float meshSize		= 1.0f;
-//	float inverseMass	= 0.5f;
-//
-//	GameObject* character = new GameObject();
-//	SphereVolume* volume  = new SphereVolume(1.0f);
-//
-//	character->SetBoundingVolume((CollisionVolume*)volume);
-//
-//	character->GetTransform()
-//		.SetScale(Vector3(meshSize, meshSize, meshSize))
-//		.SetPosition(position);
-//
-//	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
-//	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
-//
-//	character->GetPhysicsObject()->SetInverseMass(inverseMass);
-//	character->GetPhysicsObject()->InitSphereInertia();
-//
-//	GameWorld::GetInstance()->AddGameObject(character);
-//
-//	return character;
-//}
 GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	GameObject* triangle = new GameObject();
 
@@ -1362,10 +1441,10 @@ void TutorialGame::AddMapToWorld() {
 
 playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation) {
 	float meshSize = 2.0f;
-	float inverseMass = 0.8f;
+	float inverseMass = 0.3f;
 
 	playerTracking* character = new playerTracking();
-	AABBVolume* volume = new AABBVolume(Vector3{ 2,2,2 });
+	AABBVolume* volume = new AABBVolume(Vector3(1.0f, 0.2f, 1.0f) * meshSize);
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -1376,16 +1455,12 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), renderer->playerMesh, nullptr, renderer->characterShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
-	character->GetPhysicsObject()->setTorqueFriction(0.005f);
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->setCoeficient(0.55f);
-	character->GetPhysicsObject()->InitSphereInertia();
-	setGoatCharacter(character);
 	InitPaintableTextureOnObject(character);
 
 	GameWorld::GetInstance()->AddGameObject(character);
 	character->SetName("character");
-	character->SetTeamId(Team::team1);
 	return character;
 }
 
@@ -1455,9 +1530,9 @@ Projectile* TutorialGame::FireBullet(playerTracking* selectedPlayerCharacter) {
 
 
 
-void TutorialGame::setGoatCharacter(playerTracking* assignCharcter) {
-	goatCharacter = assignCharcter;
-}
+//void TutorialGame::setGoatCharacter(playerTracking* assignCharcter) {
+//	goatCharacter = assignCharcter;
+//}
 
 void TutorialGame::setEnemyGoat(GameObject* assignCharcter) {
 	EnemyGoat = assignCharcter;
@@ -1581,14 +1656,11 @@ void TutorialGame::InitDefaultFloorRunway() {
 	AddRunwayToWorld(Vector3(0, -20, 0));
 }
 
-void TutorialGame::InitGameExamples() {
-	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
-	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 2.5, 2.5);
-	
-	//TODO
-	auto q = Quaternion();
-	testPlayer = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
-	lockedObject = testPlayer; 
+void TutorialGame::InitGameObjects() {
+	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.1f);
+	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 1.5, 1.5, 0.2f);
+
+	//lockedObject = playerObject;
 	//TestCode of Item
 	PropSystem::GetInstance()->SpawnItem();
 	PropSystem::GetInstance()->SpawnSpeedUp();
@@ -1648,10 +1720,6 @@ void TutorialGame::InitMixedGridWorldtest(int numRows, int numCols, float rowSpa
 
 }
 
-
-
-
-
 void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims) {
 	for (int x = 1; x < numCols+1; ++x) {
 		for (int z = 1; z < numRows+1; ++z) {
@@ -1660,94 +1728,6 @@ void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing,
 		}
 	}
 }
-
-/*
-Every frame, this code will let you perform a raycast, to see if there's an object
-underneath the cursor, and if so 'select it' into a pointer, so that it can be 
-manipulated later. Pressing Q will let you toggle between this behaviour and instead
-letting you move the camera around. 
-
-*/
-bool TutorialGame::SelectObject() {
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
-		inSelectionMode = !inSelectionMode;
-		if (inSelectionMode) {
-			Window::GetWindow()->ShowOSPointer(true);
-			Window::GetWindow()->LockMouseToWindow(false);
-		}
-		else {
-			Window::GetWindow()->ShowOSPointer(false);
-			Window::GetWindow()->LockMouseToWindow(true);
-		}
-	}
-	if (inSelectionMode) {
-		Debug::Print("Press Q to change to camera mode!", Vector2(5, 85));
-
-		if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT)) {
-			if (selectionObject) {	//set colour to deselected;
-				if (selectionObject->GetRenderObject() != nullptr)selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
-				selectionObject = nullptr;
-			}
-
-			Ray ray = CollisionDetection::BuildRayFromMouse(*GameWorld::GetInstance()->GetMainCamera());
-
-			RayCollision closestCollision;
-			if (GameWorld::GetInstance()->Raycast(ray, closestCollision, true)) {
-				selectionObject = (GameObject*)closestCollision.node;
-
-				if(selectionObject->GetRenderObject() != nullptr)selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-		if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
-			if (selectionObject) {
-				if (lockedObject == selectionObject) {
-					lockedObject = nullptr;
-				}
-				else {
-					lockedObject = selectionObject;
-				}
-			}
-		}
-	}
-	else {
-		Debug::Print("Press Q to change to select mode!", Vector2(5, 85));
-	}
-	return false;
-}
-
-/*
-If an object has been clicked, it can be pushed with the right mouse button, by an amount
-determined by the scroll wheel. In the first tutorial this won't do anything, as we haven't
-added linear motion into our physics system. After the second tutorial, objects will move in a straight
-line - after the third, they'll be able to twist under torque aswell.
-*/
-
-void TutorialGame::MoveSelectedObject() {
-	Debug::Print("Click Force:" + std::to_string(forceMagnitude), Vector2(5, 90));
-	forceMagnitude += Window::GetMouse()->GetWheelMovement() * 100.0f;
-
-	if (!selectionObject) {
-		return;//we haven't selected anything!
-	}
-	//Push the selected object!
-	/*if (Window::GetMouse()->ButtonPressed(NCL::MouseButtons::RIGHT)) {
-		Ray ray = CollisionDetection::BuildRayFromMouse(*GameWorld::GetInstance()->GetMainCamera());
-
-		RayCollision closestCollision;
-		if (GameWorld::GetInstance()->Raycast(ray, closestCollision, true)) {
-			if (closestCollision.node == selectionObject) {
-				selectionObject->GetPhysicsObject()->AddForceAtPosition(ray.GetDirection() * forceMagnitude, closestCollision.collidedAt);
-			}
-		}
-	}*/
-}
-
-
-
 
 
 StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
@@ -1796,7 +1776,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	
 #ifdef TRI_DEBUG
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16F);
+	glBindImageTexture(0, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16);
 #endif
 
 	glActiveTexture(GL_TEXTURE1);
@@ -1927,7 +1907,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	
 }
 
-void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
+void TutorialGame::SetUpTriangleSSBOAndDataTexture()
 {
 	
 
@@ -1969,7 +1949,7 @@ void TutorialGame::AddDebugTriangleInfoToObject(GameObject* object) {
 	glBindTexture(GL_TEXTURE_1D, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID());
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, MAX_TRIS, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16, MAX_TRIS, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glBindTexture(GL_TEXTURE_1D, 0);
 
 	

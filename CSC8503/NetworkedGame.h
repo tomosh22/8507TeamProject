@@ -20,10 +20,10 @@ namespace NCL {
 			void SetLocalPlayer(NetworkObject* object) { this->localPlayer = object; }
 
 			void HandleConnectConfirmed();
-			void HandlePlayerConnect(int pid, AddObjectPacket& packet);
 			void HandlePlayerDisconnect(int pid);
 			void HandleUpdateState(bool delta, int pid, GamePacket* payload);
-			void AddNewNetworkPlayerToWorld(int pid, NetworkState state);
+			void AddNewNetworkPlayerToWorld(int pid, int teamID, NetworkState state);
+			void HandlePlayerAction(int pid, GamePacket* payload);
 			static NetworkedGame* GetInstance()
 			{
 				if (_instance == nullptr)
@@ -37,7 +37,7 @@ namespace NCL {
 			static NetworkedGame* _instance;
 			void UpdateToServer(float dt);
 
-			void BroadcastSnapshot(bool deltaFrame);
+			void BroadcastSnapshot();
 			void UpdateMinimumState();
 			std::map<int, int> stateIDs;
 

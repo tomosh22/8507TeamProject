@@ -256,108 +256,25 @@ so that objects separate back out.
 void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
 	PhysicsObject* physA = a.GetPhysicsObject();
 	PhysicsObject* physB = b.GetPhysicsObject();
-	Vector3 relativeA = p.localA;
-	Vector3 relativeB = p.localB;
-
-	Vector3 angVelocityA =
-		Vector3::Cross(physA->GetAngularVelocity(), relativeA);
-	Vector3 angVelocityB =
-		Vector3::Cross(physB->GetAngularVelocity(), relativeB);
-
-	Vector3 fullVelocityA = physA->GetLinearVelocity() + angVelocityA;
-	Vector3 fullVelocityB = physB->GetLinearVelocity() + angVelocityB;
-
-	Vector3 contactVelocity = fullVelocityB - fullVelocityA;
-	p.normal.Normalise();
-	//try layer id
-	if ((physA->getLayerId() == physB->getLayerId()) && physA->getLayerId() == 2) {
-		return;
-	}
-	// try layer id
-	//std::cout << contactVelocity << std::endl; // To stop gravity jittering 
-	if (applyGravity && (contactVelocity.Length() < 1.0f) && (p.normal == PhysicsObject::gravityDirection || -p.normal == PhysicsObject::gravityDirection || ((Vector3::Dot(p.normal, PhysicsObject::gravityDirection)) <= 0.99999) || ((Vector3::Dot((-p.normal), PhysicsObject::gravityDirection)) <= 0.99999))) {
-		ImpulseResolveStop(a, b, p);
-		physA->setFloorContactTrue();
-		physB->setFloorContactTrue();
-	}
-	else
-	{
-		/*typedef std::numeric_limits< float > dbl;
-		std::cout.precision(dbl::max_digits10);
-		std::cout << p.normal << std::endl;*/
-		ImpulseResolveContinuedResponse(a, b, p);
-		if (physA->GetFloorContact()) {
-			physA->setFloorContactFalse();
-		}
-		if (physB->GetFloorContact()) {
-			physB->setFloorContactFalse();
-		}
-
-	}
-
-}
-
-
-void PhysicsSystem::ImpulseResolveStop(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
-	PhysicsObject* physA = a.GetPhysicsObject();
-	PhysicsObject* physB = b.GetPhysicsObject();
 
 	Transform& transformA = a.GetTransform();
 	Transform& transformB = b.GetTransform();
 
-	
-
-	//testing gost alpha 33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
-	if (a.GetIsAlpha()) {
-		transformB.SetPosition(transformB.GetPosition() + (p.normal * p.penetration * (physB->GetInverseMass())));
-		return;
-	}
-	if (b.GetIsAlpha()) {
-		transformA.SetPosition(transformA.GetPosition() + (p.normal * p.penetration * (physA->GetInverseMass())));
-		return;
-	}
-	//testing gost alpha 33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
-
 	float totalMass = physA->GetInverseMass() + physB->GetInverseMass();
 
 	if (totalMass == 0) {
-		return; //no collision to resolve 
+		return; //two static objects??
 	}
-	//seperating the objects out using projection
-	transformA.SetPosition(transformA.GetPosition() - (p.normal * p.penetration * (physA->GetInverseMass() / totalMass)));
 
+	// Separate them out using projection
+	transformA.SetPosition(transformA.GetPosition() - (p.normal * p.penetration * (physA->GetInverseMass() / totalMass)));
 	transformB.SetPosition(transformB.GetPosition() + (p.normal * p.penetration * (physB->GetInverseMass() / totalMass)));
 
-
-}
-
-
-void PhysicsSystem::ImpulseResolveContinuedResponse(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
-	PhysicsObject* physA = a.GetPhysicsObject();
-	PhysicsObject* physB = b.GetPhysicsObject();
-
-	Transform& transformA = a.GetTransform();
-	Transform& transformB = b.GetTransform();
-
-
-	float totalMass = physA->GetInverseMass() + physB->GetInverseMass();
-
-	if (totalMass == 0) {
-		return; //no collision to resolve 
-	}
-	//seperating the objects out using projection
-	transformA.SetPosition(transformA.GetPosition() - (p.normal * p.penetration * (physA->GetInverseMass() / totalMass)));
-
-	transformB.SetPosition(transformB.GetPosition() + (p.normal * p.penetration * (physB->GetInverseMass() / totalMass)));
-	// dead stop dead end
 	Vector3 relativeA = p.localA;
 	Vector3 relativeB = p.localB;
 
-	Vector3 angVelocityA =
-		Vector3::Cross(physA->GetAngularVelocity(), relativeA);
-
-	Vector3 angVelocityB =
-		Vector3::Cross(physB->GetAngularVelocity(), relativeB);
+	Vector3 angVelocityA = Vector3::Cross(physA->GetAngularVelocity(), relativeA);
+	Vector3 angVelocityB = Vector3::Cross(physB->GetAngularVelocity(), relativeB);
 
 	Vector3 fullVelocityA = physA->GetLinearVelocity() + angVelocityA;
 	Vector3 fullVelocityB = physB->GetLinearVelocity() + angVelocityB;
@@ -365,57 +282,203 @@ void PhysicsSystem::ImpulseResolveContinuedResponse(GameObject& a, GameObject& b
 	Vector3 contactVelocity = fullVelocityB - fullVelocityA;
 
 	float impulseForce = Vector3::Dot(contactVelocity, p.normal);
-
-	//inertia effect
+	//now to work out the effect of inertia ....
 	Vector3 inertiaA = Vector3::Cross(physA->GetInertiaTensor() * Vector3::Cross(relativeA, p.normal), relativeA);
 	Vector3 inertiaB = Vector3::Cross(physB->GetInertiaTensor() * Vector3::Cross(relativeB, p.normal), relativeB);
-
 	float angularEffect = Vector3::Dot(inertiaA + inertiaB, p.normal);
 
-	float cRestitution = physA->GetCoeficient() + physB->GetCoeficient(); // energy lost
+	float cRestitution = physA->GetCoeficient() + physB->GetCoeficient(); //use coeficient to lose energy
 
 	float j = (-(1.0f + cRestitution) * impulseForce) / (totalMass + angularEffect);
-	float FIF = 0.0f;
-	float& FIFR = FIF;
 
-	//put in friction for linear movement 
-	//if (transformB.GetGoatID() == 7) {
-	//	Vector3 floorColisionNormal = { 0,-1,0 };
-	//	//Vector3 distanceFromCollision = (transformB.GetPosition() - transformA.GetPosition());
-	//	Vector3 distanceFromCollision = { 5.5,5.5,5.5 };
-	//	float coefficeintOfRestitution = 0.2f;
-	//	float coefficientOfFriction = 0.009f;
-	//	float inversePlayerMass = physB->GetInverseMass();
-	//	Vector3 distNormDist = Vector3::Cross(distanceFromCollision, Vector3::Cross(distanceFromCollision, floorColisionNormal));
-	//	Vector3 frictionTangent = physB->GetLinearVelocity() - (floorColisionNormal * (Vector3::Dot(physB->GetLinearVelocity(), floorColisionNormal)));
-	//	float topOfImpulse = -(Vector3::Dot(physB->GetLinearVelocity() * coefficientOfFriction, frictionTangent));
-	//	float tenserByVectorNormal = Vector3::Dot((physB->GetInertiaTensor()) * distNormDist, floorColisionNormal);
-	//	float bottomOfImpulse = inversePlayerMass + tenserByVectorNormal;
-	//	float impulseForce = topOfImpulse / bottomOfImpulse;
-	//	FIFR = std::min(impulseForce, (physB->GetForce().Length()));
+	Vector3 fullImpulse = p.normal * j;
+	physA->ApplyLinearImpulse(-fullImpulse * physB->GetElasticity());
+	physB->ApplyLinearImpulse(fullImpulse * physA->GetElasticity());
+
+	physA->ApplyAngularImpulse(Vector3::Cross(relativeA, -fullImpulse));
+	physB->ApplyAngularImpulse(Vector3::Cross(relativeB, fullImpulse));
+
+
+	float cFriction = physA->GetFriction() * physB->GetFriction();
+	Vector3 tangent = contactVelocity - (p.normal * Vector3::Dot(contactVelocity, p.normal));
+
+	Vector3 TinertiaA = Vector3::Cross(physA->GetInertiaTensor() * Vector3::Cross(relativeA, tangent), relativeA);
+	Vector3 TinertiaB = Vector3::Cross(physB->GetInertiaTensor() * Vector3::Cross(relativeB, tangent), relativeB);
+
+	float TangularEffect = Vector3::Dot(TinertiaA + TinertiaB, tangent);
+	float jt = -(cFriction * Vector3::Dot(contactVelocity, tangent.Normalised()) / (totalMass + TangularEffect));
+	//friction
+	Vector3 frictionImpulse = tangent.Normalised() * jt;
+	physA->ApplyLinearImpulse(-frictionImpulse);
+	physB->ApplyLinearImpulse(frictionImpulse);
+
+	physA->ApplyAngularImpulse(Vector3::Cross(relativeA, -frictionImpulse));
+	physB->ApplyAngularImpulse(Vector3::Cross(relativeB, frictionImpulse));
+
+}
+
+	//PhysicsObject* physA = a.GetPhysicsObject();
+	//PhysicsObject* physB = b.GetPhysicsObject();
+	//Vector3 relativeA = p.localA;
+	//Vector3 relativeB = p.localB;
+
+	//Vector3 angVelocityA =
+	//	Vector3::Cross(physA->GetAngularVelocity(), relativeA);
+	//Vector3 angVelocityB =
+	//	Vector3::Cross(physB->GetAngularVelocity(), relativeB);
+
+	//Vector3 fullVelocityA = physA->GetLinearVelocity() + angVelocityA;
+	//Vector3 fullVelocityB = physB->GetLinearVelocity() + angVelocityB;
+
+	//Vector3 contactVelocity = fullVelocityB - fullVelocityA;
+	//p.normal.Normalise();
+	////try layer id
+	//if ((physA->getLayerId() == physB->getLayerId()) && physA->getLayerId() == 2) {
+	//	return;
+	//}
+	//// try layer id
+	////std::cout << contactVelocity << std::endl; // To stop gravity jittering 
+	//if (applyGravity && (contactVelocity.Length() < 0.3f) && (p.normal == PhysicsObject::gravityDirection || -p.normal == PhysicsObject::gravityDirection || ((Vector3::Dot(p.normal, PhysicsObject::gravityDirection)) <= 0.99999) || ((Vector3::Dot((-p.normal), PhysicsObject::gravityDirection)) <= 0.99999))) {
+	//	ImpulseResolveStop(a, b, p);
+	//	physA->setFloorContactTrue();
+	//	physB->setFloorContactTrue();
+	//}
+	//else
+	//{
+	//	/*typedef std::numeric_limits< float > dbl;
+	//	std::cout.precision(dbl::max_digits10);
+	//	std::cout << p.normal << std::endl;*/
+	//	ImpulseResolveContinuedResponse(a, b, p);
+	//	if (physA->GetFloorContact()) {
+	//		physA->setFloorContactFalse();
+	//	}
+	//	if (physB->GetFloorContact()) {
+	//		physB->setFloorContactFalse();
+	//	}
 
 	//}
 
-	// put in friction for linear movement
-	//Get absorbtion amount
-	float aForceScaler = 1 - (a.getImpactAbsorbtionAmount());
-	float bForceScaler = 1 - (b.getImpactAbsorbtionAmount());
-	//get absorbtion amount
-	//+ (p.normal * transformA.getFrictionImpulse())
-	Vector3 fullImpulse = p.normal * j;
-	//Vector3 frictionVector = ((physB->GetLinearVelocity()).Normalised()) * -FIF;
-	FIFR = 0;
+//}
+
+//
+//void PhysicsSystem::ImpulseResolveStop(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
+//	PhysicsObject* physA = a.GetPhysicsObject();
+//	PhysicsObject* physB = b.GetPhysicsObject();
+//
+//	Transform& transformA = a.GetTransform();
+//	Transform& transformB = b.GetTransform();
+//
+//	
+//
+//	//testing gost alpha 33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+//	if (a.GetIsAlpha()) {
+//		transformB.SetPosition(transformB.GetPosition() + (p.normal * p.penetration * (physB->GetInverseMass())));
+//		return;
+//	}
+//	if (b.GetIsAlpha()) {
+//		transformA.SetPosition(transformA.GetPosition() + (p.normal * p.penetration * (physA->GetInverseMass())));
+//		return;
+//	}
+//	//testing gost alpha 33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+//
+//	float totalMass = physA->GetInverseMass() + physB->GetInverseMass();
+//
+//	if (totalMass == 0) {
+//		return; //no collision to resolve 
+//	}
+//	//seperating the objects out using projection
+//	transformA.SetPosition(transformA.GetPosition() - (p.normal * p.penetration * (physA->GetInverseMass() / totalMass)));
+//
+//	transformB.SetPosition(transformB.GetPosition() + (p.normal * p.penetration * (physB->GetInverseMass() / totalMass)));
+//
+//
+//}
 
 
-
-	physA->ApplyLinearImpulse((-fullImpulse) * aForceScaler);
-	physB->ApplyLinearImpulse((fullImpulse)*bForceScaler);
-	//physB->ApplyLinearImpulse(frictionVector);
-
-
-	physA->ApplyAngularImpulse(Vector3::Cross(relativeA, -fullImpulse));
-	physB->ApplyAngularImpulse(Vector3::Cross(relativeB, -fullImpulse));
-}
+//void PhysicsSystem::ImpulseResolveContinuedResponse(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
+//	PhysicsObject* physA = a.GetPhysicsObject();
+//	PhysicsObject* physB = b.GetPhysicsObject();
+//
+//	Transform& transformA = a.GetTransform();
+//	Transform& transformB = b.GetTransform();
+//
+//
+//	float totalMass = physA->GetInverseMass() + physB->GetInverseMass();
+//
+//	if (totalMass == 0) {
+//		return; //no collision to resolve 
+//	}
+//	//seperating the objects out using projection
+//	transformA.SetPosition(transformA.GetPosition() - (p.normal * p.penetration * (physA->GetInverseMass() / totalMass)));
+//
+//	transformB.SetPosition(transformB.GetPosition() + (p.normal * p.penetration * (physB->GetInverseMass() / totalMass)));
+//	// dead stop dead end
+//	Vector3 relativeA = p.localA;
+//	Vector3 relativeB = p.localB;
+//
+//	Vector3 angVelocityA =
+//		Vector3::Cross(physA->GetAngularVelocity(), relativeA);
+//
+//	Vector3 angVelocityB =
+//		Vector3::Cross(physB->GetAngularVelocity(), relativeB);
+//
+//	Vector3 fullVelocityA = physA->GetLinearVelocity() + angVelocityA;
+//	Vector3 fullVelocityB = physB->GetLinearVelocity() + angVelocityB;
+//
+//	Vector3 contactVelocity = fullVelocityB - fullVelocityA;
+//
+//	float impulseForce = Vector3::Dot(contactVelocity, p.normal);
+//
+//	//inertia effect
+//	Vector3 inertiaA = Vector3::Cross(physA->GetInertiaTensor() * Vector3::Cross(relativeA, p.normal), relativeA);
+//	Vector3 inertiaB = Vector3::Cross(physB->GetInertiaTensor() * Vector3::Cross(relativeB, p.normal), relativeB);
+//
+//	float angularEffect = Vector3::Dot(inertiaA + inertiaB, p.normal);
+//
+//	float cRestitution = physA->GetCoeficient() + physB->GetCoeficient(); // energy lost
+//
+//	float j = (-(1.0f + cRestitution) * impulseForce) / (totalMass + angularEffect);
+//	float FIF = 0.0f;
+//	float& FIFR = FIF;
+//
+//	//put in friction for linear movement 
+//	//if (transformB.GetGoatID() == 7) {
+//	//	Vector3 floorColisionNormal = { 0,-1,0 };
+//	//	//Vector3 distanceFromCollision = (transformB.GetPosition() - transformA.GetPosition());
+//	//	Vector3 distanceFromCollision = { 5.5,5.5,5.5 };
+//	//	float coefficeintOfRestitution = 0.2f;
+//	//	float coefficientOfFriction = 0.009f;
+//	//	float inversePlayerMass = physB->GetInverseMass();
+//	//	Vector3 distNormDist = Vector3::Cross(distanceFromCollision, Vector3::Cross(distanceFromCollision, floorColisionNormal));
+//	//	Vector3 frictionTangent = physB->GetLinearVelocity() - (floorColisionNormal * (Vector3::Dot(physB->GetLinearVelocity(), floorColisionNormal)));
+//	//	float topOfImpulse = -(Vector3::Dot(physB->GetLinearVelocity() * coefficientOfFriction, frictionTangent));
+//	//	float tenserByVectorNormal = Vector3::Dot((physB->GetInertiaTensor()) * distNormDist, floorColisionNormal);
+//	//	float bottomOfImpulse = inversePlayerMass + tenserByVectorNormal;
+//	//	float impulseForce = topOfImpulse / bottomOfImpulse;
+//	//	FIFR = std::min(impulseForce, (physB->GetForce().Length()));
+//
+//	//}
+//
+//	// put in friction for linear movement
+//	//Get absorbtion amount
+//	float aForceScaler = 1 - (a.getImpactAbsorbtionAmount());
+//	float bForceScaler = 1 - (b.getImpactAbsorbtionAmount());
+//	//get absorbtion amount
+//	//+ (p.normal * transformA.getFrictionImpulse())
+//	Vector3 fullImpulse = p.normal * j;
+//	//Vector3 frictionVector = ((physB->GetLinearVelocity()).Normalised()) * -FIF;
+//	FIFR = 0;
+//
+//
+//
+//	physA->ApplyLinearImpulse((-fullImpulse) * aForceScaler);
+//	physB->ApplyLinearImpulse((fullImpulse)*bForceScaler);
+//	//physB->ApplyLinearImpulse(frictionVector);
+//
+//
+//	physA->ApplyAngularImpulse(Vector3::Cross(relativeA, -fullImpulse));
+//	physB->ApplyAngularImpulse(Vector3::Cross(relativeB, -fullImpulse));
+//}
 
 
 /*
@@ -500,7 +563,10 @@ void PhysicsSystem::IntegrateAccel(float dt) {
 		Vector3 force = object->GetForce();
 		Vector3 accel = force * inverseMass;
 		//std::cout << "object floor contact " << object->GetFloorContact() << std::endl;
-		if (applyGravity && inverseMass > 0 && !(object->GetFloorContact()) && (object->getAffectedByGravity())) {
+		//if (applyGravity && inverseMass > 0 && !(object->GetFloorContact()) && (object->getAffectedByGravity())) {
+		//	accel += gravity;
+		//}
+		if (applyGravity && inverseMass > 0) {
 			accel += gravity;
 		}
 		// testing drag

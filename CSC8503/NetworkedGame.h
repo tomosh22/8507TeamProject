@@ -37,7 +37,7 @@ namespace NCL {
 			static NetworkedGame* _instance;
 			void UpdateToServer(float dt);
 
-			void BroadcastSnapshot(bool deltaFrame);
+			void BroadcastSnapshot();
 			void UpdateMinimumState();
 			std::map<int, int> stateIDs;
 

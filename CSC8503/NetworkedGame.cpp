@@ -71,20 +71,12 @@ void NetworkedGame::UpdateGame(float dt) {
 		client->UpdateClient();
 		if (online) {
 			//broadcast
-			//timeToNextPacket -= dt;
-			//if (timeToNextPacket < 0) {
-			//	UpdateToServer(dt);
-			//	timeToNextPacket += 1.0f / 100.0f; //20hz server/client update
-			//}
-			UpdateToServer(dt);
-		}
-		//send player's action.
-		auto messages = localPlayer->GetSendMessages();
-		if (messages.size() != 0) {
-			for (auto it : messages) {
-				client->SendPacket(it);
+			timeToNextPacket -= dt;
+			if (timeToNextPacket < 0) {
+				UpdateToServer(dt);
+				timeToNextPacket += 1.0f / 20.0f; //20hz server/client update
 			}
-			localPlayer->ClearMessagePool();
+			UpdateToServer(dt);
 		}
 	}
 
@@ -94,15 +86,23 @@ void NetworkedGame::UpdateGame(float dt) {
 
 void NetworkedGame::UpdateToServer(float dt) {
 	//broadcast
-	BroadcastSnapshot(false);
+	BroadcastSnapshot();
 }
 
-void NetworkedGame::BroadcastSnapshot(bool deltaFrame) {
+void NetworkedGame::BroadcastSnapshot() {
 	if (!localPlayer) { return; }
 	int playerState = 0;
 	GamePacket* newPacket = nullptr;
-	if (localPlayer->WritePacket(&newPacket, deltaFrame, playerState)) {
+	if (localPlayer->WritePacket(&newPacket, Full_State, playerState)) {
 		client->SendPacket(*newPacket);
+	}
+	//send player's action.
+	auto messages = localPlayer->GetSendMessages();
+	if (messages.size() != 0) {
+		for (auto it : messages) {
+			client->SendPacket(*it);
+		}
+		localPlayer->ClearMessagePool();
 	}
 }
 
@@ -207,5 +207,5 @@ void NetworkedGame::HandlePlayerAction(int pid, GamePacket* payload) {
 	auto it = serverPlayers.find(pid);
 	if (it == serverPlayers.end()) { return; }
 	ActionPacket* packet = (ActionPacket*)payload;
-	it->second->UpdateAction(packet->buttonstates, packet->param);
+	it->second->UpdateAction(*packet);
 }

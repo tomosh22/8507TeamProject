@@ -46,7 +46,7 @@ namespace NCL {
 			bool CanShoot();
 			void StartShooting(Vector3 target);
 			void Shooting(Projectile* bullet, Vector3 target);
-			bool CanJump();
+			bool CanJump(GameObject* floor);
 			void SpeedUp();
 			void SpeedDown();
 			void UpdateSpeed(float dt);
@@ -164,7 +164,9 @@ namespace NCL {
 				return "character";
 			}
 
-			void UpdateAction(bool buttonstates[8], Vector3 param) override;
+			void UpdateAction(ActionPacket packet) override;
+
+			bool WritePacket(GamePacket** p, int packetTp, int stateID) override;
 
 			void PrintPlayerInfo();
 

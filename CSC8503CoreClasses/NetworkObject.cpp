@@ -24,8 +24,8 @@ bool NetworkObject::ReadPacket(bool delta, GamePacket& p) {
 	return false;
 }
 
-bool NetworkObject::WritePacket(GamePacket** p, bool deltaFrame, int stateID) {
-	if (deltaFrame) {
+bool NetworkObject::WritePacket(GamePacket** p, int packetTp, int stateID) {
+	if (Full_State == packetTp) {
 		if (!WriteDeltaPacket(p, stateID)) {
 			return WriteFullPacket(p);
 		}

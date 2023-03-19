@@ -17,19 +17,20 @@ namespace NCL::CSC8503 {
 		//Called by clients
 		virtual bool ReadPacket(bool delta, GamePacket& p);
 		//Called by servers
-		virtual bool WritePacket(GamePacket** p, bool deltaFrame, int stateID);
+		virtual bool WritePacket(GamePacket** p, int packetTp, int stateID);
 
 		void UpdateStateHistory(int minID);
 
-		void AddSendMessage(GamePacket packet) { sendMessagePool.push_back(packet); }
+		void AddSendMessage(GamePacket* packet) { sendMessagePool.push_back(packet); }
 
-		vector<GamePacket> GetSendMessages() { return sendMessagePool; }
+		vector<GamePacket*> GetSendMessages() { return sendMessagePool; }
 
 		void ClearMessagePool() {
-			sendMessagePool = vector<GamePacket>();
+			//Do not release the pointer
+			sendMessagePool = vector<GamePacket*>();
 		}
 
-		virtual void UpdateAction(bool buttonstates[8], Vector3 param) {}
+		virtual void UpdateAction(ActionPacket packet) {}
 	protected:
 
 		NetworkState& GetLatestNetworkState();
@@ -45,7 +46,7 @@ namespace NCL::CSC8503 {
 
 		NetworkState lastFullState;
 
-		vector<GamePacket> sendMessagePool;
+		vector<GamePacket*> sendMessagePool;
 
 		std::vector<NetworkState> stateHistory;
 

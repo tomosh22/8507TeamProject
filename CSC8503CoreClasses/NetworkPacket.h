@@ -40,13 +40,15 @@ namespace NCL::CSC8503 {
 	struct ActionPacket : public GamePacket {
 		bool buttonstates[8] = {false, false, false, false, false, false, false, false};
 		Vector3 param;
+		NetworkState state;
 
-		ActionPacket(int index, Vector3 state = Vector3()) {
+		ActionPacket(int index, Vector3 info = Vector3(), NetworkState st = NetworkState()) {
 			type = Player_Action;
 			if (index < 8) {
 				buttonstates[index] = true;
 			}
-			param = state;
+			param = info;
+			state = st;
 			size = sizeof(ActionPacket) - sizeof(GamePacket);
 		}
 	};

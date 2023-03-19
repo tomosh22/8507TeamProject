@@ -7,6 +7,12 @@ namespace NCL {
 		class NetworkState	{
 		public:
 			NetworkState();
+			NetworkState(Vector3 pos, Quaternion orient, int id = 0) {
+				position = pos;
+				orientation = orient;
+				stateID = id;
+			}
+
 			virtual ~NetworkState();
 
 			Vector3		position;

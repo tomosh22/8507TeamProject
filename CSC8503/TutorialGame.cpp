@@ -777,13 +777,14 @@ void TutorialGame::ControlPlayer(float dt) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + rightAxis * dt * speed);
 	}
 	//jump
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump()) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump(floor)) {
 		playerObject->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, PLAYER_JUMP_FORCE, 0));
 	}
 	//switch weapon
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::TAB)) {
 		playerObject->SwitchWeapon();
-		playerObject->AddSendMessage(ActionPacket(PLAYER_ACTION_SWITCH_WEAPON));
+		auto packet = new ActionPacket(PLAYER_ACTION_SWITCH_WEAPON);
+		playerObject->AddSendMessage(packet);
 	}
 	//Aiming
 	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT)){
@@ -792,7 +793,11 @@ void TutorialGame::ControlPlayer(float dt) {
 		//shoot
 		if (Window::GetMouse()->ButtonHeld(MouseButtons::LEFT) && playerObject->CanShoot()) {
 			playerObject->StartShooting(playerObject->GetAimedTarget());
-			playerObject->AddSendMessage(ActionPacket(PLAYER_ACTION_SHOOT, playerObject->GetAimedTarget()));
+			auto state = NetworkState();
+			state.position = transform.GetPosition();
+			state.orientation = transform.GetOrientation();
+			auto packet = new ActionPacket(PLAYER_ACTION_SHOOT, playerObject->GetAimedTarget(), state);
+			playerObject->AddSendMessage(packet);
 		}
 	}
 	else {

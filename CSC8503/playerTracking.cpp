@@ -111,7 +111,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	CapsuleVolume* volume = new CapsuleVolume(weaponInUse.ProjectileSize * 2.0f, weaponInUse.ProjectileSize);
 	bullet->SetBoundingVolume((CollisionVolume*)volume);
 
-	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize*2.0, weaponInUse.ProjectileSize)).SetPosition(transform.GetPosition() + transform.GetDirVector().Normalised() * 2.5f + Vector3(0.0f, 1.8f, 0.0f));
+	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize*2.0, weaponInUse.ProjectileSize)).SetPosition(transform.GetPosition() + Vector3(0.0f, 2.0f, 0.0f));
 
 	bullet->SetPhysicsObject(new PhysicsObject(&bullet->GetTransform(), bullet->GetBoundingVolume()));
 
@@ -129,24 +129,21 @@ void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
 	Vector3 fireDir = (target - bullet->GetTransform().GetPosition());
 	fireDir.Normalise();
 	bullet->GetPhysicsObject()->AddForce(fireDir * weaponInUse.projectileForce);
+	std::cout << "Shooting, teamId: " << teamID << ", position: " << bullet->GetTransform().GetPosition() << ", target : " << target << std::endl;
 }
 
-bool NCL::CSC8503::playerTracking::CanJump(){
+bool NCL::CSC8503::playerTracking::CanJump(GameObject* floor){
+	if (!floor) { return false; }
 	RayCollision closetCollision;
 
-	Vector3 rayPos;
-	Vector3 rayDir;
+	Ray r = Ray(transform.GetPosition(), Vector3(0, -1, 0));
 
-	Vector3 pos = this->GetTransform().GetPosition();
-	rayDir = Vector3(0, -1, 0);
-	rayPos = pos;
-
-	Ray r = Ray(rayPos, rayDir);
-
-	if (GameWorld::GetInstance()->Raycast(r, closetCollision, true, this) && closetCollision.rayDistance < 0.8f)
+	if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 0.8f) {
 		return true;
-	else
+	}
+	else {
 		return false;
+	}
 
 }
 
@@ -198,6 +195,15 @@ void playerTracking::HealthUp(Gun newGun)
 	
 }
 
+bool playerTracking::WritePacket(GamePacket** p, int packetTp, int stateID) {
+	if (Delta_State == packetTp) {
+		if (!WriteDeltaPacket(p, stateID)) {
+			return WriteFullPacket(p);
+		}
+	}
+	return WriteFullPacket(p);
+}
+
 void playerTracking::PrintPlayerInfo() {
 	Debug::Print("Health: " + std::to_string(hp), Vector2(5, 90), Debug::RED);
 	Debug::Print("Shield: " + std::to_string(shield), Vector2(5, 95), Debug::CYAN);
@@ -212,12 +218,14 @@ void playerTracking::PrintPlayerInfo() {
 	Debug::Print(text, Vector2(70, 95), Debug::WHITE);
 }
 
-void playerTracking::UpdateAction(bool buttonstates[8], Vector3 param) {
-	if (buttonstates[PLAYER_ACTION_SWITCH_WEAPON]) {
+void playerTracking::UpdateAction(ActionPacket packet) {
+	if (packet.buttonstates[PLAYER_ACTION_SWITCH_WEAPON]) {
 		SwitchWeapon();
 	}
-	if (buttonstates[PLAYER_ACTION_SHOOT]) {
-		StartShooting(param);
+	if (packet.buttonstates[PLAYER_ACTION_SHOOT]) {
+		transform.SetPosition(packet.state.position);
+		transform.SetOrientation(packet.state.orientation);
+		StartShooting(packet.param);
 	}
 }
 

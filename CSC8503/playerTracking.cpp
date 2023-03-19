@@ -30,8 +30,11 @@ playerTracking::playerTracking()
 		bulletsUsed = {};
 		bulletsUsedAndMoved = {};
 
-		animationMap["Idle"] = new  NCL::MeshAnimation("Role_T0.anm");
-		animationMap["Move"] = new  NCL::MeshAnimation("Role_T.anm");
+		animationMap["Idle"] = new  NCL::MeshAnimation("DefaultCharacterWithTPose.anm");
+		animationMap["MoveF"] = new  NCL::MeshAnimation("RunForward.anm");
+		animationMap["MoveB"] = new  NCL::MeshAnimation("RunBackward.anm");
+		animationMap["MoveL"] = new  NCL::MeshAnimation("RunLeft.anm");
+		animationMap["MoveR"] = new  NCL::MeshAnimation("RunRight.anm");
 		currentAniamtion = animationMap["Idle"];
 }
 
@@ -106,7 +109,23 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 	}
 	else
 	{
-		TransferAnimation("Move");
+		if (Dup > 0)
+		{
+			TransferAnimation("MoveF");
+		}
+		else if (Dup < 0)
+		{
+			TransferAnimation("MoveB");
+		}
+		else if (Dright > 0)
+		{
+			TransferAnimation("MoveR");
+		}
+		else if (Dright < 0)
+		{
+			TransferAnimation("MoveL");
+		}
+
 	}
 }
 

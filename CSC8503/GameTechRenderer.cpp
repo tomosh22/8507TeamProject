@@ -997,8 +997,8 @@ void GameTechRenderer::CreateFBOColor(GLuint& fbo, GLuint& colorTex)
 void GameTechRenderer::LoadPlayerAniamtion()
 {
 	characterShader = new OGLShader("SkinningVertex.vert","SkinningFrag.frag");
-	playerMaterial = new MeshMaterial("Role_T.mat");
-	playerMesh = (OGLMesh*)LoadMesh("Role_T.msh");
+	playerMaterial = new MeshMaterial("DefaultCharacterWithTPose.mat");
+	playerMesh = (OGLMesh*)LoadMesh("DefaultCharacterWithTPose3.msh");
 	playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
 	for (int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
 		const MeshMaterialEntry* matEntry = playerMaterial->GetMaterialForLayer(i);

@@ -291,6 +291,15 @@ void GameTechRenderer::RenderShadowMap() {
 		newTransform.SetPosition(newTransform.GetPosition() - lightDir);
 		Matrix4 modelMatrix = newTransform.GetMatrix();
 
+		if (i->isAnimated) {
+			glUniform1i(glGetUniformLocation(shadowShader->GetProgramID(), "isAnimated"), true);
+			int j = glGetUniformLocation(((OGLShader*)i->GetShader())->GetProgramID(), "joints");
+			glUniformMatrix4fv(j, i->frameMatrices.size(), false, (float*)i->frameMatrices.data());
+		}
+		else {
+			glUniform1i(glGetUniformLocation(shadowShader->GetProgramID(), "isAnimated"), false);
+		}
+
 
 		Matrix4 mvpMatrix	= mvMatrix * modelMatrix;
 		glUniformMatrix4fv(mvpLocation, 1, false, (float*)&mvpMatrix);
@@ -300,6 +309,8 @@ void GameTechRenderer::RenderShadowMap() {
 			DrawBoundMesh(i);
 		}
 		i->GetMesh()->SetPrimitiveType(prevPrimitive);//dont forget this
+
+		if (i->isAnimated)BindShader(shadowShader);
 	}
 
 	glViewport(0, 0, windowWidth, windowHeight);

@@ -14,7 +14,7 @@ playerTracking::playerTracking()
 	playerID = 1;
 	teamID = 0;
 	IndividualplayerScore = 0;
-	weaponType = pistol;
+	weaponInUse = pistol;
 	moveSpeed = 10;
 	sprintTimer = 5.0f; 
 	respawnTimer = 50.0f; 

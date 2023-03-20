@@ -12,6 +12,7 @@
 #include "ObjectPool.h"
 #include "RenderObject.h"
 #include "PropSystem.h"
+#include "RespawnPoint.h"
 
 #include"MeshAnimation.h"
 #include"MeshMaterial.h"
@@ -117,7 +118,7 @@ namespace NCL {
 			in the module. Feel free to mess around with them to see different objects being created in different
 			test scenarios (constraints, collision types, and so on). 
 			*/
-			void InitGameObjects();
+			//void InitGameObjects();
 
 			void InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius);
 			void InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing);
@@ -128,6 +129,8 @@ namespace NCL {
 
 			void InitDefaultFloor();
 			void InitDefaultFloorRunway();
+
+			void InitGameExamples();
 
 			void UpdateWorldCamera(float dt);
 			void CameraLockOnPlayer();
@@ -169,7 +172,7 @@ namespace NCL {
 			GameObject* AddWallToWorld2(const Vector3& position, Vector3 dimensions); 
 			GameObject* AddLadderToWorld(const Vector3& position, float height, bool rotated);
 
-			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation, Team team = Team::teamNull, RespawnPoint* rp = nullptr);
+			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation, int team = 0, RespawnPoint* rp = nullptr);
 			GameObject* AddEnemyGoatToWorld(const Vector3& position);
 			GameObject* AddEnemyToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);

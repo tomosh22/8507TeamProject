@@ -7,6 +7,7 @@
 #include"ObjectPool.h"
 #include "GameWorld.h"
 #include "NetworkObject.h"
+#include "RespawnPoint.h"
 
 
 namespace NCL {

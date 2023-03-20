@@ -19,6 +19,7 @@
 #include<iostream>
 #include"PropSystem.h"
 #include <chrono>
+#include "RespawnPoint.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -1036,7 +1037,7 @@ void TutorialGame::InitSingleGameMode() {
 	auto q = Quaternion();
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 
-	InitGameObjects();
+	//InitGameObjects();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
 
@@ -1055,9 +1056,10 @@ void TutorialGame::InitOnlineGame(int teamID) {
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	playerObject->SetTeamId(teamID);
 
-	InitGameObjects();
+	InitGameExamples();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
+
 
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
@@ -1753,12 +1755,12 @@ void NCL::CSC8503::TutorialGame::AddRespawnPoints()
 	respawnPoint->AddRespawnPoint(rp);
 }
 
-playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation, Team team, RespawnPoint* rp) {
+playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation, int team, RespawnPoint* rp) {
 	float meshSize = 2.0f;
 	float inverseMass = 0.3f;
 
 	playerTracking* character = new playerTracking();
-	AABBVolume* volume = new AABBVolume(Vector3(1.0f, 0.2f, 1.0f) * meshSize);
+	AABBVolume* volume = new AABBVolume(Vector3{ 2,2,2 });
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -1774,14 +1776,8 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	InitPaintableTextureOnObject(character);
 
 	GameWorld::GetInstance()->AddGameObject(character);
-	character->SetTeamId(team);
-	if (character->GetTeamId() == 1)
-		character->SetName("character");
-	else
-		character->SetName("character2");
-
-	character->SetRespawn(rp);
-
+	character->SetName("character");
+	character->SetTeamId(1);
 	return character;
 }
 
@@ -1977,11 +1973,14 @@ void TutorialGame::InitDefaultFloorRunway() {
 	AddRunwayToWorld(Vector3(0, -20, 0));
 }
 
-void TutorialGame::InitGameObjects() {
-	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.1f);
-	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 1.5, 1.5, 0.2f);
-
-	//lockedObject = playerObject;
+void TutorialGame::InitGameExamples() {
+	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
+	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 2.5, 2.5);
+	
+	//TODO
+	auto q = Quaternion();
+	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	lockedObject = playerObject; 
 	//TestCode of Item
 	/*Item* p;
 	PropSystem::GetInstance()->SpawnItem(Vector3(6, 3, 6));

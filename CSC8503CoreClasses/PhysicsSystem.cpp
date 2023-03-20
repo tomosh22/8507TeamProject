@@ -283,8 +283,8 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 	//std::cout << contactVelocity << std::endl; // To stop gravity jittering 
 	if (applyGravity && (contactVelocity.Length() < 0.3f) && (p.normal == PhysicsObject::gravityDirection || -p.normal == PhysicsObject::gravityDirection || ((Vector3::Dot(p.normal, PhysicsObject::gravityDirection)) <= 0.99999) || ((Vector3::Dot((-p.normal), PhysicsObject::gravityDirection)) <= 0.99999))) {
 		ImpulseResolveStop(a, b, p);
-		physA->setFloorContactTrue();
-		physB->setFloorContactTrue();
+		//physA->setFloorContactTrue();
+		//physB->setFloorContactTrue();
 	}
 	else
 	{
@@ -292,12 +292,12 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 		std::cout.precision(dbl::max_digits10);
 		std::cout << p.normal << std::endl;*/
 		ImpulseResolveContinuedResponse(a, b, p);
-		if (physA->GetFloorContact()) {
+		/*if (physA->GetFloorContact()) {
 			physA->setFloorContactFalse();
 		}
 		if (physB->GetFloorContact()) {
 			physB->setFloorContactFalse();
-		}
+		}*/
 
 	}
 

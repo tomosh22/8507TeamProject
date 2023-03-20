@@ -132,6 +132,8 @@ namespace NCL {
 
 			void UpdateWorldCamera(float dt);
 			void CameraLockOnPlayer();
+			void RayCast();
+			bool SelectObject();
 			void LockedObjectMovement();
 			void ControlPlayer(float dt);
 			void movePlayer(playerTracking* unitGoat);

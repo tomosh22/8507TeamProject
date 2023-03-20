@@ -451,7 +451,7 @@ void TutorialGame::InitialiseAssets() {
 }
 
 void TutorialGame::UpdateWorldCamera(float dt) {
-	if (!playerObject) {
+	if (!playerObject && !inSelectionMode) {
 		GameWorld::GetInstance()->GetMainCamera()->UpdateCamera(dt);
 		return;
 	}
@@ -480,8 +480,84 @@ void TutorialGame::CameraLockOnPlayer() {
 	
 }
 
+void TutorialGame::RayCast() {
+	RayCollision closestCollision;
+	auto world = GameWorld::GetInstance();
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::K) && selectionObject) {
+		Vector3 rayPos;
+		Vector3 rayDir;
+
+		rayDir = selectionObject->GetTransform().GetOrientation() * Vector3(0, 0, -1);
+
+		rayPos = selectionObject->GetTransform().GetPosition();
+
+		Ray r = Ray(rayPos, rayDir);
+
+		if (world->Raycast(r, closestCollision, true, selectionObject)) {
+			if (objClosest) {
+				objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
+			}
+			objClosest = (GameObject*)closestCollision.node;
+
+			objClosest->GetRenderObject()->SetColour(Vector4(1, 0, 1, 1));
+		}
+	}
+
+	Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
+}
 
 
+bool TutorialGame::SelectObject() {
+	auto world = GameWorld::GetInstance();
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
+		inSelectionMode = !inSelectionMode;
+		if (inSelectionMode) {
+			Window::GetWindow()->ShowOSPointer(true);
+			Window::GetWindow()->LockMouseToWindow(false);
+	}
+		else {
+			Window::GetWindow()->ShowOSPointer(false);
+			Window::GetWindow()->LockMouseToWindow(true);
+		}
+}
+	if (inSelectionMode) {
+		Debug::Print("Press Q to change to camera mode!", Vector2(5, 85));
+
+		if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT)) {
+			if (selectionObject) {	//set colour to deselected;
+				selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
+				selectionObject = nullptr;
+			}
+
+			Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
+
+			RayCollision closestCollision;
+			if (world->Raycast(ray, closestCollision, true)) {
+				selectionObject = (GameObject*)closestCollision.node;
+
+				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
+			if (selectionObject) {
+				if (lockedObject == selectionObject) {
+					lockedObject = nullptr;
+				}
+				else {
+					lockedObject = selectionObject;
+				}
+			}
+		}
+	}
+	else {
+		Debug::Print("Press Q to change to select mode!", Vector2(5, 85));
+	}
+	return false;
+}
 
 void TutorialGame::UpdateGame(float dt) {
 #ifdef DEBUG_SHADOW
@@ -517,6 +593,8 @@ void TutorialGame::UpdateGame(float dt) {
 		//glPopDebugGroup();
 		UpdateRayMarchSpheres();
 		SendRayMarchData();
+		RayCast();
+		SelectObject();
 		break;
 	}
 	case GAME_MODE_SELECT_TEAM:

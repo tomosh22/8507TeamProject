@@ -341,6 +341,8 @@ namespace NCL {
 			bool pause = false;
 
 			int playerNum = 0;
+			
+
 		};
 
 		/*

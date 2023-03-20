@@ -587,6 +587,16 @@ void TutorialGame::UpdateGame(float dt) {
 	Debug::UpdateRenderables(dt);
 
 
+	//animation update
+	if (playerObject != nullptr)
+	{
+		renderer->frameTime -= dt;
+		while (renderer->frameTime < 0.0f) {
+			renderer->currentFrame = (renderer->currentFrame + 1) % playerObject->GetCurrentAnimation()->GetFrameCount();
+			renderer->frameTime += 1.0f / playerObject->GetCurrentAnimation()->GetFrameRate();
+		}
+		renderer->SetCurrentAniamtion(playerObject->GetCurrentAnimation());
+	}
 	//if (GAME_MODE_GRAPHIC_TEST == gameMode) {
 	//	UpdateRayMarchSpheres();
 	//	SendRayMarchData();
@@ -774,28 +784,31 @@ void TutorialGame::ControlPlayer(float dt) {
 	Quaternion orientation = transform.GetOrientation();
 	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
 	transform.SetOrientation(orientation.Normalised());
-
 	//speed
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT)) {
 		playerObject->SpeedUp();
 	}
-	else {
+	else 
+	{
 		playerObject->SpeedDown();
 	}
-
 	float speed = playerObject->GetSpeed();
 	Vector3 position = transform.GetPosition();
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
+		playerObject->TransferAnimation("MoveF");
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - fwdAxis * dt * speed);
+		playerObject->TransferAnimation("MoveB");
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - rightAxis * dt * speed);
+		playerObject->TransferAnimation("MoveL");
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + rightAxis * dt * speed);
+		playerObject->TransferAnimation("MoveR");
 	}
 	//jump
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump(floor)) {
@@ -816,7 +829,8 @@ void TutorialGame::ControlPlayer(float dt) {
 			playerObject->WriteActionMessage(PLAYER_ACTION_SHOOT);
 		}
 	}
-	else {
+	else 
+	{
 		renderer->drawCrosshair = false;
 	}
 	playerObject->PrintPlayerInfo();
@@ -1466,7 +1480,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, basicShader));
+	character->SetRenderObject(new RenderObject(&character->GetTransform(), renderer->playerMesh, nullptr, renderer->characterShader ));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
@@ -1924,10 +1938,6 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 void TutorialGame::SetUpTriangleSSBOAndDataTexture()
 {
 	
-
-	
-	
-
 	//todo delete this, just for testing
 	std::array<char, MAX_TRIS> noise;
 	for (int i = 0; i < MAX_TRIS; i++)

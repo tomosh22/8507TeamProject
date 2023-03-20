@@ -7,7 +7,8 @@
 #include"ObjectPool.h"
 #include "GameWorld.h"
 #include "NetworkObject.h"
-
+#include <map>
+#include "MeshAnimation.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -171,6 +172,11 @@ namespace NCL {
 
 			void PrintPlayerInfo();
 
+			NCL::MeshAnimation* GetCurrentAnimation()
+			{
+				return currentAniamtion;
+			}
+			void TransferAnimation(std::string animationName);
 		protected:
 			bool canJump; 
 			bool speedUp;
@@ -204,6 +210,10 @@ namespace NCL {
 
 			vector<Projectile*> bulletsUsed;
 			vector<Projectile*> bulletsUsedAndMoved;
+
+
+			std::map<std::string, NCL::MeshAnimation*> animationMap;
+			NCL::MeshAnimation* currentAniamtion;
 		};
 
 

@@ -30,6 +30,14 @@ playerTracking::playerTracking()
 		weaponInUse = pistol;
 		weaponPool.push_back(pistol);
 		weaponPool.push_back(rocket);
+
+		animationMap["Idle"] = new  NCL::MeshAnimation("DefaultCharacterWithTPose.anm");
+		animationMap["MoveF"] = new  NCL::MeshAnimation("RunForward.anm");
+		animationMap["MoveB"] = new  NCL::MeshAnimation("RunBackward.anm");
+		animationMap["MoveL"] = new  NCL::MeshAnimation("RunLeft.anm");
+		animationMap["MoveR"] = new  NCL::MeshAnimation("RunRight.anm");
+		currentAniamtion = animationMap["Idle"];
+
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
@@ -53,12 +61,15 @@ void NCL::CSC8503::playerTracking::Rotate()
 }
 
 void playerTracking::SpeedUp() {
+
 	if (sprintTimer > 0.0f) {
 		moveSpeed = PLAYER_SPEED_UP;
 	}
+
 }
 
-void playerTracking::SpeedDown() {
+void playerTracking::SpeedDown() 
+{
 	moveSpeed = PLAYER_MOVE_SPEED;
 }
 
@@ -107,7 +118,6 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 //Call this function to init a new Bullet
 void playerTracking::ResetBullet(Projectile* bullet)
 {
-
 	CapsuleVolume* volume = new CapsuleVolume(weaponInUse.ProjectileSize * 2.0f, weaponInUse.ProjectileSize);
 	bullet->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -144,7 +154,6 @@ bool NCL::CSC8503::playerTracking::CanJump(GameObject* floor){
 	else {
 		return false;
 	}
-
 }
 
 
@@ -249,3 +258,12 @@ void playerTracking::UpdateAction(ActionPacket packet) {
 	}
 }
 
+void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
+{
+
+	if (currentAniamtion == animationMap[animationName])
+	{
+		return;
+	}
+	currentAniamtion = animationMap[animationName];
+}

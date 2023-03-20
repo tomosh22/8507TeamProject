@@ -137,6 +137,8 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	ImGuiIO& io = ImGui::GetIO();
 	ImGui::StyleColorsDark();
 
+	LoadPlayerAniamtion();
+
 
 	Win32Code::Win32Window* realWindow = (Win32Code::Win32Window*)&hostWindow;
 
@@ -234,6 +236,9 @@ void GameTechRenderer::RenderFrame() {
 
 	ImGui();
 	if(drawCrosshair)DrawCrossHair();
+
+	if(currentAniamtion!=nullptr)
+	RenderPlayerAnimation(); 
 }
 
 void GameTechRenderer::BuildObjectList() {
@@ -1025,5 +1030,63 @@ void GameTechRenderer::CreateFBOColor(GLuint& fbo, GLuint& colorTex, GLenum colo
 		std::cout << "fbo creation error!!!\n";
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glPopDebugGroup();
+}
+
+void GameTechRenderer::LoadPlayerAniamtion()
+{
+	characterShader = new OGLShader("SkinningVertex.vert", "SkinningFrag.frag");
+	playerMaterial = new MeshMaterial("DefaultCharacterWithTPose.mat");
+	playerMesh = (OGLMesh*)LoadMesh("DefaultCharacterWithTPose3.msh");
+	playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
+	for (int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
+		const MeshMaterialEntry* matEntry = playerMaterial->GetMaterialForLayer(i);
+		const std::string* filename = nullptr;
+		matEntry->GetEntry("Diffuse", &filename);
+		std::string path = *filename;
+		OGLTexture* tex = static_cast<OGLTexture*>(LoadTexture(*filename));
+		matTextures.emplace_back(tex);
+	}
+	currentFrame = 0;
+	frameTime = 0.0f;
+}
+
+void GameTechRenderer::RenderPlayerAnimation()
+{
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "anim");
+	BindShader(characterShader);
+	glUniform1i(glGetUniformLocation(characterShader->GetProgramID(), "diffuseTex"), 0);
+	//UpdateShaderMatrices();
+
+	//glUniformMatrix4fv(glGetUniformLocation(characterShader->GetProgramID(), "textureMatrix"), 1, false, textureMatrix.values);
+	vector <Matrix4 > frameMatrices;
+	const Matrix4* invBindPose = playerMesh->GetInverseBindPose().data();
+	const Matrix4* frameData = currentAniamtion->GetJointData(currentFrame);
+	for (unsigned int i = 0; i < playerMesh->GetJointCount(); ++i) {
+		frameMatrices.emplace_back(frameData[i] * invBindPose[i]);
+	}
+	int j = glGetUniformLocation(characterShader->GetProgramID(), "joints");
+	glUniformMatrix4fv(j, frameMatrices.size(), false, (float*)frameMatrices.data());
+
+
+	for (int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, matTextures[i]->GetObjectID());
+		glUniform1i(glGetUniformLocation(characterShader->GetProgramID(), "diffuseTex"), 0);
+
+		const SubMesh* m = playerMesh->GetSubMesh(i);
+		glBindVertexArray(playerMesh->GetVAO());
+
+		if (playerMesh->GetIndexCount() > 0) {
+			const GLvoid* offset = (const GLvoid*)(m->start * sizeof(unsigned int));
+			glDrawElements(playerMesh->GetPrimitiveType(), m->count, GL_UNSIGNED_INT, offset);
+		}
+		else {
+			glDrawArrays(playerMesh->GetPrimitiveType(), m->start, m->count);	//Draw the triangle!
+		}
+
+		glBindVertexArray(0);
+
+	}
 	glPopDebugGroup();
 }

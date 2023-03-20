@@ -50,17 +50,17 @@ void Camera::UpdateCamera(float dt) {
 	//fire a Ray to get a contact point as the aiming point
 
 
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUMPAD8)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
 	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUMPAD2)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
 		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
 	}
 
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUMPAD4)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
 		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
 	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUMPAD6)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
 		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
 	}
 

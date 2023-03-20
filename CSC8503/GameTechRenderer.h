@@ -14,6 +14,10 @@
 #include "AreaTex.h"
 #include "SearchTex.h"
 
+//animation
+#include"MeshAnimation.h"
+#include"MeshMaterial.h"
+
 namespace NCL {
 	class Maths::Vector3;
 	class Maths::Vector4;
@@ -126,6 +130,26 @@ namespace NCL {
 			GLuint tonemappedTexture;
 			bool toneMap = true;
 			float exposure = 1;
+
+			//animaiton
+			OGLShader* characterShader;
+			void LoadPlayerAniamtion();
+			void RenderPlayerAnimation();
+			OGLMesh* playerMesh;
+			NCL::MeshAnimation* currentAniamtion;
+			MeshMaterial* playerMaterial;
+			vector<OGLTexture*> matTextures;
+			void SetCurrentAniamtion(NCL::MeshAnimation* anim)
+			{
+				if (anim != currentAniamtion)
+				{
+					currentFrame = 0;
+					frameTime = 0.0f;
+				}
+				currentAniamtion = anim;
+			}
+			int currentFrame;
+			float frameTime;
 
 		protected:
 			void NewRenderLines();

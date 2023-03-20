@@ -108,7 +108,7 @@ namespace NCL {
 
 			void EdgeDetection();
 			bool renderEdges = false;
-			float smaaThreshold = 0.05;
+			float smaaEdgeThreshold = 0.05;
 
 			GLuint blendingFBO;
 			void WeightCalculation();

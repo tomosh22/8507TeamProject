@@ -591,6 +591,14 @@ void TutorialGame::UpdateGame(float dt) {
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
 		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, TEAM_RED,true);
 		glPopDebugGroup();
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "bunny");
+		DispatchComputeShaderForEachTriangle(bunny, testSphereCenter, testSphereRadius, TEAM_RED, true);
+		glPopDebugGroup();
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 7, "spheres");
+		for (GameObject*& sphere : spheres) {
+			DispatchComputeShaderForEachTriangle(sphere, testSphereCenter, testSphereRadius, TEAM_RED, true);
+		}
+		glPopDebugGroup();
 		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
 		//for (GameObject*& wall : walls) {
 			//DispatchComputeShaderForEachTriangle(wall);

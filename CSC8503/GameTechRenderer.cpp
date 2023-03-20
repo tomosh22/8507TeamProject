@@ -700,7 +700,7 @@ void GameTechRenderer::EdgeDetection() {
 	glUniform1i(glGetUniformLocation(edgesShader->GetProgramID(), "width"), windowWidth);
 	glUniform1i(glGetUniformLocation(edgesShader->GetProgramID(), "height"), windowHeight);
 	glBindTexture(GL_TEXTURE_2D, sceneColor);
-	glUniform1f(glGetUniformLocation(edgesShader->GetProgramID(), "SMAA_THRESHOLD"), smaaThreshold);
+	glUniform1f(glGetUniformLocation(edgesShader->GetProgramID(), "SMAA_THRESHOLD"), smaaEdgeThreshold);
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -728,7 +728,7 @@ void GameTechRenderer::WeightCalculation() {
 	glUniform1i(glGetUniformLocation(weightCalcShader->GetProgramID(), "width"), windowWidth);
 	glUniform1i(glGetUniformLocation(weightCalcShader->GetProgramID(), "height"), windowHeight);
 
-	glUniform1f(glGetUniformLocation(weightCalcShader->GetProgramID(), "SMAA_THRESHOLD"), smaaThreshold);
+	glUniform1f(glGetUniformLocation(weightCalcShader->GetProgramID(), "SMAA_THRESHOLD"), smaaEdgeThreshold);
 
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -754,7 +754,7 @@ void GameTechRenderer::NeighborhoodBlending() {
 	glUniform1i(glGetUniformLocation(neighborhoodBlendingShader->GetProgramID(), "width"), windowWidth);
 	glUniform1i(glGetUniformLocation(neighborhoodBlendingShader->GetProgramID(), "height"), windowHeight);
 
-	glUniform1f(glGetUniformLocation(neighborhoodBlendingShader->GetProgramID(), "SMAA_THRESHOLD"), smaaThreshold);
+	glUniform1f(glGetUniformLocation(neighborhoodBlendingShader->GetProgramID(), "SMAA_THRESHOLD"), smaaEdgeThreshold);
 
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -1033,17 +1033,10 @@ void GameTechRenderer::ImGui() {
 
 		ImGui::TreePop();
 	}
-	if (ImGui::TreeNode("SMAA")) {
-		ImGui::Checkbox("Display Edges", &renderEdges);
-		ImGui::Checkbox("Display Blending", &renderBlend);
-		ImGui::Checkbox("Display SMAA Output", &renderAA);
-		ImGui::SliderFloat("Edge Threshold", &smaaThreshold, 0, 0.5);
-
-		ImGui::TreePop();
-	}
 	if (ImGui::TreeNode("FXAA")) {
 		ImGui::Checkbox("Use FXAA", &useFXAA);
 		ImGui::Checkbox("Edge Detection", &edgeDetection);
+		ImGui::SliderFloat("Edge Threshold", &smaaEdgeThreshold, 0, 0.5);
 
 		ImGui::TreePop();
 	}

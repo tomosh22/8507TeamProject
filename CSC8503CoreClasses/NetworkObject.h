@@ -28,6 +28,11 @@ namespace NCL::CSC8503 {
 
 		void ClearMessagePool() {
 			//Do not release the pointer
+			for (auto it : sendMessagePool) {
+				if (it) {
+					delete it;
+				}
+			}
 			sendMessagePool = vector<GamePacket*>();
 		}
 

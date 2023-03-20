@@ -247,7 +247,7 @@ namespace NCL {
 			GLuint triangleBoolSSBO;
 			int* triangleBoolSSBOPtr;
 			GLuint triangleRasteriseSSBO;
-			int* triangleRasteriseSSBOPtr;
+			unsigned int* triangleRasteriseSSBOPtr;
 			GLuint triangleRasteriseSSBOSecondShader;
 			bool SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint);
 

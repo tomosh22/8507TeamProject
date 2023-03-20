@@ -309,8 +309,6 @@ void GameTechRenderer::RenderShadowMap() {
 			DrawBoundMesh(i);
 		}
 		i->GetMesh()->SetPrimitiveType(prevPrimitive);//dont forget this
-
-		if (i->isAnimated)BindShader(shadowShader);
 	}
 
 	glViewport(0, 0, windowWidth, windowHeight);

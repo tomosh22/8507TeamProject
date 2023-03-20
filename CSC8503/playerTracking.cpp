@@ -14,7 +14,7 @@ playerTracking::playerTracking()
 		teamID = 0;
 		IndividualplayerScore = 0;
 		
-		moveSpeed = 10;
+		moveSpeed = PLAYER_MOVE_SPEED;
 		sprintTimer = 5.0f; 
 		speedUp = false; 
 		weaponUp = false; 
@@ -71,7 +71,7 @@ void playerTracking::UpdateSpeed(float dt) {
 		if (speedUpTimer <= 0)
 			speedUp = false;
 	}
-	else if (MINIMAL_NUMBER > moveSpeed - PLYAER_ITEM_SPEED_UP || MINIMAL_NUMBER < moveSpeed - PLYAER_ITEM_SPEED_UP)
+	else if (MINIMAL_NUMBER > moveSpeed - PLAYER_SPEED_UP && MINIMAL_NUMBER < moveSpeed - PLAYER_SPEED_UP)
 	{
 		sprintTimer = sprintTimer - 20 * dt;
 	}

@@ -49,7 +49,7 @@ namespace NCL {
 			~TutorialGame();
 
 			virtual void UpdateGame(float dt);
-			void SelectMode();
+			void SelectGameWorld();
 			int SelectTeam();
 			//void InitWorld(); //moved from protected
 			void InitGraphicTest();
@@ -133,6 +133,7 @@ namespace NCL {
 			void UpdateWorldCamera(float dt);
 			void CameraLockOnPlayer();
 			void RayCast();
+			void SelectMode();
 			bool SelectObject();
 			void LockedObjectMovement();
 			void ControlPlayer(float dt);

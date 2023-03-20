@@ -506,20 +506,23 @@ void TutorialGame::RayCast() {
 	Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
 }
 
-
-bool TutorialGame::SelectObject() {
-	auto world = GameWorld::GetInstance();
+void TutorialGame::SelectMode() {
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
 		inSelectionMode = !inSelectionMode;
 		if (inSelectionMode) {
 			Window::GetWindow()->ShowOSPointer(true);
 			Window::GetWindow()->LockMouseToWindow(false);
-	}
+		}
 		else {
 			Window::GetWindow()->ShowOSPointer(false);
 			Window::GetWindow()->LockMouseToWindow(true);
 		}
+	}
 }
+
+bool TutorialGame::SelectObject() {
+	SelectMode();
+	auto world = GameWorld::GetInstance();
 	if (inSelectionMode) {
 		Debug::Print("Press Q to change to camera mode!", Vector2(5, 85));
 
@@ -569,7 +572,7 @@ void TutorialGame::UpdateGame(float dt) {
 	switch (gameMode) {
 	case GAME_MODE_DEFAULT:
 	{
-		SelectMode();
+		SelectGameWorld();
 		renderer->Update(dt);
 		renderer->Render();
 		Debug::UpdateRenderables(dt);
@@ -640,6 +643,7 @@ void TutorialGame::UpdateGame(float dt) {
 			currentFrame = (currentFrame + 1) % playerIdle->GetFrameCount();
 			frameTime += 1.0f / playerIdle->GetFrameRate();
 		}
+		SelectMode();
 		break;
 	}
 	default:
@@ -671,7 +675,7 @@ void TutorialGame::UpdateGame(float dt) {
 	//}
 }
 
-void TutorialGame::SelectMode() {
+void TutorialGame::SelectGameWorld() {
 	string text = "1. Graphic Test Mode.";
 	Debug::Print(text, Vector2(30, 30), Debug::GREEN);
 	text = "2. Single Player Mode.";

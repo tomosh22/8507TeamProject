@@ -123,7 +123,7 @@ void main() {
                 
                 if(pointInSphere(triA,triB,triC,barycentric) && x < textureWidth-1 && y < textureHeight-1){
                     
-                    imageStore(outputTex,ivec2(topLeftCorner) + ivec2(x,y) + ivec2(1),uvec4(teamID,0,0,0));
+                    imageStore(outputTex,ivec2(topLeftCorner) + ivec2(x,y) + ivec2(0),uvec4(teamID,0,0,0));
                     imageStore(outputTex,ivec2(x,y),uvec4(teamID,0,0,0));
                 }
             }

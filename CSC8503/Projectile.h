@@ -8,31 +8,40 @@
 
 namespace NCL {
 	namespace CSC8503 {
+		const enum GunType {
+			GUN_TYPE_PISTOL,
+			GUN_TYPE_ROCKET,
+			GUN_TYPE_MAX
+		};
+
 		struct Gun {
+			bool affectedByGravity;
+			int type;
 			float radius;  //exlopsion radius 
 			float ProjectileSize; // size of bullet
 			float projectileForce; // Fire force
-			float weight;// keep a >0 weight on instances. Otherwise applied forces will have no effect
+			float weight;// keep a >0 weight on instances. Otherwise applied forces will have no effect //Do not exceed 1.0, otherwise additional forces will be generated
 			float rateOfFire; // time in seconds between consecuative bullets shot
-			bool affectedByGravity;
 		};
 
 		static Gun pistol{
+			true,
+			GUN_TYPE_PISTOL,
 			10.0f,
 			0.2f,
-			100.0f,
-			10.0f,
-			0.5f,
-			true,
+			8000.0f,
+			1.0f,
+			0.7f,
 		};
 
 		static Gun rocket{
+			true,
+			GUN_TYPE_ROCKET,
 			6.0f,
 			0.5f,
-			20.0f,
-			5.0f,
-			1.5f,
-			true,
+			3000.0f,
+			0.7f,
+			0.5f,
 		};
 
 

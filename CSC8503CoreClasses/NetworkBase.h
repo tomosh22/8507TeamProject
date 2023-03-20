@@ -9,22 +9,29 @@ enum BasicNetworkMessages {
 	Message,
 	Connect_Confirmed,
 	Player_Disconnected,
-	Add_Object,
+	Select_Player_Mode,
 	Full_State,		//Full transform etc
 	Delta_State,
-	Received_State, //received from a client
+	Player_Action, //received from a client
 	Shutdown,
 
 	MessageTypeMax
 };
 
+const std::string NETWORK_FILE = "network_base.txt";
+
+static int glDefaultPort = 1234;
+static std::vector<int> glIpAdress = {127, 0, 0, 1};
+
 struct GamePacket {
 	short size;
 	short type;
+	short networkID;
 
 	GamePacket() {
 		type		= BasicNetworkMessages::None;
 		size		= 0;
+		networkID = -1;
 	}
 
 	GamePacket(short type) : GamePacket() {
@@ -47,7 +54,12 @@ public:
 	static void Destroy();
 
 	static int GetDefaultPort() {
-		return 1234;
+		return glDefaultPort;
+	}
+
+	static std::vector<int> GetIpAddress() {
+
+		return glIpAdress;
 	}
 
 	void RegisterPacketHandler(int msgID, PacketReceiver* receiver) {

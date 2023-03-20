@@ -260,11 +260,8 @@ include_directories("../CSC8503CoreClasses/")
 include_directories("../FMOD/core/inc")
 include_directories("../FMOD/studio/inc")
 
-
-link_directories("../FMOD/studio/lib/x64")
-link_directories("../FMOD/core/lib/x64")
-
-
+target_link_directories(${PROJECT_NAME} PUBLIC "../FMOD/studio/lib/x64")
+target_link_directories(${PROJECT_NAME} PUBLIC "../FMOD/core/lib/x64")
 
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC NCLCoreClasses)
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC CSC8503CoreClasses)

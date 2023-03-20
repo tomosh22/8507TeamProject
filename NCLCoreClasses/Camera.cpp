@@ -28,39 +28,39 @@ void Camera::UpdateCamera(float dt) {
 
 	//std::cout << "yaw:" << yaw << " pitch:" << pitch<< std::endl;
 
-	if (lockMode)
-	{
-		double pi = 3.14159265359;
+	//if (lockMode)
+	//{
+	//	double pi = 3.14159265359;
 
-		forward.z = -cos(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
-		forward.y = sin(Maths::DegreesToRadians(pitch));
-		forward.x = -sin(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
-		forward = forward.Normalised();
+	//	forward.z = -cos(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
+	//	forward.y = sin(Maths::DegreesToRadians(pitch));
+	//	forward.x = -sin(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
+	//	forward = forward.Normalised();
 
 
-		if (targetPosition != Vector3(0, 0, 0))
-		{
-			position = targetPosition - forward * lockOffset.Length();
-		}
+	//	if (targetPosition != Vector3(0, 0, 0))
+	//	{
+	//		position = targetPosition - forward * lockOffset.Length();
+	//	}
 
-		
-	}
+	//	
+	//}
 	float frameSpeed = 100 * dt;
 
 	//fire a Ray to get a contact point as the aiming point
 
 
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUMPAD8)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
 	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUMPAD2)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
 		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
 	}
 
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUMPAD4)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
 		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
 	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUMPAD6)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
 		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
 	}
 
@@ -70,6 +70,14 @@ void Camera::UpdateCamera(float dt) {
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE)) {
 		position.y -= frameSpeed;
 	}
+}
+
+
+void Camera::UpdateObjectViewPitch() {
+	pitch -= (Window::GetMouse()->GetRelativePosition().y) * 0.2f;
+		//Bounds check the pitch, to be between straight up and straight down ;)
+	pitch = std::min(pitch, 45.0f);
+	pitch = std::max(pitch, -45.0f);
 }
 
 /*

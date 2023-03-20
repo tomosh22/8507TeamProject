@@ -54,6 +54,8 @@ namespace NCL {
 
 		void UpdateCamera(float dt);
 
+		void UpdateObjectViewPitch();
+
 		float GetFieldOfVision() const {
 			return fov;
 		}
@@ -109,6 +111,10 @@ namespace NCL {
 
 		Vector3 GetForward()
 		{
+			forward.z = -cos(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
+			forward.y = sin(Maths::DegreesToRadians(pitch));
+			forward.x = -sin(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
+			forward = forward.Normalised();
 			return forward;
 		}
 

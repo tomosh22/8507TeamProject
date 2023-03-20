@@ -154,6 +154,8 @@ namespace NCL {
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddBunnyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddWallToWorld2(const Vector3& position, Vector3 dimensions); 
+			GameObject* AddLadderToWorld(const Vector3& position, float height, bool rotated);
 
 			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation, Team team = Team::teamNull, RespawnPoint* rp = nullptr);
 			GameObject* AddEnemyGoatToWorld(const Vector3& position);
@@ -164,6 +166,12 @@ namespace NCL {
 			GameObject* AddDebugTriangleToWorld(const Vector3& position);
 
 			void AddMapToWorld();
+			void AddMapToWorld2();
+			void AddStructureToWorld();
+			void AddTowersToWorld();
+			void AddPlatformsToWorld();
+			void AddPowerUps(); 
+			void AddRespawnPoints();
 
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
@@ -201,6 +209,7 @@ namespace NCL {
 			playerTracking* goatCharacter = nullptr;
 			GameObject* EnemyGoat = nullptr;
 			playerTracking* testPlayer = nullptr;
+			//RespawnPoint* respawnPoint; 
 
 			const int bulletLifeLimit = 2;
 			const int bulletDeletionLimit = 5;

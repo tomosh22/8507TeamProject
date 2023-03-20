@@ -126,6 +126,9 @@ namespace NCL {
 				playerProjectile->setGunType(weponType);
 			}*/
 
+			void OnCollisionBegin(GameObject* otherObject);
+			void OnCollisionEnd(GameObject* otherObject);
+
 			Projectile* getPlayerProjectile() {
 				return playerProjectile;
 			}
@@ -154,6 +157,7 @@ namespace NCL {
 			bool canJump; 
 			bool speedUp;
 			bool weaponUp; 
+			bool onLadder; 
 			bool playerDead; 
 
 			float playerYawOrientation;

@@ -935,12 +935,18 @@ void TutorialGame::InitPhysicalTest() {
 	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
 
-	InitGameExamples();
-	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
-	AddWallToWorld({0, 0, 0}, {10, 5, 1});
+	
+	//AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	
+	//AddWallToWorld2({0, 0, 0}, {10, 5, 1});
 	//AddMapToWorld();
-	InitPaintableTextureOnObject(floor);
-
+	AddMapToWorld2();
+	InitGameExamples();
+	//AddLadderToWorld({ 10, 0, 0 }, 20.0f, true);
+	AddTowersToWorld();
+	AddStructureToWorld();
+	//InitPaintableTextureOnObject(floor);
+	//AddPowerUps();
 
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
@@ -1072,6 +1078,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
+	floor->GetRenderObject()->pbrTextures = grassWithWaterPBR; 
 
 	GameWorld::GetInstance()->AddGameObject(floor);
 	
@@ -1272,6 +1279,59 @@ GameObject* TutorialGame::AddWallToWorld(const Vector3& position, Vector3 dimens
 	return wall;
 }
 
+GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position, Vector3 dimensions)
+{
+	GameObject* wall = new GameObject();
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+	wall->SetBoundingVolume((CollisionVolume*)volume);
+
+	wall->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2);
+
+	
+	wall->SetRenderObject(new RenderObject(&wall->GetTransform(), cubeMesh, nullptr, basicShader));
+	wall->SetPhysicsObject(new PhysicsObject(&wall->GetTransform(), wall->GetBoundingVolume()));
+
+	wall->GetPhysicsObject()->SetInverseMass(0);
+	wall->GetPhysicsObject()->InitCubeInertia();
+
+	InitPaintableTextureOnObject(wall);
+	wall->GetRenderObject()->pbrTextures = rockPBR;
+
+	GameWorld::GetInstance()->AddGameObject(wall);
+
+	return wall;
+}
+
+GameObject* NCL::CSC8503::TutorialGame::AddLadderToWorld(const Vector3& position, float height, bool rotated)
+{
+	Vector3 dimensions;
+	if (rotated)
+		dimensions = Vector3(1.0f, height, 0.1f);
+	else
+		dimensions = Vector3(0.1f, height, 1.0f);
+	GameObject* ladder = new GameObject(); 
+	AABBVolume* volume = new AABBVolume(dimensions);
+	ladder->SetBoundingVolume((CollisionVolume*)volume);
+
+	ladder->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2);
+
+	ladder->SetRenderObject(new RenderObject(&ladder->GetTransform(), cubeMesh, nullptr, basicShader));
+	ladder->SetPhysicsObject(new PhysicsObject(&ladder->GetTransform(), ladder->GetBoundingVolume()));
+
+	ladder->GetPhysicsObject()->SetInverseMass(0);
+	ladder->GetPhysicsObject()->InitCubeInertia();
+
+	ladder->SetName("ladder");
+
+	GameWorld::GetInstance()->AddGameObject(ladder);
+	return ladder;
+}
+
 GameObject* TutorialGame::AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* max = new GameObject();
 
@@ -1442,13 +1502,176 @@ void TutorialGame::AddMapToWorld() {
 
 }
 
+void NCL::CSC8503::TutorialGame::AddMapToWorld2()
+{
+	//floor and enclosing walls 
+	AddFloorToWorld({0, 0, 0}, {100, 1, 200});
+
+	//visible walls
+	walls.push_back(AddWallToWorld2({ 100, 5, 0 }, { 1, 5, 200 }));
+	walls.push_back(AddWallToWorld2({ -100, 5, 0 }, { 1, 5, 200 }));
+
+	walls.push_back(AddWallToWorld2({ 0, 5, 200 }, { 100, 5, 1 }));
+	walls.push_back(AddWallToWorld2({ 0, 5, -200 }, { 100, 5, 1 }));
+
+	//invisible walls
+	AddWallToWorld2({ 100, 5, 0 }, { 1, 50, 200 })->SetRenderObject(nullptr);
+	AddWallToWorld2({ -100, 5, 0 }, { 1, 50, 200 })->SetRenderObject(nullptr);
+
+	AddWallToWorld2({ 0, 5, 200 }, { 100, 50, 1 })->SetRenderObject(nullptr);
+	AddWallToWorld2({ 0, 5, -200 }, { 100, 50, 1 })->SetRenderObject(nullptr);
+
+	//dividing walls
+	/*walls.push_back(AddWallToWorld2({ -50, 7, 0 }, { 1, 7, 100 }));
+	walls.push_back(AddWallToWorld2({ 50, 7, 0 }, { 1, 7, 100 }));*/
+
+	walls.push_back(AddWallToWorld2({ -50, 7, 50 }, { 1, 7, 40 }));
+	walls.push_back(AddWallToWorld2({ -50, 7, -50 }, { 1, 7, 40 }));
+
+	walls.push_back(AddWallToWorld2({ 50, 7, 50 }, { 1, 7, 40 }));
+	walls.push_back(AddWallToWorld2({ 50, 7, -50 }, { 1, 7, 40 }));
+
+	//back cover walls
+	walls.push_back(AddWallToWorld2({ 0, 5, 125 }, { 25, 5, 1 }));
+	walls.push_back(AddWallToWorld2({ 0, 5, -125 }, { 25, 5, 1 }));
+
+	//middle low cover walls
+	walls.push_back(AddWallToWorld2({ 30, 2.5, 75 }, { 10, 2.5, 1 }));
+	walls.push_back(AddWallToWorld2({ -30, 2.5, 75 }, { 10, 2.5, 1 }));
+	walls.push_back(AddWallToWorld2({ 0, 2.5, 75 }, { 10, 2.5, 1 }));
+
+	walls.push_back(AddWallToWorld2({ -15, 2.5, 35 }, { 10, 2.5, 1 }));
+	walls.push_back(AddWallToWorld2({ 15, 2.5, 35 }, { 10, 2.5, 1 }));
+
+	walls.push_back(AddWallToWorld2({ 30, 2.5, -75 }, { 10, 2.5, 1 }));
+	walls.push_back(AddWallToWorld2({ -30, 2.5, -75 }, { 10, 2.5, 1 }));
+	walls.push_back(AddWallToWorld2({ 0, 2.5, -75 }, { 10, 2.5, 1 }));
+
+	walls.push_back(AddWallToWorld2({ -15, 2.5, -35 }, { 10, 2.5, 1 }));
+	walls.push_back(AddWallToWorld2({ 15, 2.5, -35 }, { 10, 2.5, 1 }));
+
+	//side low cover walls 
+	walls.push_back(AddWallToWorld2({ 75, 2.5, 50 }, { 10, 2.5, 1 }));
+	walls.push_back(AddWallToWorld2({ -75, 2.5, 50 }, { 10, 2.5, 1 }));
+
+	walls.push_back(AddWallToWorld2({ 75, 2.5, -50 }, { 10, 2.5, 1 }));
+	walls.push_back(AddWallToWorld2({ -75, 2.5, -50 }, { 10, 2.5, 1 }));
+}
+
+void NCL::CSC8503::TutorialGame::AddStructureToWorld()
+{
+	//middle structure
+	//pillars
+	AddCubeToWorld({12, 7, 8}, {1, 7, 1}, 0.0f);
+	AddCubeToWorld({ -12, 7, 8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ 12, 7, -8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ -12, 7, -8 }, { 1, 7, 1 }, 0.0f);
+
+	//platform 
+	AddCubeToWorld({ 0, 13, 0 }, { 13, 1, 9 }, 0.0f);
+
+	//side structures
+	//pillars
+	AddCubeToWorld({ 87, 7, 8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ 63, 7, 8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ 87, 7, -8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ 63, 7, -8 }, { 1, 7, 1 }, 0.0f);
+
+	//platform 
+	AddCubeToWorld({ 75, 13, 0 }, { 13, 1, 9 }, 0.0f);
+	AddLadderToWorld({88, 6.5, 0}, 6.5f, false);
+
+	//pillars
+	AddCubeToWorld({ -87, 7, 8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ -63, 7, 8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ -87, 7, -8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ -63, 7, -8 }, { 1, 7, 1 }, 0.0f);
+
+	//platform 
+	AddCubeToWorld({ -75, 13, 0 }, { 13, 1, 9 }, 0.0f);
+	AddLadderToWorld({ -88, 6.5, 0 }, 6.5f, false);
+
+	//paths betweeen platforms
+	AddCubeToWorld({38, 13, 0}, {25, 1, 6}, 0.0f);
+	AddCubeToWorld({ -38, 13, 0 }, { 25, 1, 6 }, 0.0f);
+
+	//walls on platforms
+	AddCubeToWorld({ 0, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
+	AddCubeToWorld({ 0, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+
+	AddCubeToWorld({ -75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
+	AddCubeToWorld({ -75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+
+	AddCubeToWorld({ 75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
+	AddCubeToWorld({ 75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+}
+
+void NCL::CSC8503::TutorialGame::AddTowersToWorld()
+{
+	AddCubeToWorld({ 70, 12.5, 150 }, { 2.5 , 12.5, 2.5 }, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
+	AddLadderToWorld({ 70, 12.5, 153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;
+
+	AddCubeToWorld({ -70, 12.5, -150 }, { 2.5 , 12.5, 2.5 }, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
+	AddLadderToWorld({ -70, 12.5, -153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;
+}
+
+void NCL::CSC8503::TutorialGame::AddPlatformsToWorld()
+{
+}
+
+void NCL::CSC8503::TutorialGame::AddPowerUps()
+{
+	GameObject* item;
+	item = PropSystem::GetInstance()->SpawnWeaponUp({ 0, 16, 0 });
+	item->GetRenderObject()->pbrTextures = crystalPBR;
+	GameWorld::GetInstance()->AddGameObject(item);
+
+	PropSystem::GetInstance()->SpawnHeal({ 0, 5, 150 });
+	PropSystem::GetInstance()->SpawnHeal({ 0, 5, -150 });
+	PropSystem::GetInstance()->SpawnHeal({ 70, 5, 100 });
+	PropSystem::GetInstance()->SpawnHeal({ -70, 5, -100 });
+	PropSystem::GetInstance()->SpawnHeal({ -70, 5, 100 });
+	PropSystem::GetInstance()->SpawnHeal({ 70, 5, -100 });
+
+	PropSystem::GetInstance()->SpawnSpeedUp({ 75, 5, 0 });
+	PropSystem::GetInstance()->SpawnSpeedUp({ -75, 5, 0 });
+
+	PropSystem::GetInstance()->SpawnShield({ 0, 5, 50 });
+	PropSystem::GetInstance()->SpawnShield({ 0, 5, -50 });
+}
+
+void NCL::CSC8503::TutorialGame::AddRespawnPoints()
+{
+	//back respawn points
+	RespawnPoint* respawnPoint = new RespawnPoint({ 0, 5, 150 });
+	respawnPoint->AddRespawnPoint(respawnPoint);
+	RespawnPoint* rp = new RespawnPoint({ 0, 5, -150 });
+	respawnPoint->AddRespawnPoint(rp);
+
+	//side respawn points
+	rp = new RespawnPoint({ 70, 5, 0 });
+	respawnPoint->AddRespawnPoint(rp);
+	rp = new RespawnPoint({ -70, 5, 0 });
+	respawnPoint->AddRespawnPoint(rp);
+
+	//corner respawn points 
+	rp = new RespawnPoint({ 70, 5, -150 });
+	respawnPoint->AddRespawnPoint(rp);
+	rp = new RespawnPoint({ -70, 5, -150 });
+	respawnPoint->AddRespawnPoint(rp);
+	rp = new RespawnPoint({ 70, 5, 150 });
+	respawnPoint->AddRespawnPoint(rp);
+	rp = new RespawnPoint({ -70, 5, 150 });
+	respawnPoint->AddRespawnPoint(rp);
+}
+
 playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation, Team team, RespawnPoint* rp) {
 	float meshSize = 2.0f;
 	float inverseMass = 0.8f;
 
 	playerTracking* character = new playerTracking();
 	AABBVolume* volume = new AABBVolume(Vector3{ 2,2,2 });
-
+	//CapsuleVolume* volume = new CapsuleVolume(0.5f, 1.0f);
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
 	character->GetTransform().SetScale(Vector3(meshSize, meshSize, meshSize)).SetPosition(position).SetOrientation(orientation);
@@ -1670,8 +1893,8 @@ void TutorialGame::InitDefaultFloorRunway() {
 }
 
 void TutorialGame::InitGameExamples() {
-	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
-	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 2.5, 2.5);
+	//AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
+	//AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 2.5, 2.5);
 	
 	//RespawnPoint* respawnPoint = new RespawnPoint(Vector3(40, 5, 6));
 	//respawnPoint->AddRespawnPoint(respawnPoint);
@@ -1680,7 +1903,7 @@ void TutorialGame::InitGameExamples() {
 	testPlayer = AddPlayerToWorld(Vector3(0, 6.0f, 20.0f), q, Team::team1/*, respawnPoint*/);
 	lockedObject = testPlayer; 
 	//TestCode of Item
-	Item* p;
+	/*Item* p;
 	PropSystem::GetInstance()->SpawnItem(Vector3(6, 3, 6));
 	p = PropSystem::GetInstance()->SpawnSpeedUp(Vector3(9, 3, 6));
 	GameWorld::GetInstance()->AddGameObject(p);
@@ -1689,14 +1912,15 @@ void TutorialGame::InitGameExamples() {
 	p = PropSystem::GetInstance()->SpawnHeal(Vector3(15, 3, 6));
 	GameWorld::GetInstance()->AddGameObject(p);
 	p = PropSystem::GetInstance()->SpawnWeaponUp(Vector3(18, 3, 6));
-	GameWorld::GetInstance()->AddGameObject(p);
+	GameWorld::GetInstance()->AddGameObject(p);*/
 
 	
 
 	//AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	//AddEnemyToWorld(Vector3(5, 5, 0));
 	//AddBonusToWorld(Vector3(10, 5, 0));
-
+	AddPowerUps();
+	AddRespawnPoints(); 
 }
 
 void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius) {

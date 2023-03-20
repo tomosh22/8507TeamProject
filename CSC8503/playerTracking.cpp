@@ -87,7 +87,7 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 		if (speedUpTimer <= 0)
 			speedUp = false;
 	}
-	else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W) && Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && sprintTimer > 0) 
+	else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W) && Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && sprintTimer > 0 && canJump == true) 
 	{
 		moveSpeed = 30;
 		sprintTimer = sprintTimer - 20 * dt;
@@ -98,7 +98,8 @@ void NCL::CSC8503::playerTracking::Move(float dt)
 		sprintTimer = sprintTimer + 10 * dt;
 	}
 
-
+	if(Window::GetKeyboard()->KeyDown(KeyboardKeys::W) && onLadder)
+		this->GetPhysicsObject()->AddForce(Vector3(0, 25, 0));
 
 	transform.SetPosition(transform.GetPosition()+(forwad * Dup + right * Dright) * dt * moveSpeed);
 
@@ -161,6 +162,18 @@ void NCL::CSC8503::playerTracking::Weapon(float dt)
 			setWeponType(pistol);
 		}
 	}
+}
+
+void NCL::CSC8503::playerTracking::OnCollisionBegin(GameObject* otherObject)
+{
+	if (otherObject->GetName() == "ladder")
+		onLadder = true;
+}
+
+void NCL::CSC8503::playerTracking::OnCollisionEnd(GameObject* otherObject)
+{
+	if (otherObject->GetName() == "ladder")
+		onLadder = false;
 }
 
 void NCL::CSC8503::playerTracking::TakeDamage(int damage)

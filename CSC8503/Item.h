@@ -5,10 +5,13 @@
 #include"GameObject.h"
 #include"GameWorld.h"
 #include "playerTracking.h"
+#include "RenderObject.h"
 
 namespace NCL {
 	namespace CSC8503 {
 	
+		struct PBRTextures;
+
 		class Item :public GameObject {
 		public:
 			void Update(float dt);
@@ -37,7 +40,7 @@ namespace NCL {
 
 		class WeaponUpItem :public PowerUpItem {
 		public:
-			WeaponUpItem(const Vector3 pos);
+			WeaponUpItem(const Vector3 pos, PBRTextures* pbr);
 			~WeaponUpItem() {
 				//physicsProjectile;
 			}

@@ -1027,7 +1027,7 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated
 	object->GetRenderObject()->baseTex = spaceShipDiffuse;
 	object->GetRenderObject()->bumpTex = spaceShipBump;
 	
-	object->GetRenderObject()->pbrTextures = crystalPBR;
+	if(object->GetRenderObject()->pbrTextures == nullptr)object->GetRenderObject()->pbrTextures = crystalPBR;
 }
 /*
 
@@ -1281,28 +1281,28 @@ GameObject* TutorialGame::AddWallToWorld(const Vector3& position, Vector3 dimens
 
 GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position, Vector3 dimensions)
 {
-	GameObject* wall = new GameObject();
+	GameObject* myWall = new GameObject();
 
 	AABBVolume* volume = new AABBVolume(dimensions);
-	wall->SetBoundingVolume((CollisionVolume*)volume);
+	myWall->SetBoundingVolume((CollisionVolume*)volume);
 
-	wall->GetTransform()
+	myWall->GetTransform()
 		.SetPosition(position)
 		.SetScale(dimensions * 2);
 
 	
-	wall->SetRenderObject(new RenderObject(&wall->GetTransform(), cubeMesh, nullptr, basicShader));
-	wall->SetPhysicsObject(new PhysicsObject(&wall->GetTransform(), wall->GetBoundingVolume()));
+	myWall->SetRenderObject(new RenderObject(&myWall->GetTransform(), cubeMesh, nullptr, basicShader));
+	myWall->SetPhysicsObject(new PhysicsObject(&myWall->GetTransform(), myWall->GetBoundingVolume()));
 
-	wall->GetPhysicsObject()->SetInverseMass(0);
-	wall->GetPhysicsObject()->InitCubeInertia();
+	myWall->GetPhysicsObject()->SetInverseMass(0);
+	myWall->GetPhysicsObject()->InitCubeInertia();
 
-	InitPaintableTextureOnObject(wall);
-	wall->GetRenderObject()->pbrTextures = rockPBR;
+	InitPaintableTextureOnObject(myWall);
+	myWall->GetRenderObject()->pbrTextures = spaceShipPBR;
 
-	GameWorld::GetInstance()->AddGameObject(wall);
+	GameWorld::GetInstance()->AddGameObject(myWall);
 
-	return wall;
+	return myWall;
 }
 
 GameObject* NCL::CSC8503::TutorialGame::AddLadderToWorld(const Vector3& position, float height, bool rotated)
@@ -1556,6 +1556,8 @@ void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 
 	walls.push_back(AddWallToWorld2({ 75, 2.5, -50 }, { 10, 2.5, 1 }));
 	walls.push_back(AddWallToWorld2({ -75, 2.5, -50 }, { 10, 2.5, 1 }));
+
+	//AddPowerUps();
 }
 
 void NCL::CSC8503::TutorialGame::AddStructureToWorld()
@@ -1621,10 +1623,8 @@ void NCL::CSC8503::TutorialGame::AddPlatformsToWorld()
 
 void NCL::CSC8503::TutorialGame::AddPowerUps()
 {
-	GameObject* item;
-	item = PropSystem::GetInstance()->SpawnWeaponUp({ 0, 16, 0 });
-	item->GetRenderObject()->pbrTextures = crystalPBR;
-	GameWorld::GetInstance()->AddGameObject(item);
+	
+	PropSystem::GetInstance()->SpawnWeaponUp({ 0, 16, 0 }, grassWithWaterPBR);
 
 	PropSystem::GetInstance()->SpawnHeal({ 0, 5, 150 });
 	PropSystem::GetInstance()->SpawnHeal({ 0, 5, -150 });

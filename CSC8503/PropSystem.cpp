@@ -1,5 +1,6 @@
 #include "PropSystem.h"
 
+
 using namespace NCL;
 using namespace CSC8503;
 
@@ -29,8 +30,8 @@ Item* NCL::CSC8503::PropSystem::SpawnShield(Vector3 pos)
 	return newItem;
 }
 
-Item* NCL::CSC8503::PropSystem::SpawnWeaponUp(Vector3 pos)
+Item* NCL::CSC8503::PropSystem::SpawnWeaponUp(Vector3 pos, PBRTextures* pbr)
 {
-	PowerUpItem* newItem = new WeaponUpItem(pos);
+	PowerUpItem* newItem = new WeaponUpItem(pos,pbr);
 	return newItem;
 }

@@ -52,7 +52,7 @@ NCL::CSC8503::PowerUpItem::PowerUpItem()
 {
 }
 
-NCL::CSC8503::WeaponUpItem::WeaponUpItem(const Vector3 pos)
+NCL::CSC8503::WeaponUpItem::WeaponUpItem(const Vector3 pos,PBRTextures* pbr)
 {
 	SphereVolume* volume = new SphereVolume(1.0f);
 	SetBoundingVolume((CollisionVolume*)volume);
@@ -70,6 +70,7 @@ NCL::CSC8503::WeaponUpItem::WeaponUpItem(const Vector3 pos)
 	SetName("WeaponUp");
 	originalPos = pos;
 	SetActive(true);
+	GetRenderObject()->pbrTextures = pbr;
 	GameWorld::GetInstance()->AddGameObject(this);
 }
 

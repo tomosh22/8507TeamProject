@@ -1,4 +1,5 @@
 #pragma once
+
 #include "GameTechRenderer.h"
 #ifdef USEVULKAN
 #include "GameTechVulkanRenderer.h"
@@ -15,11 +16,30 @@
 #include"MeshAnimation.h"
 #include"MeshMaterial.h"
 
+#include <thread>
+#include <mutex>
+
 namespace NCL {
 	namespace CSC8503 {
-		const int GAME_MODE_DEFAULT = 0;
-		const int GAME_MODE_GRAPHIC_TEST = 1;
-		const int GAME_MODE_PHISICAL_TEST = 2;
+		const enum GameMode {
+			GAME_MODE_DEFAULT,
+			GAME_MODE_GRAPHIC_TEST,
+			GAME_MODE_SINGLE_GAME,
+			GAME_MODE_ONLINE_GAME,
+			GAME_MODE_SELECT_TEAM,
+		};
+
+		const int TWO_PLAYERS = 2;
+		const int FOUR_PLAYERS = 4;
+
+		enum TeamID {
+			TEAM_DEFAULT,
+			TEAM_RED,
+			TEAM_BLUE,
+			TEAM_GREEN,
+			TEAM_YELLOW,
+		};
+
 		class Projectile;
 		class TutorialGame		{
 		public:
@@ -28,9 +48,11 @@ namespace NCL {
 
 			virtual void UpdateGame(float dt);
 			void SelectMode();
+			int SelectTeam();
 			//void InitWorld(); //moved from protected
 			void InitGraphicTest();
-			void InitPhysicalTest();
+			void InitSingleGameMode();
+			void InitOnlineGame(int treamID);
 			void InitWorldtest2();
 
 			void setLockedObjectNull();
@@ -80,18 +102,6 @@ namespace NCL {
 
 			MeshGeometry* playerMesh = nullptr;
 
-			enum Team {
-				teamNull,
-				team1,
-				team2,
-				team3,
-				team4,
-				team5,
-				team6,
-				team7,
-				team8,
-			};
-
 		protected:
 			void InitialiseAssets();
 
@@ -107,7 +117,7 @@ namespace NCL {
 			in the module. Feel free to mess around with them to see different objects being created in different
 			test scenarios (constraints, collision types, and so on). 
 			*/
-			void InitGameExamples();
+			void InitGameObjects();
 
 			void InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius);
 			void InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing);
@@ -119,10 +129,12 @@ namespace NCL {
 			void InitDefaultFloor();
 			void InitDefaultFloorRunway();
 
+			void UpdateWorldCamera(float dt);
+			void CameraLockOnPlayer();
+			void RayCast();
 			bool SelectObject();
-			void MoveSelectedObject();
-			void DebugObjectMovement();
 			void LockedObjectMovement();
+			void ControlPlayer(float dt);
 			void movePlayer(playerTracking* unitGoat);
 			void setLockedObject(GameObject* goatPlayer);
 
@@ -187,6 +199,8 @@ namespace NCL {
 
 			float		forceMagnitude;
 
+			Vector3 viewOffset = Vector3(10.0f, 3.0f, 10.0f);
+
 			GameObject* selectionObject = nullptr;
 			GameObject* phantomCubeOutput = nullptr;
 
@@ -206,10 +220,9 @@ namespace NCL {
 
 			GameObject* objClosest = nullptr;
 
-			playerTracking* goatCharacter = nullptr;
+			//playerTracking* goatCharacter = nullptr;
 			GameObject* EnemyGoat = nullptr;
-			playerTracking* testPlayer = nullptr;
-			//RespawnPoint* respawnPoint; 
+			playerTracking* playerObject = nullptr;
 
 			const int bulletLifeLimit = 2;
 			const int bulletDeletionLimit = 5;
@@ -334,8 +347,19 @@ namespace NCL {
 			int currentFrame;
 			float frameTime;
 
+			bool pause = false;
 
+			int playerNum = 0;
 		};
+
+		/*
+
+		Each of the little demo scenarios used in the game uses the same 2 meshes,
+		and the same texture and shader. There's no need to ever load in anything else
+		for this module, even in the coursework, but you can add it if you like!
+
+		*/
+
 	}
 }
 

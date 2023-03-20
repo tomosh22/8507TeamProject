@@ -7,51 +7,70 @@ namespace NCL::CSC8503 {
 		short messageID;
 		std::string content;
 
-		MessagePacket() {
+		MessagePacket(int nid) {
+			networkID = nid;
 			messageID = 0;
 			type = Message;
 			size = sizeof(MessagePacket) - sizeof(GamePacket);
 		}
 	};
 
-	struct AddObjectPacket :public GamePacket {
-		int objectID = -1;
-		NetworkState fullState;
+	struct ConfirmedPacket : public GamePacket {
+		ConfirmedPacket(int nid = 0) {
+			networkID = nid;
+			type = Connect_Confirmed;
+			size = sizeof(ConfirmedPacket) - sizeof(GamePacket);
+		}
+	};
 
-		AddObjectPacket() {
-			type = Add_Object;
-			size = sizeof(AddObjectPacket) - sizeof(GamePacket);
+	struct SelectModePacket : public GamePacket {
+		short mode;
+		SelectModePacket(int nid, int mode = 0) : mode(mode) {
+			networkID = nid;
+			type = Select_Player_Mode;
+			size = sizeof(SelectModePacket) - sizeof(GamePacket);
 		}
 	};
 
 	struct FullPacket : public GamePacket {
+		int teamId = -1;
 		int		objectID = -1;
 		NetworkState fullState;
 
-		FullPacket() {
+		FullPacket(int nid) {
+			networkID = nid;
 			type = Full_State;
 			size = sizeof(FullPacket) - sizeof(GamePacket);
 		}
 	};
 
-	struct DeltaPacket : public GamePacket {
+	struct DeltaPacket : public GamePacket { 
 		int		fullID = -1;
 		int		objectID = -1;
 		char	pos[3];
 		char	orientation[4];
 
-		DeltaPacket() {
+		DeltaPacket(int nid) {
+			networkID = nid;
 			type = Delta_State;
 			size = sizeof(DeltaPacket) - sizeof(GamePacket);
 		}
 	};
 
-	struct ClientPacket : public GamePacket {
-		int		lastID;
-		char	buttonstates[8];
+	struct ActionPacket : public GamePacket {
+		bool buttonstates[8] = {false, false, false, false, false, false, false, false};
+		Vector3 param;
+		NetworkState state;
 
-		ClientPacket() {
-			size = sizeof(ClientPacket) - sizeof(GamePacket);
+		ActionPacket(int nid, int index, Vector3 info = Vector3(), NetworkState st = NetworkState()) {
+			type = Player_Action;
+			if (index < 8) {
+				buttonstates[index] = true;
+			}
+			networkID = nid;
+			param = info;
+			state = st;
+			size = sizeof(ActionPacket) - sizeof(GamePacket);
 		}
 	};
 }

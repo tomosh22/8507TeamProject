@@ -7,20 +7,42 @@
 namespace NCL::CSC8503 {
 	class GameObject;
 
-	class NetworkObject		{
+	class NetworkObject	: public GameObject {
 	public:
-		NetworkObject(GameObject* o, int id);
+		NetworkObject(int id = 0);
 		virtual ~NetworkObject();
 
+		void SetNetworkId(int id) { networkID = id; }
+		int GetNetworkId() { return networkID; }
+		
 		//Called by clients
-		virtual bool ReadPacket(bool delta, GamePacket* p);
+		virtual bool ReadPacket(bool delta, GamePacket& p);
 		//Called by servers
-		virtual bool WritePacket(GamePacket** p, bool deltaFrame, int stateID);
+		virtual bool WritePacket(GamePacket** p, int packetTp, int stateID);
 
 		void UpdateStateHistory(int minID);
 
-		GameObject* GetObjectPointer() { return object; }
+		void AddSendMessage(GamePacket* packet) { sendMessagePool.push_back(packet); }
 
+		vector<GamePacket*> GetSendMessages() { return sendMessagePool; }
+
+		void ClearMessagePool() {
+			//Do not release the pointer
+			for (auto it : sendMessagePool) {
+				if (it) {
+					delete it;
+				}
+			}
+			sendMessagePool = vector<GamePacket*>();
+		}
+
+		void Online() { online = true; }
+
+		bool IsOnline() { return online; }
+
+		void Offline() { online = false; }
+
+		virtual void UpdateAction(ActionPacket packet) {}
 	protected:
 
 		NetworkState& GetLatestNetworkState();
@@ -33,9 +55,10 @@ namespace NCL::CSC8503 {
 		virtual bool WriteDeltaPacket(GamePacket**p, int stateID);
 		virtual bool WriteFullPacket(GamePacket**p);
 
-		GameObject* object;
 
 		NetworkState lastFullState;
+
+		vector<GamePacket*> sendMessagePool;
 
 		std::vector<NetworkState> stateHistory;
 
@@ -43,5 +66,7 @@ namespace NCL::CSC8503 {
 		int fullErrors;
 
 		int networkID;
+
+		bool online = false;
 	};
 }

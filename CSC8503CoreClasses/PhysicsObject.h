@@ -35,6 +35,14 @@ namespace NCL {
 				return force;
 			}
 
+			float GetElasticity() const {
+				return elasticity;
+			}
+
+			float GetFriction() const {
+				return friction;
+			}
+
 			bool getAlphaPhasing() {
 				return alphaPhasing;
 			}
@@ -51,17 +59,17 @@ namespace NCL {
 				return inverseMass;
 			}
 
-			bool GetFloorContact() {
-				return floorcontact;
-			}
+			//bool GetFloorContact() {
+			//	return floorcontact;
+			//}
 
-			void setFloorContactTrue() {
-				floorcontact = true;
-			}
+			//void setFloorContactTrue() {
+			//	floorcontact = true;
+			//}
 
-			void setFloorContactFalse() {
-				floorcontact = false;
-			}
+			//void setFloorContactFalse() {
+			//	floorcontact = false;
+			//}
 
 			bool GetCanJump() {
 				return canJump;

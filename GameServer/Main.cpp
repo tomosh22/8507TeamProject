@@ -1,12 +1,12 @@
 #include "ServerObject.h"
 #include <conio.h>
 
-
+using namespace NCL::CSC8503;
 
 int main() {
 	//init
 	NetworkBase::Initialise();
-	auto server = new NCL::CSC8503::ServerObject(NetworkBase::GetDefaultPort(), 4);
+	auto server = new ServerObject(NetworkBase::GetDefaultPort(), MAX_CLIENT_NUM);
 	server->Init();
 	while (true) {
 		while (!_kbhit()) {

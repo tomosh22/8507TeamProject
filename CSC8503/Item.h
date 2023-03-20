@@ -63,7 +63,7 @@ namespace NCL {
 			void Trigger(GameObject* character) override {
 				std::cout << "Speed Up" << std::endl;
 				playerTracking* c = static_cast<playerTracking*>(character);
-				c->SpeedUp();
+				c->TakeSpeedUpItem();
 				std::cout << c->GetSpeed() << std::endl;
 				this->GetTransform().SetPosition(Vector3(1000, 1000, 1000));
 				notSpawned = true;

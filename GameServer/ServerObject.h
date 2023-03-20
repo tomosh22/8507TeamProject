@@ -10,12 +10,14 @@
 namespace NCL {
 	namespace CSC8503 {
 
-#define MAX_CLIENT_NUM 4
-#define CONNECT_CHECK_OFFSET 10
+		const int HOST_PLAYER_PID = 0;
+		const int MAX_CLIENT_NUM = 4;
+		const int CONNECT_CHECK_OFFSET = 10;
 
 		struct ConnectInfo {
-			ENetPeer* peer;
+			int gameMode;
 			time_t updateTime;
+			ENetPeer* peer;
 
 			ENetPeer* GetPeer() { return peer; }
 			bool Expire(time_t tm) { return updateTime + CONNECT_CHECK_OFFSET <= tm; }
@@ -31,8 +33,8 @@ namespace NCL {
 			void Init();
 			void UpdateServer() override;
 			void ReceivePacket(int type, GamePacket* payload, int source = -1) override;
-			void ReplyToClient(int type, ENetPeer* peer);
-			void Broadcast(int type, ENetPacket* msg, int source);
+			void ReplyToClient(int pid, GamePacket* packet);
+			void Broadcast(int type, GamePacket* payload, int source);
 			//handle event
 			void HandleConnected(ENetPeer* peer);
 			void HandleDisconnected(int pid);

@@ -23,6 +23,7 @@ void ServerObject::UpdateServer() {
 			HandleConnected(peer);
 		}
 		else if (ENetEventType::ENET_EVENT_TYPE_DISCONNECT == type) {
+
 			HandleDisconnected(pid);
 		}
 		else if (ENetEventType::ENET_EVENT_TYPE_RECEIVE == type) {
@@ -33,7 +34,7 @@ void ServerObject::UpdateServer() {
 		}
 		enet_packet_destroy(event.packet);
 	}
-	CheckConnectExpire();
+	//CheckConnectExpire();
 }
 
 //check if exception has occurred on clients 
@@ -51,9 +52,11 @@ void ServerObject::CheckConnectExpire() {
 void ServerObject::HandleConnected(ENetPeer* peer) {
 	if (!peer) { return; }
 	auto tm = time(0);
-	auto info = ConnectInfo{ peer, tm };
+	auto info = ConnectInfo{0, tm, peer };
 	connects.insert(std::pair<int, ConnectInfo>(peer->incomingPeerID, info));
 	std::cout << "Client[" << peer->incomingPeerID << "]: connected..., time: " << tm << std::endl;
+	auto sp = new ConfirmedPacket(peer->incomingPeerID);
+	ReplyToClient(peer->incomingPeerID, sp);
 }
 
 void ServerObject::HandleDisconnected(int pid) {
@@ -81,39 +84,58 @@ void ServerObject::HandleReceived(int pid, GamePacket* packet) {
 //@param payload - message
 //@param source - source peer
 void ServerObject::ReceivePacket(int type, GamePacket* payload, int source) {
-	GamePacket* packet = DeepCopyPacket(payload);
-	ENetPacket* dataPacket = enet_packet_create(packet, payload->GetTotalSize(), 0);
-	if (NULL == dataPacket) {
-		std::cout << "Client[" << source << "]: Create global packet error" << source << std::endl;
-		return;
+	if (!payload) { return; }
+
+	//Host player selection mode
+	if (Select_Player_Mode == type) {
+		if (HOST_PLAYER_PID == source) {
+			auto it = connects.find(source);
+			if (connects.end() == it) { return; }
+			SelectModePacket* sp = (SelectModePacket*)payload;
+			it->second.gameMode = sp->mode;
+			std::cout << "Save mode: " << it->second.gameMode << std::endl;
+		} else {
+			auto it = connects.find(HOST_PLAYER_PID);
+			if (connects.end() == it) { return; }
+			auto sp = new SelectModePacket(source, it->second.gameMode);
+			ReplyToClient(source, sp);
+			return;
+		}
 	}
+
 	//todo
 	//enet_host_broadcast(netHandle, 0, dataPacket);
-	Broadcast(type, dataPacket, source);
+	Broadcast(type, payload, source);
 	
-	delete packet;
 }
 
-void ServerObject::ReplyToClient(int type, ENetPeer* peer) {
-	if (!peer) { return; }
-	auto msgData = new GamePacket();
-	msgData->type = type;
-	ENetPacket* msg = enet_packet_create(&msgData, msgData->GetTotalSize(), 0);
+void ServerObject::ReplyToClient(int pid, GamePacket* packet) {
+	auto it = connects.find(pid);
+	if (connects.end() == it) { return; }
+	auto peer = it->second.GetPeer();
+	ENetPacket* msg = enet_packet_create(packet, packet->GetTotalSize(), 0);
 	if (msg) {
 		enet_peer_send(peer, 0, msg);
 	}
-	delete msgData;
 }
 
 //broadcast
-void ServerObject::Broadcast(int type, ENetPacket* msg, int source) {
-	if (NULL == msg) { return; }
+void ServerObject::Broadcast(int type, GamePacket* payload, int source) {
+	if (!payload) { return; }
+
 	for (auto it : connects) {
+		GamePacket* packet = DeepCopyPacket(payload);
+		ENetPacket* msg = enet_packet_create(packet, packet->GetTotalSize(), 0);
+		if (!msg) { 
+			return;
+		}
+
 		int pid = it.first;
 		if (source == pid) {
 			continue;
 		}
 		enet_peer_send(it.second.GetPeer(), 0, msg);
+		delete packet;
 	}
 }
 
@@ -122,14 +144,14 @@ GamePacket* ServerObject::DeepCopyPacket(GamePacket* packet) {
 	switch (packet->type) {
 	case Message:
 		return new MessagePacket(*(MessagePacket*)packet);
-	case Add_Object:
-		return new AddObjectPacket(*(AddObjectPacket*)packet);
 	case Full_State:
 		return new FullPacket(*(FullPacket*)packet);
 	case Delta_State:
 		return new DeltaPacket(*(DeltaPacket*)packet);
-	case Received_State:
-		return new ClientPacket(*(ClientPacket*)packet);
+	case Player_Action:
+		return new ActionPacket(*(ActionPacket*)packet);
+	case Select_Player_Mode:
+		return new SelectModePacket(*(SelectModePacket*)packet);
 	default:
 		return new GamePacket(*packet);
 	}

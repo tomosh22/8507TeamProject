@@ -20,30 +20,39 @@ NetworkedGame::~NetworkedGame() {
 	if (client) {
 		delete client;
 	}
+
+	if (netState == CONNECTED) {
+		CloseClient();
+	}
 }
 
-void NetworkedGame::StartClient(char a, char b, char c, char d) {
+void NetworkedGame::StartClient() {
 	if (!playerObject) {
 		std::cout << "There is no player in the world." << std::endl;
 		return;
 	}
 
+	auto ip = NetworkBase::GetIpAddress();
+
 	localPlayer = playerObject;
 	client = new GameClient();
-	if (!client->Connect(a, b, c, d, NetworkBase::GetDefaultPort())) {
-		std::cout << "Client:: connect server flase, ip: " << a << "." << b << "." << c << "." << d << " port: " << NetworkBase::GetDefaultPort() << std::endl;
+	if (!client->Connect(ip[0], ip[1], ip[2], ip[3], NetworkBase::GetDefaultPort())) {
+		std::cout << "Client:: connect server flase, ip: " << ip[0] << "." << ip[1] << "." << ip[2] << "." << ip[3] << " port: " << NetworkBase::GetDefaultPort() << std::endl;
 		return;
 	}
 
 	for (int i = BasicNetworkMessages::None; i < BasicNetworkMessages::MessageTypeMax; i++) {
 		client->RegisterPacketHandler(i, this);
 	}
-
-	std::cout << "Client: connecting server" << std::endl;
+	netState = CONNECTING;
+	std::cout << "Client: connecting server, ip: " << ip[0] << "." << ip[1] << "." << ip[2] << "." << ip[3] << " port: " << NetworkBase::GetDefaultPort() << std::endl;
 }
 
 void NetworkedGame::CloseClient() {
-	online = false;
+	netState = DISCONNECT;
+	if (localPlayer) {
+		localPlayer->Offline();
+	}
 	if (client) {
 		client->Destroy();
 	}
@@ -57,26 +66,35 @@ void NetworkedGame::CloseClient() {
 }
 
 void NetworkedGame::UpdateGame(float dt) {
-	if (online) {
-		Debug::Print("Network: on, Press F10 to exit network.", Vector2(1, 5));
+	if (GAME_MODE_ONLINE_GAME == gameMode) {
+		if (DISCONNECT == netState) {
+			StartClient();
+		}
+		else if (CONNECTING == netState) {
+			Debug::Print("Connecting server...", Vector2(40, 30));
+		}
+		else if (CONNECTED == netState) {
+			//Waiting for host players to choose
+			//Waiting for players to connect
+			if (playerNum > GetNetworkPlayerNum() || playerNum == 0) {
+				Debug::Print("Waiting players... player num: " + std::to_string(GetNetworkPlayerNum()), Vector2(25, 25), Debug::GREEN);
+				if (!pause) { pause = true; }
+			}
+			else {
+				if (pause) { pause = false; }
+			}
+		}
 	}
-	else {
-		Debug::Print("Network: off, Press F9 to start network.", Vector2(1, 5));
-	}
-	
-	if (!client && Window::GetKeyboard()->KeyPressed(KeyboardKeys::F9)) { StartClient(127, 0, 0, 1); }
-	if (client && Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) { CloseClient(); }
 	if (client) {
 		//update from server
 		client->UpdateClient();
-		if (online) {
+		if (CONNECTED == netState) {
 			//broadcast
 			timeToNextPacket -= dt;
 			if (timeToNextPacket < 0) {
 				UpdateToServer(dt);
 				timeToNextPacket += 1.0f / 20.0f; //20hz server/client update
 			}
-			UpdateToServer(dt);
 		}
 	}
 
@@ -124,13 +142,19 @@ void NetworkedGame::UpdateMinimumState() {
 }
 
 void NetworkedGame::ReceivePacket(int type, GamePacket* payload, int source) {
+	if (!payload) { return; }
+	source = payload->networkID;
 	switch (type) {
 	case Connect_Confirmed:{
-		HandleConnectConfirmed();
+		HandleConnectConfirmed(payload);
 		break;
 	}
 	case Player_Disconnected:{
 		HandlePlayerDisconnect(source);
+		break;
+	}
+	case Select_Player_Mode: {
+		HandleSelectPlayerMode(payload);
 		break;
 	}
 	case Full_State:{
@@ -147,7 +171,7 @@ void NetworkedGame::ReceivePacket(int type, GamePacket* payload, int source) {
 	}
 	case Shutdown: {
 		std::cout << "Client: server disconnected!" << std::endl;
-		online = false;
+		netState = DISCONNECT;
 		break;
 	}
 	default:
@@ -155,16 +179,26 @@ void NetworkedGame::ReceivePacket(int type, GamePacket* payload, int source) {
 	}
 }
 
-void NetworkedGame::HandleConnectConfirmed() {
-	FullPacket* msg = new FullPacket();
-	if (localPlayer) {
+void NetworkedGame::HandleConnectConfirmed(GamePacket* packet) {
+	auto recv = (ConfirmedPacket*)packet;
+ 	if (localPlayer) {
+		FullPacket* msg = new FullPacket(recv->networkID);
 		msg->teamId = localPlayer->GetTeamId();
+		msg->objectID = recv->networkID;
 		msg->fullState.position = localPlayer->GetTransform().GetPosition();
 		msg->fullState.orientation = localPlayer->GetTransform().GetOrientation();
+		localPlayer->SetNetworkId(recv->networkID);
+		localPlayer->Online();
+		client->SendPacket(*msg);	//broadcast first connect;
+		////Get mode
+		if (localPlayer->GetNetworkId() != 0) {
+			auto packet = new SelectModePacket(recv->networkID);
+			client->SendPacket(*packet);
+		}
 	}
-	client->SendPacket(*msg);	//broadcast first connect;
-	std::cout << "Client: connect server confirmed!" << std::endl;
-	online = true;
+
+	std::cout << "Client: connect server confirmed! network_id: " << localPlayer->GetNetworkId() << std::endl;
+	netState = CONNECTED;
 }
 
 void NetworkedGame::HandlePlayerDisconnect(int pid) {
@@ -178,13 +212,20 @@ void NetworkedGame::HandlePlayerDisconnect(int pid) {
 	serverPlayers.erase(it);
 }
 
+void NetworkedGame::HandleSelectPlayerMode(GamePacket* payload) {
+	auto packet = (SelectModePacket*)payload;
+	if (packet) {
+		playerNum = packet->mode;
+	}
+}
+
 void NetworkedGame::HandleUpdateState(bool delta, int pid, GamePacket* payload) {
 	if (!payload) { return; }
 	auto it = serverPlayers.find(pid);
 	if (serverPlayers.end() == it) {
 		if (Full_State == payload->type) {
 			auto fullPacket = (FullPacket*)payload;
-			AddNewNetworkPlayerToWorld(pid, fullPacket->teamId, fullPacket->fullState);
+			AddNewNetworkPlayerToWorld(fullPacket->objectID, fullPacket->teamId, fullPacket->fullState);
 		}
 		return;
 	}

@@ -25,7 +25,7 @@ bool NetworkObject::ReadPacket(bool delta, GamePacket& p) {
 }
 
 bool NetworkObject::WritePacket(GamePacket** p, int packetTp, int stateID) {
-	if (Full_State == packetTp) {
+	if (Delta_State == packetTp) {
 		if (!WriteDeltaPacket(p, stateID)) {
 			return WriteFullPacket(p);
 		}
@@ -71,7 +71,7 @@ bool NetworkObject::ReadFullPacket(NetworkState &state) {
 }
 
 bool NetworkObject::WriteDeltaPacket(GamePacket**p, int stateID) {
-	DeltaPacket* dp = new DeltaPacket();
+	DeltaPacket* dp = new DeltaPacket(networkID);
 	NetworkState state;
 	if (!GetNetworkState(stateID, state)) {
 		return false;
@@ -99,9 +99,10 @@ bool NetworkObject::WriteDeltaPacket(GamePacket**p, int stateID) {
 }
 
 bool NetworkObject::WriteFullPacket(GamePacket**p) {
-	FullPacket* fp = new FullPacket();
+	FullPacket* fp = new FullPacket(networkID);
 
 	fp->objectID = networkID;
+	fp->teamId = teamID;
 	fp->fullState.position = transform.GetPosition();
 	fp->fullState.orientation = transform.GetOrientation();
 	fp->fullState.stateID = lastFullState.stateID++;

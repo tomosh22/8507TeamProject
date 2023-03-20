@@ -519,8 +519,43 @@ void TutorialGame::UpdateGame(float dt) {
 		SendRayMarchData();
 		break;
 	}
-	case GAME_MODE_PHISICAL_TEST:
-	case GAME_MODE_GAME:
+	case GAME_MODE_SELECT_TEAM:
+	{
+		int teamID = SelectTeam();
+		if (teamID != 0) {
+			gameMode = GAME_MODE_ONLINE_GAME;
+			InitOnlineGame(teamID);
+			return;
+		}
+		renderer->Update(dt);
+		renderer->Render();
+		Debug::UpdateRenderables(dt);
+		return;
+	}
+	case GAME_MODE_ONLINE_GAME:
+	{
+		//Host player selects the number of players
+		if (0 == playerNum && 0 == playerObject->GetNetworkId() && playerObject->IsOnline()) {
+			Debug::Print("Please choose your team.", Vector2(30, 30));
+			Debug::Print("1. 2 Players.", Vector2(30, 35) );
+			Debug::Print("2. 4 Players.", Vector2(30, 40));
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
+				playerNum = TWO_PLAYERS;
+			}
+			else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
+				playerNum = FOUR_PLAYERS;
+			}
+			if (playerNum != 0) {
+				playerObject->WriteActionMessage(Select_Player_Mode, playerNum);
+			}
+
+			renderer->Update(dt);
+			renderer->Render();
+			Debug::UpdateRenderables(dt);
+			return;
+		}
+	}
+	case GAME_MODE_SINGLE_GAME:
 	{
 		frameTime -= dt;
 		while (frameTime < 0.0f) {
@@ -528,19 +563,6 @@ void TutorialGame::UpdateGame(float dt) {
 			frameTime += 1.0f / playerIdle->GetFrameRate();
 		}
 		break;
-	}
-	case GAME_MODE_SELECT_TEAM:
-	{
-		int teamID = SelectTeam();
-		if (teamID != 0) {
-			gameMode = GAME_MODE_GAME;
-			InitGame(teamID);
-			break;
-		}
-		renderer->Update(dt);
-		renderer->Render();
-		Debug::UpdateRenderables(dt);
-		return;
 	}
 	default:
 		std::cout << "Game mode error" << std::endl;
@@ -550,8 +572,6 @@ void TutorialGame::UpdateGame(float dt) {
 	timePassed += dt;
 
 	if (rayMarch)DispatchComputeShaderForEachPixel();
-	if (floor != nullptr)
-		Debug::DrawAxisLines(floor->GetTransform().GetMatrix());
 
 	UpdateWorldCamera(dt);
 
@@ -576,9 +596,9 @@ void TutorialGame::UpdateGame(float dt) {
 void TutorialGame::SelectMode() {
 	string text = "1. Graphic Test Mode.";
 	Debug::Print(text, Vector2(30, 30), Debug::GREEN);
-	text = "2. Physical Test Mode.";
+	text = "2. Single Player Mode.";
 	Debug::Print(text, Vector2(30, 40), Debug::GREEN);
-	text = "3. Game Start";
+	text = "3. Online Game Mode.";
 	Debug::Print(text, Vector2(30, 50), Debug::GREEN);
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
@@ -586,8 +606,8 @@ void TutorialGame::SelectMode() {
 		InitGraphicTest();
 	}
 	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
-		gameMode = GAME_MODE_PHISICAL_TEST;
-		InitPhysicTest();
+		gameMode = GAME_MODE_SINGLE_GAME;
+		InitSingleGameMode();
 	}
 	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM3)) {
 		gameMode = GAME_MODE_SELECT_TEAM;
@@ -740,6 +760,7 @@ void TutorialGame::UpdateKeys() {
 }
 
 void TutorialGame::ControlPlayer(float dt) {
+	if (pause) { return; }
 	if (!playerObject) { return; }
 
 	Transform& transform = playerObject->GetTransform();
@@ -783,8 +804,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	//switch weapon
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::TAB)) {
 		playerObject->SwitchWeapon();
-		auto packet = new ActionPacket(PLAYER_ACTION_SWITCH_WEAPON);
-		playerObject->AddSendMessage(packet);
+		playerObject->WriteActionMessage(PLAYER_ACTION_SWITCH_WEAPON);
 	}
 	//Aiming
 	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT)){
@@ -793,11 +813,7 @@ void TutorialGame::ControlPlayer(float dt) {
 		//shoot
 		if (Window::GetMouse()->ButtonHeld(MouseButtons::LEFT) && playerObject->CanShoot()) {
 			playerObject->StartShooting(playerObject->GetAimedTarget());
-			auto state = NetworkState();
-			state.position = transform.GetPosition();
-			state.orientation = transform.GetOrientation();
-			auto packet = new ActionPacket(PLAYER_ACTION_SHOOT, playerObject->GetAimedTarget(), state);
-			playerObject->AddSendMessage(packet);
+			playerObject->WriteActionMessage(PLAYER_ACTION_SHOOT);
 		}
 	}
 	else {
@@ -928,7 +944,7 @@ void TutorialGame::InitGraphicTest() {
 	return;
 }
 
-void TutorialGame::InitPhysicTest() {
+void TutorialGame::InitSingleGameMode() {
 	renderer->drawCrosshair = false;
 	GameWorld::GetInstance()->ClearAndErase();
 	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
@@ -946,7 +962,7 @@ void TutorialGame::InitPhysicTest() {
 #endif
 }
 
-void TutorialGame::InitGame(int teamID) {
+void TutorialGame::InitOnlineGame(int teamID) {
 	renderer->drawCrosshair = false;
 	GameWorld::GetInstance()->ClearAndErase();
 	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);

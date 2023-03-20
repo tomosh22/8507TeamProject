@@ -195,13 +195,33 @@ void playerTracking::HealthUp(Gun newGun)
 	
 }
 
-bool playerTracking::WritePacket(GamePacket** p, int packetTp, int stateID) {
-	if (Delta_State == packetTp) {
-		if (!WriteDeltaPacket(p, stateID)) {
-			return WriteFullPacket(p);
-		}
+void playerTracking::WriteActionMessage(int actionTp, int param) {
+	if (!online) { return; }
+	switch (actionTp) {
+	case PLAYER_ACTION_SWITCH_WEAPON:
+	{
+		auto packet = new ActionPacket(networkID, PLAYER_ACTION_SWITCH_WEAPON);
+		sendMessagePool.push_back(packet);
+		break;
 	}
-	return WriteFullPacket(p);
+	case PLAYER_ACTION_SHOOT:
+	{
+		auto state = NetworkState();
+		state.position = transform.GetPosition();
+		state.orientation = transform.GetOrientation();
+		auto packet = new ActionPacket(networkID, PLAYER_ACTION_SHOOT, aimPos, state);
+		sendMessagePool.push_back(packet);
+		break;
+	}
+	case Select_Player_Mode:
+	{
+		auto packet = new SelectModePacket(networkID, param);
+		sendMessagePool.push_back(packet);
+		break;
+	}
+	default:
+		std::cout << "Error player action" << std::endl;
+	}
 }
 
 void playerTracking::PrintPlayerInfo() {

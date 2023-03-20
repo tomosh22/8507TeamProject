@@ -7,20 +7,27 @@ namespace NCL {
 	namespace CSC8503 {
 		class GameClient;
 		class NetworkPlayer;
-
+		const enum GameNetworkState {
+			DISCONNECT,
+			CONNECTING,
+			CONNECTED,
+		};
 		class NetworkedGame : public TutorialGame, public PacketReceiver {
 		public:
 			NetworkedGame();
 			~NetworkedGame();
-			void StartClient(char a, char b, char c, char d);
+			void StartClient();
 			void CloseClient();
 
 			void UpdateGame(float dt) override;
 			void ReceivePacket(int type, GamePacket* payload, int source) override;
 			void SetLocalPlayer(NetworkObject* object) { this->localPlayer = object; }
 
-			void HandleConnectConfirmed();
+			int GetNetworkPlayerNum() { return serverPlayers.size() + 1; }
+
+			void HandleConnectConfirmed(GamePacket* packet);
 			void HandlePlayerDisconnect(int pid);
+			void HandleSelectPlayerMode(GamePacket* payload);
 			void HandleUpdateState(bool delta, int pid, GamePacket* payload);
 			void AddNewNetworkPlayerToWorld(int pid, int teamID, NetworkState state);
 			void HandlePlayerAction(int pid, GamePacket* payload);
@@ -48,7 +55,7 @@ namespace NCL {
 			std::map<int, NetworkObject*> serverPlayers;
 			NetworkObject* localPlayer;
 
-			bool online = false;
+			int netState = DISCONNECT;
 		};
 	}
 }

@@ -13,6 +13,7 @@ namespace NCL::CSC8503 {
 		virtual ~NetworkObject();
 
 		void SetNetworkId(int id) { networkID = id; }
+		int GetNetworkId() { return networkID; }
 		
 		//Called by clients
 		virtual bool ReadPacket(bool delta, GamePacket& p);
@@ -29,6 +30,12 @@ namespace NCL::CSC8503 {
 			//Do not release the pointer
 			sendMessagePool = vector<GamePacket*>();
 		}
+
+		void Online() { online = true; }
+
+		bool IsOnline() { return online; }
+
+		void Offline() { online = false; }
 
 		virtual void UpdateAction(ActionPacket packet) {}
 	protected:
@@ -54,5 +61,7 @@ namespace NCL::CSC8503 {
 		int fullErrors;
 
 		int networkID;
+
+		bool online = false;
 	};
 }

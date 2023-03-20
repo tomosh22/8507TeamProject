@@ -23,11 +23,16 @@
 
 namespace NCL {
 	namespace CSC8503 {
-		const int GAME_MODE_DEFAULT = 0;
-		const int GAME_MODE_GRAPHIC_TEST = 1;
-		const int GAME_MODE_PHISICAL_TEST = 2;
-		const int GAME_MODE_GAME = 3;
-		const int GAME_MODE_SELECT_TEAM = 4;
+		const enum GameMode {
+			GAME_MODE_DEFAULT,
+			GAME_MODE_GRAPHIC_TEST,
+			GAME_MODE_SINGLE_GAME,
+			GAME_MODE_ONLINE_GAME,
+			GAME_MODE_SELECT_TEAM,
+		};
+
+		const int TWO_PLAYERS = 2;
+		const int FOUR_PLAYERS = 4;
 
 		enum TeamID {
 			TEAM_DEFAULT,
@@ -48,8 +53,8 @@ namespace NCL {
 			int SelectTeam();
 			//void InitWorld(); //moved from protected
 			void InitGraphicTest();
-			void InitPhysicTest();
-			void InitGame(int treamID);
+			void InitSingleGameMode();
+			void InitOnlineGame(int treamID);
 			void InitWorldtest2();
 
 			void setLockedObjectNull();
@@ -333,7 +338,9 @@ namespace NCL {
 			int currentFrame;
 			float frameTime;
 
+			bool pause = false;
 
+			int playerNum = 0;
 		};
 
 		/*

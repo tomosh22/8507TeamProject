@@ -166,7 +166,8 @@ namespace NCL {
 
 			void UpdateAction(ActionPacket packet) override;
 
-			bool WritePacket(GamePacket** p, int packetTp, int stateID) override;
+			void WriteActionMessage(int actionTp, int param = 0);
+
 
 			void PrintPlayerInfo();
 

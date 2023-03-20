@@ -7,10 +7,28 @@ namespace NCL::CSC8503 {
 		short messageID;
 		std::string content;
 
-		MessagePacket() {
+		MessagePacket(int nid) {
+			networkID = nid;
 			messageID = 0;
 			type = Message;
 			size = sizeof(MessagePacket) - sizeof(GamePacket);
+		}
+	};
+
+	struct ConfirmedPacket : public GamePacket {
+		ConfirmedPacket(int nid = 0) {
+			networkID = nid;
+			type = Connect_Confirmed;
+			size = sizeof(ConfirmedPacket) - sizeof(GamePacket);
+		}
+	};
+
+	struct SelectModePacket : public GamePacket {
+		short mode;
+		SelectModePacket(int nid, int mode = 0) : mode(mode) {
+			networkID = nid;
+			type = Select_Player_Mode;
+			size = sizeof(SelectModePacket) - sizeof(GamePacket);
 		}
 	};
 
@@ -19,7 +37,8 @@ namespace NCL::CSC8503 {
 		int		objectID = -1;
 		NetworkState fullState;
 
-		FullPacket() {
+		FullPacket(int nid) {
+			networkID = nid;
 			type = Full_State;
 			size = sizeof(FullPacket) - sizeof(GamePacket);
 		}
@@ -31,7 +50,8 @@ namespace NCL::CSC8503 {
 		char	pos[3];
 		char	orientation[4];
 
-		DeltaPacket() {
+		DeltaPacket(int nid) {
+			networkID = nid;
 			type = Delta_State;
 			size = sizeof(DeltaPacket) - sizeof(GamePacket);
 		}
@@ -42,11 +62,12 @@ namespace NCL::CSC8503 {
 		Vector3 param;
 		NetworkState state;
 
-		ActionPacket(int index, Vector3 info = Vector3(), NetworkState st = NetworkState()) {
+		ActionPacket(int nid, int index, Vector3 info = Vector3(), NetworkState st = NetworkState()) {
 			type = Player_Action;
 			if (index < 8) {
 				buttonstates[index] = true;
 			}
+			networkID = nid;
 			param = info;
 			state = st;
 			size = sizeof(ActionPacket) - sizeof(GamePacket);

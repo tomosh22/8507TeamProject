@@ -81,5 +81,4 @@ void main( void ) {
         fragColor[0]=vec4(rgbB,1);
     }
     fragColor[1] =vec4(0);
-    fragColor[0] = vec4(1);
 }

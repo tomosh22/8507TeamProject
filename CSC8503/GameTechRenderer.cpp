@@ -270,7 +270,7 @@ void GameTechRenderer::RenderFrame() {
 	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture->GetObjectID());//raymarching
 	
 	
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	
 
 	if (bloom) {
 		Blur();
@@ -278,6 +278,7 @@ void GameTechRenderer::RenderFrame() {
 	}
 	
 	if(useFXAA)FXAA();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	RenderFullScreenQuadWithTexture(sceneColor);//todo fix rotation
 
 	

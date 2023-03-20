@@ -269,8 +269,6 @@ void GameTechRenderer::RenderFrame() {
 	
 	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture->GetObjectID());//raymarching
 	
-	
-	
 
 	if (bloom) {
 		Blur();
@@ -279,7 +277,10 @@ void GameTechRenderer::RenderFrame() {
 	
 	if(useFXAA)FXAA();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	
 	RenderFullScreenQuadWithTexture(sceneColor);//todo fix rotation
+	
 
 	
 	glDisable(GL_CULL_FACE); //Todo - text indices are going the wrong way...
@@ -613,11 +614,11 @@ void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture) {
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE); //todo reverse winding order
-	BindShader(quad->GetShader());
+	BindShader(quadShader);
 	
 	glActiveTexture(GL_TEXTURE0);
-	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "mainTex"), 0);
-	glUniform1i(glGetUniformLocation(((OGLShader*)quad->GetShader())->GetProgramID(), "hasTexture"), true);
+	glUniform1i(glGetUniformLocation(quadShader->GetProgramID(), "mainTex"), 0);
+	glUniform1i(glGetUniformLocation(quadShader->GetProgramID(), "hasTexture"), true);
 	
 	glBindTexture(GL_TEXTURE_2D, texture);
 	BindMesh(quad->GetMesh());
@@ -627,7 +628,7 @@ void GameTechRenderer::RenderFullScreenQuadWithTexture(GLuint texture) {
 
 void GameTechRenderer::RenderBloom() {
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "bloom");
-
+	glDepthMask(false);
 	BindShader(bloomShader);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -640,13 +641,12 @@ void GameTechRenderer::RenderBloom() {
 
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
+	glDepthMask(true);
 	glPopDebugGroup();
 }
 
 void GameTechRenderer::FXAA() {
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "fxaa");
-	glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
 	
 	EdgeDetection();
 	BindShader(fxaaShader);
@@ -666,7 +666,6 @@ void GameTechRenderer::FXAA() {
 
 	BindMesh(quad->GetMesh());
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glPopDebugGroup();
 }
 
@@ -765,27 +764,7 @@ void GameTechRenderer::NeighborhoodBlending() {
 
 void GameTechRenderer::Blur() {
 	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 10, "downsample");
-#pragma region old
-	/*glBindFramebuffer(GL_FRAMEBUFFER, downsampleFBO);
-	BindShader(downsampleShader);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, downsampleChain[1].texture, 0);
-	for (int i = 0; i < numBloomMips - 1; i++)
-	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, downsampleChain[i].texture);
-		glUniform1i(glGetUniformLocation(downsampleShader->GetProgramID(), "tex"), 0);
 
-		glUniform1i(glGetUniformLocation(downsampleShader->GetProgramID(), "width"), downsampleChain[i].width);
-		glUniform1i(glGetUniformLocation(downsampleShader->GetProgramID(), "height"), downsampleChain[i].height);
-		glViewport(0, 0, downsampleChain[i].width, downsampleChain[i].height);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, downsampleChain[i+1].texture, 0);
-
-		BindMesh(quad->GetMesh());
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
-#pragma endregion
 
 	downsampleComputeShader->Bind();
 

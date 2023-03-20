@@ -59,6 +59,10 @@ namespace NCL {
 				return inverseMass;
 			}
 
+			void SetElasticity(float e) {
+				elasticity = e;
+			}
+
 			//bool GetFloorContact() {
 			//	return floorcontact;
 			//}

@@ -867,7 +867,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
 	transform.SetOrientation(orientation.Normalised());
 	//speed
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && playerObject->CanJump(floor)) {
 		playerObject->SpeedUp();
 	}
 	else 
@@ -1572,6 +1572,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->setCoeficient(0.55f);
+	character->GetPhysicsObject()->SetElasticity(0.0f);
 	InitPaintableTextureOnObject(character);
 
 	GameWorld::GetInstance()->AddGameObject(character);

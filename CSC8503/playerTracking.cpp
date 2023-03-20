@@ -148,7 +148,7 @@ bool NCL::CSC8503::playerTracking::CanJump(GameObject* floor){
 
 	Ray r = Ray(transform.GetPosition(), Vector3(0, -1, 0));
 
-	if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 0.8f) {
+	if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 0.6f) {
 		return true;
 	}
 	else {

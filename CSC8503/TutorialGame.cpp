@@ -124,7 +124,10 @@ TutorialGame::TutorialGame()	{
 	glGenBuffers(1, &triangleBoolSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, highestTriCount * sizeof(int), NULL, GL_DYNAMIC_DRAW);
+	glBufferStorage(GL_SHADER_STORAGE_BUFFER, highestTriCount * sizeof(int), NULL, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	triangleBoolSSBOPtr = (int*)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, highestTriCount * sizeof(int), GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	
 
 	glGenBuffers(1, &triangleRasteriseSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBO);
@@ -1914,7 +1917,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	//int* ints = new int[highestTriCount];
 	
 	triComputeShader->Execute((numTris)/64+1, 1, 1);//todo change number of thread groups
-	int* ints = (int*)glMapNamedBuffer(triangleBoolSSBO, GL_READ_ONLY);//todo store 32 bools in one int
+	//int* ints = (int*)glMapNamedBuffer(triangleBoolSSBO, GL_READ_ONLY);//todo store 32 bools in one int
 	unsigned int* ints2 = (unsigned int*)glMapNamedBuffer(triangleRasteriseSSBO, GL_READ_ONLY);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	
@@ -1940,7 +1943,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 #pragma endregion
 	for (int i = 0; i < highestTriCount; i++)
 	{
-		if (ints[i]) {
+		if (triangleBoolSSBOPtr[i]) {
 			numTrisHit++;
 			indices.push_back(i);
 			if(ints2[4 * i + 0] > maxWidth) maxWidth = ints2[4 * i + 0];
@@ -1949,7 +1952,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 		}
 	}
 
-	glUnmapNamedBuffer(triangleBoolSSBO);
+	//glUnmapNamedBuffer(triangleBoolSSBO);
 	glUnmapNamedBuffer(triangleRasteriseSSBO);
 
 

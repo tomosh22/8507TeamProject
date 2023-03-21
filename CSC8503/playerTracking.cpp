@@ -93,10 +93,10 @@ void playerTracking::UpdateSpeed(float dt) {
 		sprintTimer = sprintTimer + 10 * dt;
 	}
 
-	if (onLadder && Window::GetKeyboard()->KeyDown(KeyboardKeys::W))
+	/*if (onLadder && Window::GetKeyboard()->KeyDown(KeyboardKeys::W))
 	{
 		GetPhysicsObject()->ApplyLinearImpulse({ 0, 20, 0 });
-	}
+	}*/
 }
 
 void playerTracking::UpdateAimPosition(Camera* camera) {

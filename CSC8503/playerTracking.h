@@ -187,6 +187,11 @@ namespace NCL {
 				return currentAniamtion;
 			}
 			void TransferAnimation(std::string animationName);
+
+			bool GetOnLadder() {
+				return onLadder;
+			}
+
 		protected:
 			bool canJump; 
 			bool speedUp;

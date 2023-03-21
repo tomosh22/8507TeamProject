@@ -873,8 +873,16 @@ void TutorialGame::ControlPlayer(float dt) {
 	float speed = playerObject->GetSpeed();
 	Vector3 position = transform.GetPosition();
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
-		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
-		playerObject->TransferAnimation("MoveF");
+		if (playerObject->GetOnLadder() && Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
+			playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + Vector3{0,1,0} *dt * speed);
+			std::cout << "going up " << std::endl;
+		}
+		else
+		{
+			playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
+			playerObject->TransferAnimation("MoveF");
+			std::cout << "going forward " << std::endl;
+		}
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - fwdAxis * dt * speed);

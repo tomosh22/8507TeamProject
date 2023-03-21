@@ -14,6 +14,10 @@
 #include "AreaTex.h"
 #include "SearchTex.h"
 
+//animation
+#include"MeshAnimation.h"
+#include"MeshMaterial.h"
+
 namespace NCL {
 	class Maths::Vector3;
 	class Maths::Vector4;
@@ -127,6 +131,8 @@ namespace NCL {
 			bool toneMap = true;
 			float exposure = 1;
 
+			
+
 		protected:
 			void NewRenderLines();
 			void NewRenderText();
@@ -153,6 +159,7 @@ namespace NCL {
 			void SetDebugLineBufferSizes(size_t newVertCount);
 
 			vector<const RenderObject*> activeObjects;
+			vector<RenderObject*> animatedObjects;
 			
 
 			

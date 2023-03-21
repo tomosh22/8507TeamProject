@@ -9,19 +9,18 @@ using namespace CSC8503;
 
 playerTracking::playerTracking() 
 {
-	playerYawOrientation = 0.0f;
-	playerPitchOrientation = 0.0f;
-	playerID = 1;
-	teamID = 0;
-	IndividualplayerScore = 0;
-	weaponInUse = pistol;
-	moveSpeed = 10;
-	sprintTimer = 5.0f; 
-	respawnTimer = 50.0f; 
-	speedUp = false; 
-	weaponUp = false; 
-	hp = 100;
-	shield = 0; 
+		playerYawOrientation = 0.0f;
+		playerPitchOrientation = 0.0f;
+		playerID = 1;
+		teamID = 0;
+		IndividualplayerScore = 0;
+		
+		moveSpeed = PLAYER_MOVE_SPEED;
+		sprintTimer = 5.0f; 
+		speedUp = false; 
+		weaponUp = false; 
+		hp = 100;
+		shield = 0; 
 
 		fireOffset = 10;
 		bulletPool = new ObjectPool<Projectile>();
@@ -32,6 +31,14 @@ playerTracking::playerTracking()
 		weaponInUse = pistol;
 		weaponPool.push_back(pistol);
 		weaponPool.push_back(rocket);
+
+		animationMap["Idle"] = new  NCL::MeshAnimation("Idle.anm");
+		animationMap["MoveF"] = new  NCL::MeshAnimation("RunForward.anm");
+		animationMap["MoveB"] = new  NCL::MeshAnimation("RunBackward.anm");
+		animationMap["MoveL"] = new  NCL::MeshAnimation("RunLeft.anm");
+		animationMap["MoveR"] = new  NCL::MeshAnimation("RunRight.anm");
+		currentAniamtion = animationMap["Idle"];
+
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
@@ -43,8 +50,7 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 	{
 		TakeDamage(50);
 	}
-
-	
+	GetRenderObject()->anim = currentAniamtion;
 }
 
 void NCL::CSC8503::playerTracking::Rotate()
@@ -57,12 +63,15 @@ void NCL::CSC8503::playerTracking::Rotate()
 }
 
 void playerTracking::SpeedUp() {
+
 	if (sprintTimer > 0.0f) {
 		moveSpeed = PLAYER_SPEED_UP;
 	}
+
 }
 
-void playerTracking::SpeedDown() {
+void playerTracking::SpeedDown() 
+{
 	moveSpeed = PLAYER_MOVE_SPEED;
 }
 
@@ -75,7 +84,7 @@ void playerTracking::UpdateSpeed(float dt) {
 		if (speedUpTimer <= 0)
 			speedUp = false;
 	}
-	else if (MINIMAL_NUMBER > moveSpeed - PLYAER_ITEM_SPEED_UP || MINIMAL_NUMBER < moveSpeed - PLYAER_ITEM_SPEED_UP)
+	else if (MINIMAL_NUMBER > moveSpeed - PLAYER_SPEED_UP && MINIMAL_NUMBER < moveSpeed - PLAYER_SPEED_UP)
 	{
 		sprintTimer = sprintTimer - 20 * dt;
 	}
@@ -111,7 +120,6 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 //Call this function to init a new Bullet
 void playerTracking::ResetBullet(Projectile* bullet)
 {
-
 	CapsuleVolume* volume = new CapsuleVolume(weaponInUse.ProjectileSize * 2.0f, weaponInUse.ProjectileSize);
 	bullet->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -142,13 +150,12 @@ bool NCL::CSC8503::playerTracking::CanJump(GameObject* floor){
 
 	Ray r = Ray(transform.GetPosition(), Vector3(0, -1, 0));
 
-	if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 0.8f) {
+	if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 0.6f) {
 		return true;
 	}
 	else {
 		return false;
 	}
-
 }
 
 
@@ -298,3 +305,12 @@ void playerTracking::UpdateAction(ActionPacket packet) {
 	}
 }
 
+void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
+{
+
+	if (currentAniamtion == animationMap[animationName])
+	{
+		return;
+	}
+	currentAniamtion = animationMap[animationName];
+}

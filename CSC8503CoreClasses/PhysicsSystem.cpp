@@ -372,8 +372,9 @@ void PhysicsSystem::ImpulseResolveContinuedResponse(GameObject& a, GameObject& b
 	float j = (-(1.0f + cRestitution) * impulseForce) / (totalMass + angularEffect);
 
 	Vector3 fullImpulse = p.normal * j;
-	physA->ApplyLinearImpulse(-fullImpulse * physB->GetElasticity());
-	physB->ApplyLinearImpulse(fullImpulse * physA->GetElasticity());
+	float elasticity = (physA->GetElasticity() + physB->GetElasticity()) / 2.0f;
+	physA->ApplyLinearImpulse(-fullImpulse * elasticity);
+	physB->ApplyLinearImpulse(fullImpulse * elasticity);
 
 	physA->ApplyAngularImpulse(Vector3::Cross(relativeA, -fullImpulse));
 	physB->ApplyAngularImpulse(Vector3::Cross(relativeB, fullImpulse));

@@ -7,14 +7,14 @@
 #include"ObjectPool.h"
 #include "GameWorld.h"
 #include "NetworkObject.h"
-#include "RespawnPoint.h"
-
+#include <map>
+#include "MeshAnimation.h"
 
 namespace NCL {
 	namespace CSC8503 {
 		const float PLAYER_MOVE_SPEED = 10.0f;
 		const float PLYAER_ITEM_SPEED_UP = 35.0f;
-		const float PLAYER_SPEED_UP = 30.0f;
+		const float PLAYER_SPEED_UP = 20.0f;
 		const float PLAYER_JUMP_FORCE = 20.0f;
 
 		const enum PlayerAction {
@@ -181,6 +181,11 @@ namespace NCL {
 
 			void PrintPlayerInfo();
 
+			NCL::MeshAnimation* GetCurrentAnimation()
+			{
+				return currentAniamtion;
+			}
+			void TransferAnimation(std::string animationName);
 		protected:
 			bool canJump; 
 			bool speedUp;
@@ -218,7 +223,9 @@ namespace NCL {
 			vector<Projectile*> bulletsUsed;
 			vector<Projectile*> bulletsUsedAndMoved;
 
-			RespawnPoint* respawn; 
+
+			std::map<std::string, NCL::MeshAnimation*> animationMap;
+			NCL::MeshAnimation* currentAniamtion;
 		};
 
 

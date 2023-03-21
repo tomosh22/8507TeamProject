@@ -150,8 +150,7 @@ TutorialGame::TutorialGame()	{
 
 	renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
 
-	playerIdle = new MeshAnimation("BasicCharacter.anm");
-	playerMaterial = new MeshMaterial("BasicCharacter.mat");
+	playerMaterial = new MeshMaterial("Character/Character.mat");
 
 
 
@@ -306,7 +305,9 @@ void TutorialGame::InitialiseAssets() {
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
 	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
 
-	playerMesh = renderer->LoadMesh("BasicCharacter.msh", &meshes);
+	playerMesh = renderer->LoadMesh("Character/Character.msh", &meshes);
+
+	playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
 
 	for (MeshGeometry*& mesh : meshes) {
 		if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
@@ -350,7 +351,7 @@ void TutorialGame::InitialiseAssets() {
 
 
 	
-	characterShader = renderer->LoadShader("SkinningVertex.vert", "SkinningFrag.frag");
+	
 	metalTex = renderer->LoadTexture("metal.png");
 
 	testBumpTex = renderer->LoadTexture("testBump.jpg");
@@ -449,6 +450,7 @@ void TutorialGame::InitialiseAssets() {
 
 	rayMarchComputeShader = new OGLComputeShader("rayMarchCompute.glsl");
 
+	characterShader = new OGLShader("SkinningVertex.vert", "SkinningFrag.frag");
 
 	InitQuadTexture();
 
@@ -512,20 +514,23 @@ void TutorialGame::RayCast() {
 	Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
 }
 
-
-bool TutorialGame::SelectObject() {
-	auto world = GameWorld::GetInstance();
+void TutorialGame::SelectMode() {
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
 		inSelectionMode = !inSelectionMode;
 		if (inSelectionMode) {
 			Window::GetWindow()->ShowOSPointer(true);
 			Window::GetWindow()->LockMouseToWindow(false);
-	}
+		}
 		else {
 			Window::GetWindow()->ShowOSPointer(false);
 			Window::GetWindow()->LockMouseToWindow(true);
 		}
+	}
 }
+
+bool TutorialGame::SelectObject() {
+	SelectMode();
+	auto world = GameWorld::GetInstance();
 	if (inSelectionMode) {
 		Debug::Print("Press Q to change to camera mode!", Vector2(5, 85));
 
@@ -569,13 +574,12 @@ void TutorialGame::UpdateGame(float dt) {
 #ifdef DEBUG_SHADOW
 	renderer->lightPosition = world->GetMainCamera()->GetPosition();
 #endif
-
 	renderer->timePassed += dt * renderer->timeScale;
 
 	switch (gameMode) {
 	case GAME_MODE_DEFAULT:
 	{
-		SelectMode();
+		SelectGameWorld();
 		renderer->Update(dt);
 		renderer->Render();
 		Debug::UpdateRenderables(dt);
@@ -642,10 +646,8 @@ void TutorialGame::UpdateGame(float dt) {
 	case GAME_MODE_SINGLE_GAME:
 	{
 		frameTime -= dt;
-		while (frameTime < 0.0f) {
-			currentFrame = (currentFrame + 1) % playerIdle->GetFrameCount();
-			frameTime += 1.0f / playerIdle->GetFrameRate();
-		}
+		UpdateAnimations(dt);
+		SelectMode();
 		break;
 	}
 	default:
@@ -671,13 +673,15 @@ void TutorialGame::UpdateGame(float dt) {
 	Debug::UpdateRenderables(dt);
 
 
+	
+	
 	//if (GAME_MODE_GRAPHIC_TEST == gameMode) {
 	//	UpdateRayMarchSpheres();
 	//	SendRayMarchData();
 	//}
 }
 
-void TutorialGame::SelectMode() {
+void TutorialGame::SelectGameWorld() {
 	string text = "1. Graphic Test Mode.";
 	Debug::Print(text, Vector2(30, 30), Debug::GREEN);
 	text = "2. Single Player Mode.";
@@ -858,28 +862,36 @@ void TutorialGame::ControlPlayer(float dt) {
 	Quaternion orientation = transform.GetOrientation();
 	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
 	transform.SetOrientation(orientation.Normalised());
-
 	//speed
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT)) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && playerObject->CanJump(floor)) {
 		playerObject->SpeedUp();
 	}
-	else {
+	else 
+	{
 		playerObject->SpeedDown();
 	}
-
 	float speed = playerObject->GetSpeed();
 	Vector3 position = transform.GetPosition();
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
+		playerObject->TransferAnimation("MoveF");
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - fwdAxis * dt * speed);
+		playerObject->TransferAnimation("MoveB");
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - rightAxis * dt * speed);
+		playerObject->TransferAnimation("MoveL");
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + rightAxis * dt * speed);
+		playerObject->TransferAnimation("MoveR");
+	}
+	if(!Window::GetKeyboard()->KeyDown(KeyboardKeys::W)&& !Window::GetKeyboard()->KeyDown(KeyboardKeys::S)
+		&&!Window::GetKeyboard()->KeyDown(KeyboardKeys::A)&& !Window::GetKeyboard()->KeyDown(KeyboardKeys::D))
+	{
+		playerObject->TransferAnimation("Idle");
 	}
 	//jump
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump(floor)) {
@@ -900,7 +912,8 @@ void TutorialGame::ControlPlayer(float dt) {
 			playerObject->WriteActionMessage(PLAYER_ACTION_SHOOT);
 		}
 	}
-	else {
+	else 
+	{
 		renderer->drawCrosshair = false;
 	}
 	playerObject->PrintPlayerInfo();
@@ -1768,11 +1781,24 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, basicShader));
+	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, characterShader ));
+	character->GetRenderObject()->isAnimated = true;
+
+	for (int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
+		const MeshMaterialEntry* matEntry = playerMaterial->GetMaterialForLayer(i);
+		const std::string* filename = nullptr;
+		matEntry->GetEntry("Diffuse", &filename);
+		std::string path = *filename;
+		character->GetRenderObject()->matTextures.emplace_back(renderer->LoadTexture(path));
+	}
+	character->GetRenderObject()->anim = character->GetCurrentAnimation();
+	animatedObjects.emplace_back(character->GetRenderObject());
+
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->setCoeficient(0.55f);
+	character->GetPhysicsObject()->SetElasticity(0.0f);
 	InitPaintableTextureOnObject(character);
 
 	GameWorld::GetInstance()->AddGameObject(character);
@@ -2238,10 +2264,6 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 void TutorialGame::SetUpTriangleSSBOAndDataTexture()
 {
 	
-
-	
-	
-
 	//todo delete this, just for testing
 	std::array<char, MAX_TRIS> noise;
 	for (int i = 0; i < MAX_TRIS; i++)
@@ -2323,4 +2345,25 @@ bool TutorialGame::SphereTriangleIntersection(Vector3 sphereCenter, float sphere
 	intersectionPoint = projection;
 	
 	return true;
+}
+
+void TutorialGame::UpdateAnimations(float dt) {
+
+	for (auto& i : animatedObjects) {
+		const Matrix4* invBindPose = i->GetMesh()->GetInverseBindPose().data();
+
+		const Matrix4* frameData = i->anim->GetJointData(i->currentFrame);
+
+		i->frameMatrices.clear();
+		for (unsigned int x = 0; x < i->GetMesh()->GetJointCount(); ++x) {
+			i->frameMatrices.emplace_back(frameData[x] * invBindPose[x]);
+		}
+		i->frameTime -= dt;
+		while (i->frameTime < 0.0f) {
+			i->currentFrame = (i->currentFrame + 1) % i->anim->GetFrameCount();
+			i->frameTime += 1.0f / i->anim->GetFrameRate();
+		}
+
+	}
+
 }

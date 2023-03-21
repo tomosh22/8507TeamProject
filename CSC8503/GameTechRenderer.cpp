@@ -978,7 +978,7 @@ void GameTechRenderer::CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint
 		{GL_RGBA16,GL_RGBA},
 		{GL_RGBA16F,GL_RGBA},
 	};
-	if (!formats.contains(colorFormat)) {
+	if (formats.find(colorFormat) == formats.end()) {
 		std::cout << "missing fbo format!!!";
 		return;
 	}
@@ -1017,12 +1017,13 @@ void GameTechRenderer::CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint
 
 void GameTechRenderer::CreateFBOColor(GLuint& fbo, GLuint& colorTex, GLenum colorFormat)
 {
-	std::map<GLenum, GLenum> formats{
+	std::unordered_map<GLenum, GLenum> formats{
 		{GL_RGBA8,GL_RGBA},
 		{GL_RGBA16,GL_RGBA},
 		{GL_RGBA16F,GL_RGBA},
 	};
-	if (!formats.contains(colorFormat)) {
+
+	if (formats.find(colorFormat) == formats.end()) {
 		std::cout << "missing fbo format!!!";
 		return;
 	}

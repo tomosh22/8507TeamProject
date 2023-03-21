@@ -26,7 +26,7 @@ namespace NCL {
 			//New behaviour added to previous
 			PLAYER_ACTION_MAX = 8,
 		};
-			
+
 
 		class Team;
 		class playerTracking :public NetworkObject {
@@ -72,7 +72,7 @@ namespace NCL {
 			}
 
 			void setWeponType(Gun newWeponType) {
-				weaponInUse = newWeponType; 
+				weaponInUse = newWeponType;
 			}
 
 			void SetRespawn(RespawnPoint* rp)
@@ -111,7 +111,7 @@ namespace NCL {
 
 			void ShieldUp()
 			{
-				shield = 100; 
+				shield = 100;
 			}
 
 			int GetHealth()
@@ -121,20 +121,20 @@ namespace NCL {
 
 			void Heal()
 			{
-				hp = 100; 
+				hp = 100;
 			}
 
 			void TakeSpeedUpItem()
 			{
 				speedUp = true;
-				speedUpTimer = 300.0f; 
+				speedUpTimer = 300.0f;
 			}
 
 			void WeaponUp()
 			{
 				weaponInUse = rocket;
-				weaponUp = true; 
-				weaponUpTimer = 300.0f; 
+				weaponUp = true;
+				weaponUpTimer = 300.0f;
 			}
 
 			void Weapon(float dt);
@@ -171,7 +171,7 @@ namespace NCL {
 				weaponInUse = weaponPool[index];
 			}
 
-			 std::string id()
+			std::string id()
 			{
 				return "character";
 			}
@@ -194,30 +194,30 @@ namespace NCL {
 			}
 
 		protected:
-			bool canJump; 
+			bool canJump;
 			bool speedUp;
-			bool weaponUp; 
-			bool onLadder; 
-			bool playerDead; 
+			bool weaponUp;
+			bool onLadder;
+			bool playerDead;
 
 			float playerYawOrientation;
 			float playerPitchOrientation;
-			
+
 			int hp;
-			int shield; 
+			int shield;
 			int playerID;
 			int IndividualplayerScore;
-			Projectile *playerProjectile;
+			Projectile* playerProjectile;
 			Gun weaponInUse;
-			vector<Gun> weaponPool;
+			std::vector<Gun> weaponPool;
 			//Vector4 paintColor;
 			RespawnPoint* respawn;
 
 			float moveSpeed;
 			float sprintTimer;
 			float speedUpTimer;
-			float weaponUpTimer; 
-			float respawnTimer; 
+			float weaponUpTimer;
+			float respawnTimer;
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;
@@ -225,11 +225,11 @@ namespace NCL {
 			Vector3 aimPos;
 			//This is me 
 
-			ObjectPool<Projectile> *bulletPool;
+			ObjectPool<Projectile>* bulletPool;
 			float coolDownTimer;   //this is timer of firing
 
-			vector<Projectile*> bulletsUsed;
-			vector<Projectile*> bulletsUsedAndMoved;
+			std::vector<Projectile*> bulletsUsed;
+			std::vector<Projectile*> bulletsUsedAndMoved;
 
 
 			std::map<std::string, NCL::MeshAnimation*> animationMap;
@@ -237,6 +237,6 @@ namespace NCL {
 		};
 
 
-
-
 	}
+
+}

@@ -3,6 +3,7 @@
 #include "NetworkBase.h"
 #include "NetworkState.h"
 #include "NetworkPacket.h"
+#include <vector>
 
 namespace NCL::CSC8503 {
 	class GameObject;
@@ -24,7 +25,7 @@ namespace NCL::CSC8503 {
 
 		void AddSendMessage(GamePacket* packet) { sendMessagePool.push_back(packet); }
 
-		vector<GamePacket*> GetSendMessages() { return sendMessagePool; }
+		std::vector<GamePacket*> GetSendMessages() { return sendMessagePool; }
 
 		void ClearMessagePool() {
 			//Do not release the pointer
@@ -33,7 +34,7 @@ namespace NCL::CSC8503 {
 					delete it;
 				}
 			}
-			sendMessagePool = vector<GamePacket*>();
+			sendMessagePool = std::vector<GamePacket*>();
 		}
 
 		void Online() { online = true; }
@@ -58,7 +59,7 @@ namespace NCL::CSC8503 {
 
 		NetworkState lastFullState;
 
-		vector<GamePacket*> sendMessagePool;
+		std::vector<GamePacket*> sendMessagePool;
 
 		std::vector<NetworkState> stateHistory;
 

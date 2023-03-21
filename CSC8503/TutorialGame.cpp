@@ -1057,6 +1057,7 @@ void TutorialGame::InitSingleGameMode() {
 	//add player
 	auto q = Quaternion();
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	playerObject->SetTeamId(TEAM_RED);
 
 	//InitGameObjects();
 	//floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });

@@ -49,6 +49,7 @@ set(Header_Files
 
 	"GameManager.h"
 	"AudioSystem.h"
+    "RayMarchSphere.h"
 
 
 )
@@ -65,7 +66,10 @@ set(Source_Files
 	"Item.cpp"
 	"GameManager.cpp"
     "AudioSystem.cpp"
+
     "RespawnPoint.cpp"
+
+    "RayMarchSphere.cpp"
 
 )
 

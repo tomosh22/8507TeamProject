@@ -30,14 +30,7 @@ playerTracking::playerTracking()
 		weaponInUse = pistol;
 		weaponPool.push_back(pistol);
 		weaponPool.push_back(rocket);
-
-		animationMap["Idle"] = new  NCL::MeshAnimation("Idle.anm");
-		animationMap["MoveF"] = new  NCL::MeshAnimation("RunForward.anm");
-		animationMap["MoveB"] = new  NCL::MeshAnimation("RunBackward.anm");
-		animationMap["MoveL"] = new  NCL::MeshAnimation("RunLeft.anm");
-		animationMap["MoveR"] = new  NCL::MeshAnimation("RunRight.anm");
-		currentAniamtion = animationMap["Idle"];
-
+		LoadAniamtion();
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
@@ -267,4 +260,18 @@ void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
 		return;
 	}
 	currentAniamtion = animationMap[animationName];
+}
+
+void NCL::CSC8503::playerTracking::LoadAniamtion()
+{
+	animationMap["Idle"] = new  NCL::MeshAnimation("Idle.anm");
+	animationMap["MoveF"] = new  NCL::MeshAnimation("RunForward.anm");
+	animationMap["MoveB"] = new  NCL::MeshAnimation("RunBackward.anm");
+	animationMap["MoveL"] = new  NCL::MeshAnimation("RunLeft.anm");
+	animationMap["MoveR"] = new  NCL::MeshAnimation("RunRight.anm");
+	currentAniamtion = animationMap["Idle"];
+}
+
+void NCL::CSC8503::playerTracking::LoadAudio()
+{
 }

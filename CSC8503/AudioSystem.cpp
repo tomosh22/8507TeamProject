@@ -2,15 +2,32 @@
 #include <stdio.h>
 #include <fmod_errors.h>
 
+AudioSystem* AudioSystem::_instance = nullptr;
 FMOD::Sound* AudioSystem::loadSound(const std::string& file, FMOD_MODE mode) const {
 	FMOD::Sound* pSound;
-	lowLevelSystem->createSound(file.c_str(), mode, nullptr, &pSound);
+	std::string path = "../../Assets/Audio/" + file;
+	this->lowLevelSystem->createSound(path.c_str(), mode, nullptr, &pSound);
 	return pSound;
 }
 
 FMOD::Channel* AudioSystem::playSound(FMOD::Sound* sound) const {
 	FMOD::Channel* channel;
 	lowLevelSystem->playSound(sound, nullptr, false, &channel);
+	return channel;
+}
+
+FMOD::Channel* AudioSystem::playSound(FMOD::Sound* sound, float volume) const
+{
+	FMOD::Channel* channel;
+	lowLevelSystem->playSound(sound, nullptr, false, &channel);
+	channel->setVolume(volume);
+	return channel;
+}
+
+FMOD::Channel* AudioSystem::pauseSound(FMOD::Sound* sound) const
+{
+	FMOD::Channel* channel;
+	lowLevelSystem->playSound(sound, nullptr, true, &channel);
 	return channel;
 }
 

@@ -446,6 +446,8 @@ void TutorialGame::InitialiseAssets() {
 
 	characterShader = new OGLShader("SkinningVertex.vert", "SkinningFrag.frag");
 
+	LoadAudio();
+
 	InitQuadTexture();
 
 	InitCamera();
@@ -1044,6 +1046,8 @@ void TutorialGame::InitSingleGameMode() {
 	auto q = Quaternion();
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 
+	AudioSystem::GetInstance()-> playSound(audioMap["BK"],0.2);
+
 	InitGameObjects();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
@@ -1541,6 +1545,12 @@ void TutorialGame::AddMapToWorld() {
 	for (GameObject*& wall : walls) {
 		InitPaintableTextureOnObject(wall);
 	}
+
+}
+
+void NCL::CSC8503::TutorialGame::LoadAudio()
+{
+	audioMap["BK"] = AudioSystem::GetInstance()->loadSound("BKMusic.wav", FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
 
 }
 

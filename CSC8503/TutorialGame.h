@@ -5,21 +5,19 @@
 #include "GameTechVulkanRenderer.h"
 #endif
 #include "PhysicsSystem.h"
-
 #include"playerTracking.h"
-
-
 #include "StateGameObject.h"
 #include <array>
 #include"ObjectPool.h"
 #include "RenderObject.h"
 #include "PropSystem.h"
-
 #include"MeshAnimation.h"
 #include"MeshMaterial.h"
-
+#include "AudioSystem.h"
 #include <thread>
 #include <mutex>
+#include <map>
+
 
 namespace NCL {
 	namespace CSC8503 {
@@ -179,6 +177,8 @@ namespace NCL {
 
 			void AddMapToWorld();
 
+
+			void LoadAudio();
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
 #else
@@ -346,7 +346,7 @@ namespace NCL {
 
 			int playerNum = 0;
 			
-
+			std::map<std::string, FMOD::Sound*> audioMap;
 		};
 
 		/*

@@ -177,6 +177,8 @@ namespace NCL {
 				return currentAniamtion;
 			}
 			void TransferAnimation(std::string animationName);
+			void LoadAniamtion();
+			void LoadAudio();
 		protected:
 			bool canJump; 
 			bool speedUp;

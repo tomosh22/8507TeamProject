@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include"GameObject.h"
@@ -9,6 +10,7 @@
 #include "NetworkObject.h"
 #include <map>
 #include "MeshAnimation.h"
+#include "RespawnPoint.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -73,6 +75,10 @@ namespace NCL {
 				weaponInUse = newWeponType; 
 			}
 
+			void SetRespawn(RespawnPoint* rp)
+			{
+				respawn = rp;
+			}
 
 			void addToBulletsUsed(Projectile* bulletToAdd) {
 				bulletsUsed.push_back(bulletToAdd);
@@ -137,12 +143,17 @@ namespace NCL {
 				playerProjectile->setGunType(weponType);
 			}*/
 
+			void OnCollisionBegin(GameObject* otherObject);
+			void OnCollisionEnd(GameObject* otherObject);
+
 			Projectile* getPlayerProjectile() {
 				return playerProjectile;
 			}
 
 			void TakeDamage(int damage);
-
+			void PlayerDie();
+			void PlayerRespawn();
+			void Respawning(float dt);
 
 
 			void FireBullet();
@@ -177,10 +188,17 @@ namespace NCL {
 				return currentAniamtion;
 			}
 			void TransferAnimation(std::string animationName);
+
+			bool GetOnLadder() {
+				return onLadder;
+			}
+
 		protected:
 			bool canJump; 
 			bool speedUp;
 			bool weaponUp; 
+			bool onLadder; 
+			bool playerDead; 
 
 			float playerYawOrientation;
 			float playerPitchOrientation;
@@ -191,13 +209,15 @@ namespace NCL {
 			int IndividualplayerScore;
 			Projectile *playerProjectile;
 			Gun weaponInUse;
-			std::vector<Gun> weaponPool;
+			vector<Gun> weaponPool;
 			//Vector4 paintColor;
-		
+			RespawnPoint* respawn;
+
 			float moveSpeed;
 			float sprintTimer;
 			float speedUpTimer;
 			float weaponUpTimer; 
+			float respawnTimer; 
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;
@@ -208,8 +228,8 @@ namespace NCL {
 			ObjectPool<Projectile> *bulletPool;
 			float coolDownTimer;   //this is timer of firing
 
-			std::vector<Projectile*> bulletsUsed;
-			std::vector<Projectile*> bulletsUsedAndMoved;
+			vector<Projectile*> bulletsUsed;
+			vector<Projectile*> bulletsUsedAndMoved;
 
 
 			std::map<std::string, NCL::MeshAnimation*> animationMap;
@@ -220,4 +240,3 @@ namespace NCL {
 
 
 	}
-}

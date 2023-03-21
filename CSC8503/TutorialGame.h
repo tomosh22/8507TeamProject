@@ -336,7 +336,6 @@ namespace NCL {
 			bool rayMarch = true;
 			//Player Animation 
 			OGLShader* characterShader;
-			MeshAnimation* playerIdle;
 			MeshMaterial* playerMaterial;
 			int currentFrame;
 			float frameTime;

@@ -146,8 +146,7 @@ TutorialGame::TutorialGame()	{
 
 	renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
 
-	playerIdle = new MeshAnimation("BasicCharacter.anm");
-	playerMaterial = new MeshMaterial("BasicCharacter.mat");
+	playerMaterial = new MeshMaterial("Character/Character.mat");
 
 
 
@@ -302,7 +301,8 @@ void TutorialGame::InitialiseAssets() {
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
 	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
 
-	playerMesh = renderer->LoadMesh("BasicCharacter.msh", &meshes);
+	playerMesh = renderer->LoadMesh("Character/Character.msh", &meshes);
+
 	playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
 
 	for (MeshGeometry*& mesh : meshes) {
@@ -568,7 +568,6 @@ void TutorialGame::UpdateGame(float dt) {
 #ifdef DEBUG_SHADOW
 	renderer->lightPosition = world->GetMainCamera()->GetPosition();
 #endif
-	UpdateAnimations(dt);
 	renderer->timePassed += dt * renderer->timeScale;
 
 	switch (gameMode) {
@@ -641,10 +640,7 @@ void TutorialGame::UpdateGame(float dt) {
 	case GAME_MODE_SINGLE_GAME:
 	{
 		frameTime -= dt;
-		while (frameTime < 0.0f) {
-			currentFrame = (currentFrame + 1) % playerIdle->GetFrameCount();
-			frameTime += 1.0f / playerIdle->GetFrameRate();
-		}
+		UpdateAnimations(dt);
 		SelectMode();
 		break;
 	}
@@ -1565,21 +1561,16 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, characterShader ));
 	character->GetRenderObject()->isAnimated = true;
-	character->GetRenderObject()->anim = playerIdle;
 
 	for (int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
 		const MeshMaterialEntry* matEntry = playerMaterial->GetMaterialForLayer(i);
 		const std::string* filename = nullptr;
 		matEntry->GetEntry("Diffuse", &filename);
 		std::string path = *filename;
-		character->GetRenderObject()->matTextures.emplace_back(renderer->LoadTexture("Default.png"));
+		character->GetRenderObject()->matTextures.emplace_back(renderer->LoadTexture(path));
 	}
-
-
+	character->GetRenderObject()->anim = character->GetCurrentAnimation();
 	animatedObjects.emplace_back(character->GetRenderObject());
-
-
-
 
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
@@ -2127,27 +2118,18 @@ void TutorialGame::UpdateAnimations(float dt) {
 	for (auto& i : animatedObjects) {
 		const Matrix4* invBindPose = i->GetMesh()->GetInverseBindPose().data();
 
-		const Matrix4* frameData = i->anim->GetJointData(currentFrame);
+		const Matrix4* frameData = i->anim->GetJointData(i->currentFrame);
 
 		i->frameMatrices.clear();
 		for (unsigned int x = 0; x < i->GetMesh()->GetJointCount(); ++x) {
 			i->frameMatrices.emplace_back(frameData[x] * invBindPose[x]);
 		}
-
 		i->frameTime -= dt;
 		while (i->frameTime < 0.0f) {
 			i->currentFrame = (i->currentFrame + 1) % i->anim->GetFrameCount();
 			i->frameTime += 1.0f / i->anim->GetFrameRate();
 		}
-		/*void SetCurrentAniamtion(NCL::MeshAnimation * anim)
-		{
-			if (anim != currentAniamtion)
-			{
-				currentFrame = 0;
-				frameTime = 0.0f;
-			}
-			currentAniamtion = anim;
-		}*/
+
 	}
 
 }

@@ -112,6 +112,7 @@ void playerTracking::UpdateCoolDownTime(float dt) {
 void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 {
 	Projectile* newBullet = bulletPool->GetObject2();
+	newBullet->SetName("Bulllet");
 	ResetBullet(newBullet);
 	coolDownTimer = weaponInUse.rateOfFire;
 	Shooting(newBullet, target);
@@ -145,17 +146,16 @@ void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
 }
 
 bool NCL::CSC8503::playerTracking::CanJump(GameObject* floor){
-	if (!floor) { return false; }
 	RayCollision closetCollision;
-
 	Ray r = Ray(transform.GetPosition(), Vector3(0, -1, 0));
 
-	if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 0.6f) {
+	if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 1.0f) {
 		return true;
 	}
 	else {
 		return false;
 	}
+
 }
 
 

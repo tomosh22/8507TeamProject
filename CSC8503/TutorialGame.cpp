@@ -647,9 +647,6 @@ void TutorialGame::UpdateGame(float dt) {
 	{
 		frameTime -= dt;
 		UpdateAnimations(dt);
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED,true);
-		glPopDebugGroup();
 		SelectMode();
 		break;
 	}

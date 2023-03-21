@@ -1,3 +1,8 @@
+#include<iostream>
+#include<cmath>
+#include <chrono>
+#include <corecrt_math_defines.h>
+
 #include "TutorialGame.h"
 #include "GameWorld.h"
 #include "PhysicsObject.h"
@@ -7,37 +12,64 @@
 #include "PositionConstraint.h"
 #include "OrientationConstraint.h"
 #include "StateGameObject.h"
-#include <minmax.h>
-#include<cmath>
 
-#include "playerTracking.h"
-#include"Projectile.h"
+#include"PropSystem.h"
+#include "Projectile.h"
 
-#include<iostream>
 
-using namespace std;
 using namespace NCL;
 using namespace CSC8503;
 
-#define TRI_DEBUG
+//#define TRI_DEBUG
 //#define OLD_PAINT
+//#define DEBUG_SHADOW
+
+struct TextureThing {
+	char* texData = nullptr;
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	int flags = 0;
+
+	TextureBase** myPointer;
+
+	TextureThing(char* texData, int width, int height, int channels, int flags, TextureBase** myPointer) : texData(texData), width(width), height(height), channels(channels), flags(flags), myPointer(myPointer) {}
+};
+
+std::vector<TextureThing> things;
+std::mutex texturesMutex;
+
+
+void LoadTextureThread(const std::string& name, TextureBase** ptr) {
+	char* texData = nullptr;
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	int flags = 0;
+	TextureLoader::LoadTexture(name, texData, width, height, channels, flags);
+
+	TextureThing thing(texData, width, height, channels, flags, ptr);
+	texturesMutex.lock();
+	things.push_back(thing);
+	texturesMutex.unlock();
+}
 
 TutorialGame::TutorialGame()	{
-	world		= new GameWorld();
+	
 #ifdef USEVULKAN
 	renderer	= new GameTechVulkanRenderer(*world);
 #else 
-	renderer = new GameTechRenderer(*world);
+	renderer = new GameTechRenderer(*GameWorld::GetInstance());
 #endif
 
-	physics		= new PhysicsSystem(*world);
+	physics		= new PhysicsSystem(*GameWorld::GetInstance());
 
 	forceMagnitude	= 10.0f;
 	useGravity		= false;
 	inSelectionMode = false;
 	testStateObject = nullptr;
 
-	objectpool = new ObjectPool<Projectile>(100);
+	objectpool = new ObjectPool<Projectile>();
 
 	InitialiseAssets();
 
@@ -58,7 +90,6 @@ TutorialGame::TutorialGame()	{
 	glGenBuffers(1, &rayMarchSphereSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, maxRayMarchSpheres * sizeof(RayMarchSphere), NULL, GL_DYNAMIC_DRAW);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, rayMarchSphereSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	glGenTextures(1, &depthBufferTex);
@@ -82,39 +113,94 @@ TutorialGame::TutorialGame()	{
 	testSphereRadius = 10;
 	renderer->imguiptrs.testSphereCenter = &testSphereCenter;
 	renderer->imguiptrs.testSphereRadius = &testSphereRadius;
+
+	
+	renderer->imguiptrs.newMethod = &renderer->newMethod;
+
+	renderer->imguiptrs.rayMarchBool = &rayMarch;
+
+	
+
+	glGenBuffers(1, &triangleBoolSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, highestTriCount * sizeof(int), NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	glGenBuffers(1, &triangleRasteriseSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, highestTriCount * sizeof(int) * 4, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	glGenBuffers(1, &triangleRasteriseSSBOSecondShader);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBOSecondShader);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, highestTriCount * sizeof(int) * 3, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
 	for (int i = 0; i < 1000 * 1000; i++)
 	{
 		zeros[i] = 0;
 	}
+	glGenBuffers(1, &(tempSSBO));
+
+
+	renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
+
+	playerMaterial = new MeshMaterial("Character/Character.mat");
+
+
+
+	currentFrame = 0;
+	frameTime = 0.0f;
 
 	return;
 
 	
 }
 
+TutorialGame::~TutorialGame() {
+	delete cubeMesh;
+	delete sphereMesh;
+	delete charMesh;
+	delete enemyMesh;
+	delete bonusMesh;
 
+	delete basicTex;
+	delete basicShader;
+
+	delete physics;
+	delete renderer;
+
+
+	delete objectpool;
+
+	//todo delete texture array
+	//todo delete compute shader
+}
 
 void TutorialGame::InitQuadTexture() {
 	int width = (renderer->GetWindowWidth());
 	int height = (renderer->GetWindowHeight());
 	//std::array<float, 1280 * 720 * 4>* data = new std::array<float, 1280 * 720 * 4>();//todo dont hardcode
-	quadTex = new OGLTexture();
-	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), quadTex, quadShader);
+	
+	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), nullptr, quadShader);
 	//for (int i = 0; i < 1280*720*4; i++)
 	//{ 
 	//	data->at(i) = (float)rand() / (float)RAND_MAX;
 	//}
 	
-	glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()));
+	renderer->rayMarchTexture = new OGLTexture();
+	glBindTexture(GL_TEXTURE_2D, (renderer->rayMarchTexture->GetObjectID()));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 	//todo maybe move this somewhere else? still somewhat related
 
 	//may need to adjust if fps tanks
 	maxSteps = 500;
 	hitDistance = 0.001;
+
 
 	noHitDistance = 1000;
 	debugValue = 1;
@@ -124,36 +210,26 @@ void TutorialGame::InitQuadTexture() {
 	renderer->imguiptrs.rayMarchNoHitDistance = &noHitDistance;
 	renderer->imguiptrs.debugValue = &debugValue;
 	renderer->imguiptrs.depthTest = &rayMarchDepthTest;
+	//renderer->imguiptrs.currentTeamInt = &currentTeamInt;
 }
 
 //raymarching
 void TutorialGame::DispatchComputeShaderForEachPixel() {
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, rayMarchSphereSSBO);
 	int width = renderer->GetWindowWidth();
 	int height = renderer->GetWindowHeight();
 
 	rayMarchComputeShader->Bind();
 
 	float screenAspect = (float)width / (float)height;
-	//world->GetMainCamera()->SetFieldOfVision(90);
+	//GameWorld::GetInstance()->GetMainCamera()->SetFieldOfVision(90);
 
-	Matrix4 viewMatrix = world->GetMainCamera()->BuildViewMatrix();
+	Matrix4 viewMatrix = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
 	//std::cout << viewMatrix << '\n';
-	Matrix4 projMatrix = world->GetMainCamera()->BuildProjectionMatrix(screenAspect);
-	Vector3 cameraPos = world->GetMainCamera()->GetPosition();
+	Matrix4 projMatrix = GameWorld::GetInstance()->GetMainCamera()->BuildProjectionMatrix(screenAspect);
+	Vector3 cameraPos = GameWorld::GetInstance()->GetMainCamera()->GetPosition();
 	
-	std::vector<float> buffer;
-	buffer.resize(width * height);
-	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, buffer.data());
-	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
-	glTexImage2D(GL_TEXTURE_2D, 0,
-		GL_DEPTH_COMPONENT,
-		renderer->GetWindowWidth(),
-		renderer->GetWindowHeight(),
-		0,
-		GL_DEPTH_COMPONENT,
-		GL_FLOAT,
-		buffer.data());
-	glBindTexture(GL_TEXTURE_2D, 0);
+	
 	
 
 	int projLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "projMatrix");
@@ -181,20 +257,20 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	glUniform1i(viewportWidthLocation, width);
 	glUniform1i(viewportHeightLocation, height);
 	glUniform1i(numSpheresLocation, rayMarchSpheres.size()+2);//one for debug sphere
-	glUniform1f(nearPlaneLocation, world->GetMainCamera()->GetNearPlane());
-	glUniform1f(farPlaneLocation, world->GetMainCamera()->GetFarPlane());
+	glUniform1f(nearPlaneLocation, GameWorld::GetInstance()->GetMainCamera()->GetNearPlane());
+	glUniform1f(farPlaneLocation, GameWorld::GetInstance()->GetMainCamera()->GetFarPlane());
 	glUniform1f(debugValueLocation, debugValue);
 	glUniform1i(depthTestValueLocation, rayMarchDepthTest);
 
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, (((OGLTexture*)renderer->quad->GetDefaultTexture())->GetObjectID()), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16F);
+	glBindImageTexture(0, renderer->rayMarchTexture->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16);
 
 
 
 	glUniform1i(depthTexLocation, 1);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
+	glBindTexture(GL_TEXTURE_2D, renderer->sceneDepth);
 
 	rayMarchComputeShader->Execute(width/8+1, height/8+1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -206,26 +282,35 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 
 }
 
-/*
 
-Each of the little demo scenarios used in the game uses the same 2 meshes, 
-and the same texture and shader. There's no need to ever load in anything else
-for this module, even in the coursework, but you can add it if you like!
 
-*/
 void TutorialGame::InitialiseAssets() {
-	cubeMesh	= renderer->LoadMesh("cube.msh");
-	sphereMesh	= renderer->LoadMesh("sphere.msh");
-	charMesh	= renderer->LoadMesh("goat.msh");
-	enemyMesh	= renderer->LoadMesh("Keeper.msh");
-	bonusMesh	= renderer->LoadMesh("apple.msh");
-	capsuleMesh = renderer->LoadMesh("capsule.msh");
+	std::vector<MeshGeometry*> meshes;
+	cubeMesh = renderer->LoadMesh("cube.msh", &meshes);
+	sphereMesh = renderer->LoadMesh("sphere.msh", &meshes);
+	charMesh = renderer->LoadMesh("goat.msh", &meshes);
+	enemyMesh = renderer->LoadMesh("Keeper.msh", &meshes);
+	bonusMesh = renderer->LoadMesh("apple.msh", &meshes);
+	capsuleMesh = renderer->LoadMesh("capsule.msh", &meshes);
+
 	//this was me
 	triangleMesh = OGLMesh::GenerateTriangleWithIndices();
-	monkeyMesh = renderer->LoadMesh("monkey.msh");
-	floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh");
-	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh");
-	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh");
+	monkeyMesh = renderer->LoadMesh("newMonkey.msh", &meshes);
+	floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh", &meshes);
+	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh", &meshes);
+	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
+	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
+
+	playerMesh = renderer->LoadMesh("Character/Character.msh", &meshes);
+
+	playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
+
+	for (MeshGeometry*& mesh : meshes) {
+		if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
+		if (mesh->GetIndexCount() / 3 > highestTriCount) {
+			highestTriCount = mesh->GetIndexCount() / 3;
+		}
+	}
 #pragma region debuggingSphereTriangleCollisions
 	/*MESH_TRIANGLES_AND_UVS tris = capsuleMesh->GetAllTrianglesAndUVs();
 	std::vector<std::array<float, 4>> results{};
@@ -251,111 +336,155 @@ void TutorialGame::InitialiseAssets() {
 	}*/
 #pragma endregion
 
-	basicTex	= renderer->LoadTexture("checkerboard.png");
-	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
+	basicTex = renderer->LoadTexture("checkerboard.png");
+	glPatchParameteri(GL_PATCH_VERTICES, 3);
+
+	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc", "scene.tese");
+
+	std::vector<std::thread> threads;
+
+
+	
+	
 	metalTex = renderer->LoadTexture("metal.png");
+
 	testBumpTex = renderer->LoadTexture("testBump.jpg");
+
+
+	ironDiffuse = renderer->LoadTexture("PBR/rustediron2_basecolor.png");
+	ironBump = renderer->LoadTexture("PBR/rustediron2_normal.png");
+	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
+	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
+
+	
+
+	crystalPBR = new PBRTextures();
+	TextureBase** test = &(crystalPBR->base);
+	//crystalPBR->base = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_diffuse.jpg");
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_diffuse.jpg", &(crystalPBR->base)));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_normal.jpg", &crystalPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_metallic.jpg", &crystalPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_roughness.jpg", &crystalPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_height.jpg", &crystalPBR->heightMap));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_emissive.jpg", &crystalPBR->emission));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_ao.jpg", &crystalPBR->ao));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_opacity.jpg", &crystalPBR->opacity));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_glossiness.jpg", &crystalPBR->gloss));
+
+	spaceShipPBR = new PBRTextures();
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_diffuse.jpg", &spaceShipPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_normal.jpg", &spaceShipPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_metalness.jpg", &spaceShipPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_roughness.jpg", &spaceShipPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_height.jpg", &spaceShipPBR->heightMap));
+	spaceShipPBR->emission = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_ao.jpg", &spaceShipPBR->ao));
+	spaceShipPBR->opacity = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_glossiness.jpg", &spaceShipPBR->gloss));
+
+	rockPBR = new PBRTextures();
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_diffuse.jpg", &rockPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_normal.jpg", &rockPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_metallic.jpg", &rockPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_roughness.jpg", &rockPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_height.jpg", &rockPBR->heightMap));
+	rockPBR->emission = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_ao.jpg", &rockPBR->ao));
+	rockPBR->opacity = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_glossiness.jpg", &rockPBR->gloss));
+
+	grassWithWaterPBR = new PBRTextures();
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_diffuse.jpg", &grassWithWaterPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_normal.jpg", &grassWithWaterPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_metallic.jpg", &grassWithWaterPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_roughness.jpg", &grassWithWaterPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_height.jpg", &grassWithWaterPBR->heightMap));
+	grassWithWaterPBR->emission = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_ao.jpg", &grassWithWaterPBR->ao));
+	grassWithWaterPBR->opacity = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_glossiness.jpg", &grassWithWaterPBR->gloss));
+
+	fencePBR = new PBRTextures();
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_diffuse.jpg", &fencePBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_normal.jpg", &fencePBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_metallic.jpg", &fencePBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_roughness.jpg", &fencePBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_height.jpg", &fencePBR->heightMap));
+	fencePBR->emission = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_ao.jpg", &fencePBR->ao));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg", &fencePBR->opacity));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg", &fencePBR->gloss));
+
+	
+	
+	
+
+	for (std::thread& thread : threads) {
+		thread.join();
+	}
+	
+	for (TextureThing& thing : things)
+	{
+		TextureBase* tex = OGLTexture::RGBATextureFromData(thing.texData, thing.width, thing.height, thing.channels);
+		*(thing.myPointer) = (tex);
+		free(thing.texData);
+	}
+	threads.clear();
+
+	
+
 
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
 	quadShader = new OGLShader("quad.vert", "quad.frag");
+	renderer->quadShader = quadShader;
 
 	triComputeShader = new OGLComputeShader("tris.comp");
+	triRasteriseShader = new OGLComputeShader("rasteriseTriangle.comp");
 
 	rayMarchComputeShader = new OGLComputeShader("rayMarchCompute.glsl");
 
-	
+	characterShader = new OGLShader("SkinningVertex.vert", "SkinningFrag.frag");
+
 	InitQuadTexture();
-	
+
 	InitCamera();
 	InitWorld();
-
-	/*AddFloorToWorld({ 0, 0, 0 });
-	AddPlayerToWorld({ 0, 1, 0 });*/
 }
 
-TutorialGame::~TutorialGame()	{
-	delete cubeMesh;
-	delete sphereMesh;
-	delete charMesh;
-	delete enemyMesh;
-	delete bonusMesh;
-
-	delete basicTex;
-	delete basicShader;
-
-	delete physics;
-	delete renderer;
-	delete world;
-
-	delete objectpool;
-
-	//todo delete texture array
-	//todo delete compute shader
-}
-
-
-
-void TutorialGame::UpdateGame(float dt) {
-	if (GAME_MODE_DEFAULT == gameMode) {
-		SelectMode();
-		renderer->Update(dt);
-		renderer->Render();
-		Debug::UpdateRenderables(dt);
+void TutorialGame::UpdateWorldCamera(float dt) {
+	if (!playerObject && !inSelectionMode) {
+		GameWorld::GetInstance()->GetMainCamera()->UpdateCamera(dt);
 		return;
 	}
-	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
-		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "cube");
-		//DispatchComputeShaderForEachTriangle(testCube);
-		//glPopDebugGroup();
-		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
-		//DispatchComputeShaderForEachTriangle(monkey);
-		//glPopDebugGroup();
-		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		//DispatchComputeShaderForEachTriangle(floor);
-		//glPopDebugGroup();
-		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
-		//for (GameObject*& wall : walls) {
-			//DispatchComputeShaderForEachTriangle(wall);
-		//}
-		//glPopDebugGroup();
-	}
+	CameraLockOnPlayer();
+}
+
+void TutorialGame::CameraLockOnPlayer() {
+	if (!playerObject) { return; }
+	auto world = GameWorld::GetInstance();
+	Vector3 objPos = playerObject->GetTransform().GetPosition();
+	//find object orientation
+	float yrot = playerObject->GetTransform().GetOrientation().ToEuler().y;
+	//set camera position
+	Vector3 offSet = Vector3(viewOffset.x * cos((yrot + 270.0f) * M_PI / 180), viewOffset.y, viewOffset.z * sin((yrot - 270.0f) * M_PI / 180));
+
+	Vector3 camPos = objPos + offSet + Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), offSet).Normalised() * 2.0f;
+	//targeting in front of the object
+	Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos - offSet * Vector3(10.0f, 0.0f, 10.0f), Vector3(0, 1, 0));
+	Matrix4 modelMat = temp.Inverse();
+	Quaternion q(modelMat);
+	Vector3 angles = q.ToEuler(); //nearly there now!
+
+	world->GetMainCamera()->SetPosition(camPos);
+	world->GetMainCamera()->SetYaw(angles.y);
+	world->GetMainCamera()->UpdateObjectViewPitch();
 	
-	timePassed += dt;
-	//TODO DELETE THIS !!!
-	DispatchComputeShaderForEachPixel();
-	if(worldFloor != nullptr)
-	Debug::DrawAxisLines(worldFloor->GetTransform().GetMatrix());
+}
 
-	if (!inSelectionMode) {
-		world->GetMainCamera()->UpdateCamera(dt);
-	}
-	if (lockedObject != nullptr) {
-		Vector3 objPos = lockedObject->GetTransform().GetPosition();
-		Vector3 camPos = objPos + lockedOffset;
-
-		Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos, Vector3(0,1,0));
-
-		Matrix4 modelMat = temp.Inverse();
-
-		Quaternion q(modelMat);
-		Vector3 angles = q.ToEuler(); //nearly there now!
-
-		world->GetMainCamera()->SetPosition(camPos);
-		world->GetMainCamera()->SetPitch(angles.x);
-		world->GetMainCamera()->SetYaw(angles.y);
-	}
-
-	UpdateKeys();
-
-	if (useGravity) {
-		Debug::Print("(G)ravity on", Vector2(5, 95), Debug::RED);
-	}
-	else {
-		Debug::Print("(G)ravity off", Vector2(5, 95), Debug::RED);
-	}
-
+void TutorialGame::RayCast() {
 	RayCollision closestCollision;
+	auto world = GameWorld::GetInstance();
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::K) && selectionObject) {
 		Vector3 rayPos;
 		Vector3 rayDir;
@@ -376,58 +505,223 @@ void TutorialGame::UpdateGame(float dt) {
 		}
 	}
 
-	//Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
-
-	SelectObject();
-	MoveSelectedObject();
-	movePlayer(goatCharacter);
-
-	world->UpdateWorld(dt);
-	renderer->Update(dt);
-	physics->Update(dt);
-	//testing 
-	/*if (physics->getCurrentCollisions().size() > 0) {
-		PhysicsSystem::collisionData tt = physics->getCurrentCollisions()[0];
-		DispatchComputeShaderForEachTriangle(tt.objectHit, tt.contactPosition, tt.paintRadius);
-		physics->clearCurrentCollisions();
-	}*/
-
-		TutorialGame::addToRunningBulletTime(dt);
-	if (TutorialGame::runningBulletTimeLimitTest(goatCharacter->getPlayerProjectile()->GetRateOfFireTransferred()) && (!goatCharacter->getPlayerProjectile()->GetCanFire())) {
-		goatCharacter->getPlayerProjectile()->toggleCanFire();
-		//goatCharacter->updateBulletsUsed();
-		//unsigned int numObjects =
-		//world->RemoveGameObject();
-
-	}
-	//testing
-	renderer->Render();
-	Debug::UpdateRenderables(dt);
-
-	/*float testFloat = float(1000) / float(55);
-	if (1000 * dt > testFloat)std::cout << "fps drop\n";*/
-
-	//timePassed = 0;
-
-	if (GAME_MODE_GRAPHIC_TEST == gameMode) {
-    UpdateRayMarchSpheres();
-		SendRayMarchData();
-	}
+	Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
 }
 
 void TutorialGame::SelectMode() {
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
+		inSelectionMode = !inSelectionMode;
+		if (inSelectionMode) {
+			Window::GetWindow()->ShowOSPointer(true);
+			Window::GetWindow()->LockMouseToWindow(false);
+		}
+		else {
+			Window::GetWindow()->ShowOSPointer(false);
+			Window::GetWindow()->LockMouseToWindow(true);
+		}
+	}
+}
+
+bool TutorialGame::SelectObject() {
+	SelectMode();
+	auto world = GameWorld::GetInstance();
+	if (inSelectionMode) {
+		Debug::Print("Press Q to change to camera mode!", Vector2(5, 85));
+
+		if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT)) {
+			if (selectionObject) {	//set colour to deselected;
+				selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
+				selectionObject = nullptr;
+			}
+
+			Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
+
+			RayCollision closestCollision;
+			if (world->Raycast(ray, closestCollision, true)) {
+				selectionObject = (GameObject*)closestCollision.node;
+
+				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
+			if (selectionObject) {
+				if (lockedObject == selectionObject) {
+					lockedObject = nullptr;
+				}
+				else {
+					lockedObject = selectionObject;
+				}
+			}
+		}
+	}
+	else {
+		Debug::Print("Press Q to change to select mode!", Vector2(5, 85));
+	}
+	return false;
+}
+
+void TutorialGame::UpdateGame(float dt) {
+#ifdef DEBUG_SHADOW
+	renderer->lightPosition = world->GetMainCamera()->GetPosition();
+#endif
+	renderer->timePassed += dt * renderer->timeScale;
+
+	switch (gameMode) {
+	case GAME_MODE_DEFAULT:
+	{
+		SelectGameWorld();
+		renderer->Update(dt);
+		renderer->Render();
+		Debug::UpdateRenderables(dt);
+		return;
+	}
+	case GAME_MODE_GRAPHIC_TEST:
+	{
+		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "cube");
+		//DispatchComputeShaderForEachTriangle(testCube);
+		//glPopDebugGroup();
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "monkey");
+		DispatchComputeShaderForEachTriangle(monkey, testSphereCenter, testSphereRadius, TEAM_RED);
+		glPopDebugGroup();
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
+		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED);
+		glPopDebugGroup();
+		//glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "walls");
+		//for (GameObject*& wall : walls) {
+			//DispatchComputeShaderForEachTriangle(wall);
+		//}
+		//glPopDebugGroup();
+		UpdateRayMarchSpheres();
+		SendRayMarchData();
+		RayCast();
+		SelectObject();
+		break;
+	}
+	case GAME_MODE_SELECT_TEAM:
+	{
+		int teamID = SelectTeam();
+		if (teamID != 0) {
+			gameMode = GAME_MODE_ONLINE_GAME;
+			InitOnlineGame(teamID);
+			return;
+		}
+		renderer->Update(dt);
+		renderer->Render();
+		Debug::UpdateRenderables(dt);
+		return;
+	}
+	case GAME_MODE_ONLINE_GAME:
+	{
+		//Host player selects the number of players
+		if (0 == playerNum && 0 == playerObject->GetNetworkId() && playerObject->IsOnline()) {
+			Debug::Print("Please choose your team.", Vector2(30, 30));
+			Debug::Print("1. 2 Players.", Vector2(30, 35) );
+			Debug::Print("2. 4 Players.", Vector2(30, 40));
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
+				playerNum = TWO_PLAYERS;
+			}
+			else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
+				playerNum = FOUR_PLAYERS;
+			}
+			if (playerNum != 0) {
+				playerObject->WriteActionMessage(Select_Player_Mode, playerNum);
+			}
+
+			renderer->Update(dt);
+			renderer->Render();
+			Debug::UpdateRenderables(dt);
+			return;
+		}
+	}
+	case GAME_MODE_SINGLE_GAME:
+	{
+		frameTime -= dt;
+		UpdateAnimations(dt);
+		SelectMode();
+		break;
+	}
+	default:
+		std::cout << "Game mode error" << std::endl;
+		return;
+	}
+
+	timePassed += dt;
+
+	if (rayMarch)DispatchComputeShaderForEachPixel();
+
+	UpdateWorldCamera(dt);
+
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::P)) {
+		TogglePause();
+	}
+
+	ControlPlayer(dt);
+
+	UpdateKeys();
+
+	GameWorld::GetInstance()->UpdateWorld(dt);
+	if (!pause) {
+		AddToGameTime(dt);
+		renderer->Update(dt);
+		physics->Update(dt);
+		renderer->Render();
+		Debug::UpdateRenderables(dt);
+	}
+	
+	//std::cout <<"GameTime: " << GetGameTime() << std::endl;
+
+	
+	
+	//if (GAME_MODE_GRAPHIC_TEST == gameMode) {
+	//	UpdateRayMarchSpheres();
+	//	SendRayMarchData();
+	//}
+}
+
+void TutorialGame::SelectGameWorld() {
 	string text = "1. Graphic Test Mode.";
-	Debug::Print(text, Vector2(35, 30), Debug::GREEN);
-	text = "2. Physical Test Mode.";
-	Debug::Print(text, Vector2(35, 50), Debug::GREEN);
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM1)) {
+	Debug::Print(text, Vector2(30, 30), Debug::GREEN);
+	text = "2. Single Player Mode.";
+	Debug::Print(text, Vector2(30, 40), Debug::GREEN);
+	text = "3. Online Game Mode.";
+	Debug::Print(text, Vector2(30, 50), Debug::GREEN);
+
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
 		gameMode = GAME_MODE_GRAPHIC_TEST;
 		InitGraphicTest();
 	}
-	else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM2)) {
-		gameMode = GAME_MODE_PHISICAL_TEST;
-		InitPhysicalTest();
+	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
+		gameMode = GAME_MODE_SINGLE_GAME;
+		InitSingleGameMode();
 	}
+	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM3)) {
+		gameMode = GAME_MODE_SELECT_TEAM;
+	}
+}
+
+int TutorialGame::SelectTeam() {
+	Debug::Print("Please choose your team.", Vector2(30, 30));
+	Debug::Print("1. RED.", Vector2(30, 35), Debug::RED);
+	Debug::Print("2. BLUE.", Vector2(30, 40), Debug::BLUE);
+	Debug::Print("3. GREEN.", Vector2(30, 45), Debug::GREEN);
+	Debug::Print("4. YELLOW.", Vector2(30, 50), Debug::YELLOW);
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
+		return TEAM_RED;
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
+		return TEAM_BLUE;
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM3)) {
+		return TEAM_GREEN;
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM4)) {
+		return TEAM_YELLOW;
+	}
+	return 0;
 }
 
 void TutorialGame::UpdateRayMarchSpheres() {
@@ -508,6 +802,7 @@ void TutorialGame::SendRayMarchData() {
 }
 
 void TutorialGame::UpdateKeys() {
+	if (pause) { return; }
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1)) {
 		InitWorld(); //We can reset the simulation at any time with F1
 		selectionObject = nullptr;
@@ -527,49 +822,25 @@ void TutorialGame::UpdateKeys() {
 	//allowing the other one to stretch too much etc. Shuffling the order so that it
 	//is random every frame can help reduce such bias.
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F9)) {
-		world->ShuffleConstraints(true);
+		GameWorld::GetInstance()->ShuffleConstraints(true);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) {
-		world->ShuffleConstraints(false);
+		GameWorld::GetInstance()->ShuffleConstraints(false);
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
-		world->ShuffleObjects(true);
+		GameWorld::GetInstance()->ShuffleObjects(true);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
-		world->ShuffleObjects(false);
+		GameWorld::GetInstance()->ShuffleObjects(false);
 	}
 
-	if (lockedObject) {
-		LockedObjectMovement();
-	}
-	else {
-		DebugObjectMovement();
-	}
-	/*if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
-		for (int i = 0; i < 1; i++)
-		{
-			Vector3 halfDims = worldFloor->GetTransform().GetScale() / 2;
-			float randX = (rand() % 200) - 100;
-			float randY = (rand() % 200) - 100;
-			Vector3 randVec(randX, 2, randY);
-			Vector2 center;
-			int radius = 10;
-			int startIndex, numInts, leftS, rightS, topT, bottomT;
-
-			//worldFloor->ApplyPaintAtPosition(randVec, halfDims, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
-			//RunComputeShader(worldFloor,200,200, leftS, rightS, topT, bottomT, radius, center);
-
-
-		}
-		
-	}*/
   if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
 		float randX = (rand() % 200) - 100;
 		float randZ = (rand() % 200) - 100;
 		Vector3 randVec(randX, 2, randZ);
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10);
+		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10, TEAM_DEFAULT);
 		glPopDebugGroup();
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F)) {
@@ -578,8 +849,83 @@ void TutorialGame::UpdateKeys() {
 	}
 }
 
+void TutorialGame::ControlPlayer(float dt) {
+	if (pause) { return; }
+	if (!playerObject) { return; }
+
+	Transform& transform = playerObject->GetTransform();
+
+	Vector3 fwdAxis = transform.GetDirVector().Normalised();
+	Vector3 rightAxis = Vector3::Cross(Vector3(0.0f, -1.0f, 0.0f), fwdAxis);
+
+	//orientation
+	float dirVal = Window::GetMouse()->GetRelativePosition().x;
+	while (180.0f <= dirVal) { dirVal -= 180.0f; }
+	Quaternion orientation = transform.GetOrientation();
+	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
+	transform.SetOrientation(orientation.Normalised());
+	//speed
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && playerObject->CanJump(floor)) {
+		playerObject->SpeedUp();
+	}
+	else 
+	{
+		playerObject->SpeedDown();
+	}
+	float speed = playerObject->GetSpeed();
+	Vector3 position = transform.GetPosition();
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
+		playerObject->TransferAnimation("MoveF");
+	}
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - fwdAxis * dt * speed);
+		playerObject->TransferAnimation("MoveB");
+	}
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - rightAxis * dt * speed);
+		playerObject->TransferAnimation("MoveL");
+	}
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
+		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + rightAxis * dt * speed);
+		playerObject->TransferAnimation("MoveR");
+	}
+	if(!Window::GetKeyboard()->KeyDown(KeyboardKeys::W)&& !Window::GetKeyboard()->KeyDown(KeyboardKeys::S)
+		&&!Window::GetKeyboard()->KeyDown(KeyboardKeys::A)&& !Window::GetKeyboard()->KeyDown(KeyboardKeys::D))
+	{
+		playerObject->TransferAnimation("Idle");
+	}
+
+
+
+	//jump
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump(floor)) {
+		playerObject->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, PLAYER_JUMP_FORCE, 0));
+	}
+	//switch weapon
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::TAB)) {
+		playerObject->SwitchWeapon();
+		playerObject->WriteActionMessage(PLAYER_ACTION_SWITCH_WEAPON);
+	}
+	//Aiming
+	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT)){
+		renderer->drawCrosshair = true;
+		playerObject->UpdateAimPosition(GameWorld::GetInstance()->GetMainCamera());
+		//shoot
+		if (Window::GetMouse()->ButtonHeld(MouseButtons::LEFT) && playerObject->CanShoot()) {
+			playerObject->StartShooting(playerObject->GetAimedTarget());
+			playerObject->WriteActionMessage(PLAYER_ACTION_SHOOT);
+		}
+	}
+	else 
+	{
+		renderer->drawCrosshair = false;
+	}
+	playerObject->PrintPlayerInfo();
+}
+
 void TutorialGame::LockedObjectMovement() {
-	Matrix4 view		= world->GetMainCamera()->BuildViewMatrix();
+	Matrix4 view		= GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
 	Matrix4 camWorld	= view.Inverse();
 
 	Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
@@ -610,70 +956,61 @@ void TutorialGame::LockedObjectMovement() {
 	}
 }
 
-void TutorialGame::DebugObjectMovement() {
-//If we've selected an object, we can manipulate it with some key presses
-	if (inSelectionMode && selectionObject) {
-		//Twist the selected object!
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::LEFT)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(-10, 0, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::RIGHT)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(10, 0, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::UP)) {
-			selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, -10));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::DOWN)) {
-			selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, 10));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM7)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(0, 10, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM8)) {
-			selectionObject->GetPhysicsObject()->AddTorque(Vector3(0, -10, 0));
-		}
-
-		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::NUM5)) {
-			selectionObject->GetPhysicsObject()->AddForce(Vector3(0, -10, 0));
-		}
-	}
-}
-
 void TutorialGame::InitCamera() {
-	world->GetMainCamera()->SetNearPlane(0.1f);
-	world->GetMainCamera()->SetFarPlane(500.0f);
-	world->GetMainCamera()->SetPitch(-15.0f);
-	world->GetMainCamera()->SetYaw(315.0f);
-	world->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
+	GameWorld::GetInstance()->GetMainCamera()->SetNearPlane(0.1f);
+	GameWorld::GetInstance()->GetMainCamera()->SetFarPlane(500.0f);
+	GameWorld::GetInstance()->GetMainCamera()->SetPitch(-15.0f);
+	GameWorld::GetInstance()->GetMainCamera()->SetYaw(315.0f);
+	GameWorld::GetInstance()->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
 	lockedObject = nullptr;
 }
 
 void TutorialGame::InitWorld() {
-	world->ClearAndErase();
+	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 	gameMode = GAME_MODE_DEFAULT;
 }
 
 void TutorialGame::InitGraphicTest() {
-	world->ClearAndErase();
+	renderer->drawCrosshair = true;
+	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 
 	//InitDefaultFloor();
-	InitDefaultFloor();
 
 	//position is irrelevant at this point in testing as im overriding position later
 	//for raymarching
 	for (int i = 0; i < 10; i++)
 	{
-		AddSphereToWorld({ 0,0,0 }, 10, false);
+		AddRayMarchSphereToWorld({ 0,0,0 }, 10);
 	}
 	
+	testSphere0 = AddSphereToWorld({50,50,50},10,true,false);
+	InitPaintableTextureOnObject(testSphere0);
+	testSphere0->GetRenderObject()->pbrTextures = crystalPBR;
+	testSphere0->GetRenderObject()->useHeightMap = true;
 
+	testSphere1 = AddSphereToWorld({ 50,50,100 }, 10, true, false);
+	InitPaintableTextureOnObject(testSphere1);
+	testSphere1->GetRenderObject()->pbrTextures = spaceShipPBR;
+	testSphere1->GetRenderObject()->useHeightMap = true;
+
+	testSphere2 = AddSphereToWorld({ 50,50,150 }, 10, true, false);
+	InitPaintableTextureOnObject(testSphere2);
+	testSphere2->GetRenderObject()->pbrTextures = rockPBR;
+	testSphere2->GetRenderObject()->useHeightMap = true;
+
+	testSphere3 = AddSphereToWorld({ 100,50,50 }, 10, true, false);
+	InitPaintableTextureOnObject(testSphere3);
+	testSphere3->GetRenderObject()->pbrTextures = grassWithWaterPBR;
+	testSphere3->GetRenderObject()->useHeightMap = true;
+
+	testSphere4 = AddSphereToWorld({ 100,50,100 }, 10, true, false);
+	InitPaintableTextureOnObject(testSphere4);
+	testSphere4->GetRenderObject()->pbrTextures = fencePBR;
+	testSphere4->GetRenderObject()->useHeightMap = true;
+
+	
 	
 
 	//testCube = AddCubeToWorld(Vector3(), Vector3(100, 100, 100));
@@ -682,12 +1019,17 @@ void TutorialGame::InitGraphicTest() {
 
 	//testTriangle = AddDebugTriangleToWorld({ 0,200,0 });
 
-	monkey = AddMonkeyToWorld({ 0,20,100 }, { 5,5,5 });
+	monkey = AddMonkeyToWorld({ 0,20,100 }, { 5,5,5 },false);
 	monkey->SetName(std::string("monkey"));
 	monkey->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(0, 180, 0));
-	walls.push_back(AddFloorToWorld({ 0,25,-20 }, {100,1,25},true));
+	monkey->GetRenderObject()->useHeightMap = true;
+	walls.push_back(AddFloorToWorld({ 0,25,-50 }, {100,1,25},true));
 	walls.back()->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(90, 0, 0));
 	walls.back()->SetName(std::string("back"));
+
+	bunny = AddBunnyToWorld({ 0,20,50 }, { 5,5,5 },false);
+	bunny->GetRenderObject()->pbrTextures = rockPBR;
+	bunny->GetRenderObject()->useHeightMap = true;
 
 	//max = AddMaxToWorld({ 10,10,-10 }, { 10,10,10 });
 
@@ -700,23 +1042,50 @@ void TutorialGame::InitGraphicTest() {
 		AddDebugTriangleInfoToObject(wall);
 	}
 #endif
+	floor->GetRenderObject()->useHeightMap = true;
 	return;
 }
 
-void TutorialGame::InitPhysicalTest() {
-	world->ClearAndErase();
+void TutorialGame::InitSingleGameMode() {
+	renderer->drawCrosshair = false;
+	GameWorld::GetInstance()->ClearAndErase();
+	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
+	//add player
+	auto q = Quaternion();
+	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	playerObject->SetTeamId(TEAM_RED);
 
-	InitGameExamples();
+	InitGameObjects();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
+
+#ifdef TRI_DEBUG
+	AddDebugTriangleInfoToObject(floor);
+#endif
+}
+
+void TutorialGame::InitOnlineGame(int teamID) {
+	renderer->drawCrosshair = false;
+	GameWorld::GetInstance()->ClearAndErase();
+	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
+	physics->Clear();
+	//add player
+	auto q = Quaternion();
+	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	playerObject->SetTeamId(teamID);
+
+	InitGameObjects();
+	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	InitPaintableTextureOnObject(floor);
+
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
 #endif
 }
 
 void TutorialGame::InitWorldtest2() {
-	world->ClearAndErase();
+	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
 	
 
@@ -786,8 +1155,10 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
-	object->GetRenderObject()->baseTex = metalTex;
-	object->GetRenderObject()->bumpTex = testBumpTex;
+	object->GetRenderObject()->baseTex = spaceShipDiffuse;
+	object->GetRenderObject()->bumpTex = spaceShipBump;
+	
+	object->GetRenderObject()->pbrTextures = crystalPBR;
 }
 /*
 
@@ -804,7 +1175,6 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 		.SetScale(scale * 2)
 		.SetPosition(position);
 
-	
 	floor->isPaintable = true;
 	
 	srand(time(0));
@@ -831,15 +1201,18 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 
 	
 	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), floorMesh, nullptr, basicShader));
+	
 	InitPaintableTextureOnObject(floor,rotated);
+	floor->GetRenderObject()->useHeightMap = true;
 
 	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
 
-	world->AddGameObject(floor);
-	worldFloor = floor;
+	GameWorld::GetInstance()->AddGameObject(floor);
+	
+	floor->SetName("floor");
 	return floor;
 }
 
@@ -859,7 +1232,7 @@ GameObject* TutorialGame::AddRunwayToWorld(const Vector3& position) {
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
 
-	world->AddGameObject(floor);
+	GameWorld::GetInstance()->AddGameObject(floor);
 
 	return floor;
 }
@@ -872,7 +1245,7 @@ rigid body representation. This and the cube function will let you build a lot o
 physics worlds. You'll probably need another function for the creation of OBB cubes too.
 
 */
-GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass) {
+GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass, bool physics) {
 	RayMarchSphere* sphere = new RayMarchSphere();
 
 	Vector3 sphereSize = Vector3(radius, radius, radius);
@@ -883,19 +1256,52 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 		.SetScale(sphereSize)
 		.SetPosition(position);
 
-	if(render)sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
-	sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
+	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
+	if (!render)sphere->GetRenderObject()->onlyForShadows = true;
+	
+	if (physics) {
+		sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
 
-	sphere->GetPhysicsObject()->SetInverseMass(inverseMass);
-	sphere->GetPhysicsObject()->InitSphereInertia();
+		sphere->GetPhysicsObject()->SetInverseMass(inverseMass);
+		sphere->GetPhysicsObject()->InitSphereInertia();
+	}
 
-	world->AddGameObject(sphere);
+	GameWorld::GetInstance()->AddGameObject(sphere);
 
 	sphere->color = { 1,0,0 };
 	sphere->radius = radius;
 	sphere->center = position;
-	rayMarchSpheres.push_back(sphere);
+	//rayMarchSpheres.push_back(sphere);
 	spheres.push_back(sphere);
+	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2*sizeof(float), sizeof(float), &(position.z));
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3*sizeof(float), sizeof(float), &(radius));
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
+	return sphere;
+}
+
+GameObject* TutorialGame::AddRayMarchSphereToWorld(const Vector3& position, float radius) {
+	RayMarchSphere* sphere = new RayMarchSphere();
+
+	Vector3 sphereSize = Vector3(radius, radius, radius);
+	SphereVolume* volume = new SphereVolume(radius);
+	sphere->SetBoundingVolume((CollisionVolume*)volume);
+
+	sphere->GetTransform()
+		.SetScale(sphereSize)
+		.SetPosition(position);
+
+	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
+	sphere->GetRenderObject()->onlyForShadows = true;
+
+	sphere->color = { 1,0,0 };
+	sphere->radius = radius;
+	sphere->center = position;
+	GameWorld::GetInstance()->AddGameObject(sphere);
+	rayMarchSpheres.push_back(sphere);
 	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
@@ -909,14 +1315,13 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 
 
 
-
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* cube = new GameObject();
 
 	OBBVolume* volume = new OBBVolume(dimensions);
 	cube->SetBoundingVolume((CollisionVolume*)volume);
 
-	cube->GetTransform().SetPosition(position).SetScale(dimensions * 3.0f);
+	cube->GetTransform().SetPosition(position).SetScale(dimensions * 2.0f);
 
 	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, nullptr, basicShader));
 	cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));
@@ -926,15 +1331,15 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 
 	InitPaintableTextureOnObject(cube);
 
-	world->AddGameObject(cube);
-
+	GameWorld::GetInstance()->AddGameObject(cube);
+	cube->SetName("cube");
 	return cube;
 }
 
 GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inverseMass) {
 	GameObject* capsule = new GameObject();
 
-	CapsuleVolume* volume = new CapsuleVolume(halfHeight, radius);
+	CapsuleVolume* volume = new CapsuleVolume(halfHeight * 0.5f, radius * 0.5f);
 	capsule->SetBoundingVolume((CollisionVolume*)volume);
 
 	capsule->GetTransform().SetScale(Vector3(radius, halfHeight, radius)).SetPosition(position);
@@ -947,13 +1352,13 @@ GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfH
 
 	InitPaintableTextureOnObject(capsule);
 
-	world->AddGameObject(capsule);
-
+	GameWorld::GetInstance()->AddGameObject(capsule);
+	capsule->SetName("capsule");
 	return capsule;
 
 }
 
-GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, bool physics) {
 	GameObject* monkey = new GameObject();
 	
 
@@ -965,16 +1370,18 @@ GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dime
 		.SetScale(dimensions * 2);
 
 	monkey->SetRenderObject(new RenderObject(&monkey->GetTransform(), monkeyMesh, nullptr, basicShader));
-	monkey->SetPhysicsObject(new PhysicsObject(&monkey->GetTransform(), monkey->GetBoundingVolume()));
+	if (physics) {
+		monkey->SetPhysicsObject(new PhysicsObject(&monkey->GetTransform(), monkey->GetBoundingVolume()));
 
-	monkey->GetPhysicsObject()->SetInverseMass(inverseMass);
-	monkey->GetPhysicsObject()->InitCubeInertia();
+		monkey->GetPhysicsObject()->SetInverseMass(inverseMass);
+		monkey->GetPhysicsObject()->InitCubeInertia();
+	}
 
 	monkey->GetRenderObject()->isComplex = true;
 
 	InitPaintableTextureOnObject(monkey);
 
-	world->AddGameObject(monkey);
+	GameWorld::GetInstance()->AddGameObject(monkey);
 
 	return monkey;
 }
@@ -997,7 +1404,7 @@ GameObject* TutorialGame::AddWallToWorld(const Vector3& position, Vector3 dimens
 
 	InitPaintableTextureOnObject(wall);
 
-	world->AddGameObject(wall);
+	GameWorld::GetInstance()->AddGameObject(wall);
 
 	return wall;
 }
@@ -1020,9 +1427,35 @@ GameObject* TutorialGame::AddMaxToWorld(const Vector3& position, Vector3 dimensi
 
 	InitPaintableTextureOnObject(max);
 
-	world->AddGameObject(max);
+	GameWorld::GetInstance()->AddGameObject(max);
 
 	return max;
+}
+
+GameObject* TutorialGame::AddBunnyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, bool physics) {
+	GameObject* bunny = new GameObject();
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+	bunny->SetBoundingVolume((CollisionVolume*)volume);
+
+	bunny->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2);
+
+	bunny->SetRenderObject(new RenderObject(&bunny->GetTransform(), bunnyMesh, nullptr, basicShader));
+	if (physics) {
+		bunny->SetPhysicsObject(new PhysicsObject(&bunny->GetTransform(), bunny->GetBoundingVolume()));
+
+		bunny->GetPhysicsObject()->SetInverseMass(inverseMass);
+		bunny->GetPhysicsObject()->InitCubeInertia();
+	}
+	
+
+	InitPaintableTextureOnObject(bunny);
+
+	GameWorld::GetInstance()->AddGameObject(bunny);
+
+	return bunny;
 }
 
 void TutorialGame::setLockedObjectNull() {
@@ -1049,34 +1482,11 @@ GameObject* TutorialGame::AddEnemyGoatToWorld(const Vector3& position) {
 	BadGoat->GetPhysicsObject()->setCoeficient(0.55f);
 	BadGoat->GetPhysicsObject()->InitSphereInertia();
 	TutorialGame::setEnemyGoat(BadGoat);
-	world->AddGameObject(BadGoat);
+	GameWorld::GetInstance()->AddGameObject(BadGoat);
 
 	return BadGoat;
 }
 
-//GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position) { //Origonal
-//	float meshSize		= 1.0f;
-//	float inverseMass	= 0.5f;
-//
-//	GameObject* character = new GameObject();
-//	SphereVolume* volume  = new SphereVolume(1.0f);
-//
-//	character->SetBoundingVolume((CollisionVolume*)volume);
-//
-//	character->GetTransform()
-//		.SetScale(Vector3(meshSize, meshSize, meshSize))
-//		.SetPosition(position);
-//
-//	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
-//	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
-//
-//	character->GetPhysicsObject()->SetInverseMass(inverseMass);
-//	character->GetPhysicsObject()->InitSphereInertia();
-//
-//	world->AddGameObject(character);
-//
-//	return character;
-//}
 GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	GameObject* triangle = new GameObject();
 
@@ -1084,16 +1494,76 @@ GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	triangle->GetTransform().SetPosition(position);
 
 	triangle->SetRenderObject(new RenderObject(&triangle->GetTransform(), triangleMesh, testCollisionTex, basicShader));
-	world->AddGameObject(triangle);
+	GameWorld::GetInstance()->AddGameObject(triangle);
 	return triangle;
 }
 
+void TutorialGame::AddMapToWorld() {
+
+	floor = AddFloorToWorld(Vector3(0, -20, 0), Vector3(250, 1, 400));
+	
+	//back cover walls
+	walls.push_back(AddWallToWorld(Vector3(0, -22, 300), Vector3(30, 2, 1), 0));
+	walls.push_back(AddWallToWorld(Vector3(0, -22, -300), Vector3(30, 2, 1), 0));
+
+	//middle cover walls
+	walls.push_back(AddWallToWorld(Vector3(175, -22, 200), Vector3(20, 2, 1), 0));
+	walls.push_back(AddWallToWorld(Vector3(175, -22, -200), Vector3(20, 2, 1), 0));
+	walls.push_back(AddWallToWorld(Vector3(-175, -22, 200), Vector3(20, 2, 1), 0));
+	walls.push_back(AddWallToWorld(Vector3(-175, -22, -200), Vector3(20, 2, 1), 0));
+
+	//low middle cover walls
+	walls.push_back(AddWallToWorld(Vector3(50, -22, 200), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-50, -22, 200), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(50, -22, -200), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-50, -22, -200), Vector3(15, 1, 5), 0));
+
+	walls.push_back(AddWallToWorld(Vector3(50, -22, 100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-50, -22, 100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(50, -22, -100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-50, -22, -100), Vector3(15, 1, 5), 0));
+
+	walls.push_back(AddWallToWorld(Vector3(175, -22, 100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-175, -22, 100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(175, -22, -100), Vector3(15, 1, 5), 0));
+	walls.push_back(AddWallToWorld(Vector3(-175, -22, -100), Vector3(15, 1, 5), 0));
+
+	//centre cover walls
+	walls.push_back(AddWallToWorld(Vector3(0, -22, 10), Vector3(30, 2, 10), 0));
+	walls.push_back(AddWallToWorld(Vector3(160, -22, 10), Vector3(30, 2, 10), 0));
+	walls.push_back(AddWallToWorld(Vector3(-160, -22, 10), Vector3(30, 2, 10), 0));
+
+	//dividing walls 
+	walls.push_back(AddWallToWorld(Vector3(100, -25, 150), Vector3(1, 3, 200), 0));
+	walls.push_back(AddWallToWorld(Vector3(-100, -25, 150), Vector3(1, 3, 200), 0));
+	walls.push_back(AddWallToWorld(Vector3(100, -25, 450), Vector3(1, 3, 200), 0));
+	walls.push_back(AddWallToWorld(Vector3(-100, -25, 450), Vector3(1, 3, 200), 0));
+
+	//enclosing walls and ceiling
+	AddFloorToWorld(Vector3(0, 100, 0), Vector3(250, 1, 400));
+
+	//side walls
+	walls.push_back(AddWallToWorld(Vector3(250, -50, 1200), Vector3(4, 20, 800), 0));
+	walls.push_back(AddWallToWorld(Vector3(-250, -50, 1200), Vector3(4, 20, 800), 0));
+
+	//back walls
+	walls.push_back(AddWallToWorld(Vector3(0, -50, 405), Vector3(250, 20, 4), 0));
+	walls.push_back(AddWallToWorld(Vector3(0, -50, -395), Vector3(250, 20, 4), 0));
+
+	for (GameObject*& wall : walls) {
+		InitPaintableTextureOnObject(wall);
+	}
+
+}
+
+
+
 playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation) {
 	float meshSize = 2.0f;
-	float inverseMass = 0.8f;
+	float inverseMass = 0.3f;
 
 	playerTracking* character = new playerTracking();
-	AABBVolume* volume = new AABBVolume(Vector3{ 2,2,2 });
+	AABBVolume* volume = new AABBVolume(Vector3(1.0f, 0.2f, 1.0f) * meshSize);
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -1101,18 +1571,28 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
+	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, characterShader ));
+	character->GetRenderObject()->isAnimated = true;
+
+	for (int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
+		const MeshMaterialEntry* matEntry = playerMaterial->GetMaterialForLayer(i);
+		const std::string* filename = nullptr;
+		matEntry->GetEntry("Diffuse", &filename);
+		std::string path = *filename;
+		character->GetRenderObject()->matTextures.emplace_back(renderer->LoadTexture(path));
+	}
+	character->GetRenderObject()->anim = character->GetCurrentAnimation();
+	animatedObjects.emplace_back(character->GetRenderObject());
+
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
-	character->GetPhysicsObject()->setTorqueFriction(0.005f);
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->setCoeficient(0.55f);
-	character->GetPhysicsObject()->InitSphereInertia();
-	setGoatCharacter(character);
+	character->GetPhysicsObject()->SetElasticity(0.0f);
 	InitPaintableTextureOnObject(character);
 
-	world->AddGameObject(character);
-
+	GameWorld::GetInstance()->AddGameObject(character);
+	character->SetName("character");
 	return character;
 }
 
@@ -1126,34 +1606,34 @@ Projectile* TutorialGame::AddBulletToWorld(playerTracking* playableCharacter) {
 
 
 Projectile* TutorialGame::useNewBullet(playerTracking* passedPlayableCharacter) {
-	gun wepType = passedPlayableCharacter->getWeponType();
+	//gun wepType = passedPlayableCharacter->getWeponType();
 
-	Projectile* sphere = objectpool->GetObjectW();
-	float bulletsInverseMass = sphere->getWeight();
-	float radius = sphere->getProjectileRadius();
-	//Vector3 playerDirectionVector = (Vector3::Cross((passedPlayableCharacter->GetTransform().GetOrientation().ToEuler()) , Vector3 {1,0,0})).Normalised();
-	Vector3 playerDirectionVector = (passedPlayableCharacter->GetTransform().GetOrientation() * Vector3 { 0, 0, -1 });
-	Vector3 sphereSize = { radius,radius,radius };
-	Vector3 position = passedPlayableCharacter->GetTransform().GetPosition();
-	SphereVolume* volume = new SphereVolume(radius);
-	sphere->setBulletDirectionVector(Vector3{ playerDirectionVector.x,world->GetMainCamera()->GetPitch(),playerDirectionVector.z });
-	cout << world->GetMainCamera()->GetPitch() << endl;
-	sphere->SetBoundingVolume((CollisionVolume*)volume);
-	sphere->GetTransform().SetScale(sphereSize);
-	sphere->GetTransform().SetPosition(position - (passedPlayableCharacter->GetTransform().GetOrientation().Normalised() * Vector3 { 0, 0, 10 }));
+	//Projectile* sphere = objectpool->GetObject2();
+	//float bulletsInverseMass = sphere->getWeight();
+	//float radius = sphere->getProjectileRadius();
+	////Vector3 playerDirectionVector = (Vector3::Cross((passedPlayableCharacter->GetTransform().GetOrientation().ToEuler()) , Vector3 {1,0,0})).Normalised();
+	//Vector3 playerDirectionVector = (passedPlayableCharacter->GetTransform().GetOrientation() * Vector3 { 0, 0, -1 });
+	//Vector3 sphereSize = { radius,radius,radius };
+	//Vector3 position = passedPlayableCharacter->GetTransform().GetPosition();
+	//SphereVolume* volume = new SphereVolume(radius);
+	//sphere->setBulletDirectionVector(playerDirectionVector);
+	//sphere->SetBoundingVolume((CollisionVolume*)volume);
+	//sphere->GetTransform().SetScale(sphereSize);
+	//sphere->GetTransform().SetPosition(position - Vector3{ 0,0,10 });
+	//sphere->GetTransform().SetPosition((position)-(Vector3{ 0,0,10 }));
 
-	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
-	sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
-	sphere->GetRenderObject()->SetColour(passedPlayableCharacter->getPaintColor());
-	PhysicsObject* physicsBullet = sphere->GetPhysicsObject();
-	if (!sphere->ProjectileAffectedByGravity() || true) {
-		physicsBullet->SetAffectedByGravityFalse();
-	}
-	sphere->GetPhysicsObject()->SetInverseMass(bulletsInverseMass);
-	sphere->GetPhysicsObject()->InitSphereInertia();
+	//sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
+	//sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
+	//sphere->GetRenderObject()->SetColour(passedPlayableCharacter->getPaintColor());
+	//PhysicsObject* physicsBullet = sphere->GetPhysicsObject();
+	//if (!sphere->ProjectileAffectedByGravity() || true) {
+	//	physicsBullet->SetAffectedByGravityFalse();
+	//}
+	//sphere->GetPhysicsObject()->SetInverseMass(bulletsInverseMass);
+	//sphere->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(sphere);
-	return sphere;
+	//GameWorld::GetInstance()->AddGameObject(sphere);
+	return nullptr;
 
 }
 
@@ -1182,9 +1662,9 @@ Projectile* TutorialGame::FireBullet(playerTracking* selectedPlayerCharacter) {
 
 
 
-void TutorialGame::setGoatCharacter(playerTracking* assignCharcter) {
-	goatCharacter = assignCharcter;
-}
+//void TutorialGame::setGoatCharacter(playerTracking* assignCharcter) {
+//	goatCharacter = assignCharcter;
+//}
 
 void TutorialGame::setEnemyGoat(GameObject* assignCharcter) {
 	EnemyGoat = assignCharcter;
@@ -1192,19 +1672,6 @@ void TutorialGame::setEnemyGoat(GameObject* assignCharcter) {
 
 void TutorialGame::movePlayer(playerTracking* unitGoat) {
 	unitGoat->GetRenderObject()->SetColour(Vector4(0.1f, 0.2f, 0.4f, 1));
-	float yaw = world->GetMainCamera()->GetYaw();
-	Vector3 cameraOffset = ((unitGoat->GetTransform().GetOrientation()).Normalised()) * Vector3{ 0,11,15 };
-	world->GetMainCamera()->SetPosition(unitGoat->GetTransform().GetPosition() + cameraOffset);
-	yaw -= (Window::GetMouse()->GetRelativePosition().x);
-
-	if (yaw < 0) {
-		yaw += 360.0f;
-	}
-	if (yaw > 360.0f) {
-		yaw -= 360.0f;
-	}
-	unitGoat->GetTransform().SetOrientation(Quaternion::AxisAngleToQuaterion(Vector3(0, 1, 0), yaw));
-	world->GetMainCamera()->SetYaw(unitGoat->GetTransform().GetOrientation().ToEuler().y);
 	PhysicsObject* goatPhysicsObject = unitGoat->GetPhysicsObject();
 	Transform* goatTransform = &(unitGoat->GetTransform());
 	//jumping raycast test
@@ -1216,7 +1683,7 @@ void TutorialGame::movePlayer(playerTracking* unitGoat) {
 	Ray r = Ray(rayPos, rayDir);
 
 	RayCollision grounded;
-	if (world->Raycast(r, grounded, true)) {
+	if (GameWorld::GetInstance()->Raycast(r, grounded, true)) {
 		/*if (objClosest) {
 			objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
 		}*/
@@ -1243,14 +1710,7 @@ void TutorialGame::movePlayer(playerTracking* unitGoat) {
 		cout<< "current player action = " << a->getCurrentPlayerAction()<< endl;*/
 	};
 
-	/*if ((Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::F))) {
-		if (unitGoat->getPlayerProjectile()->GetCanFire()) {
-			FireBullet(unitGoat);
-			unitGoat->getPlayerProjectile()->toggleCanFire();
-		};
-	};*/
-
-	if ((Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT))) {
+	if ((Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::F))) {
 		if (unitGoat->getPlayerProjectile()->GetCanFire()) {
 			FireBullet(unitGoat);
 			unitGoat->getPlayerProjectile()->toggleCanFire();
@@ -1293,7 +1753,7 @@ GameObject* TutorialGame::AddEnemyToWorld(const Vector3& position) {
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(character);
+	GameWorld::GetInstance()->AddGameObject(character);
 
 	return character;
 }
@@ -1313,7 +1773,7 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 	apple->GetPhysicsObject()->SetInverseMass(1.0f);
 	apple->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(apple);
+	GameWorld::GetInstance()->AddGameObject(apple);
 
 	return apple;
 }
@@ -1328,15 +1788,22 @@ void TutorialGame::InitDefaultFloorRunway() {
 	AddRunwayToWorld(Vector3(0, -20, 0));
 }
 
-void TutorialGame::InitGameExamples() {
-	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.5f);
-	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 2.5, 2.5);
-	
-	//TODO
-	auto q = Quaternion();
-	selectionObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+void TutorialGame::InitGameObjects() {
+	AddCubeToWorld(Vector3(0.0f, 5.0f, 0.0f), Vector3(2.5f, 2.5f, 2.5f), 0.1f);
+	AddCapsuleToWorld(Vector3(0.0f, 5.0f, 5.0f), 1.5, 1.5, 0.2f);
+
+	//lockedObject = playerObject;
+	//TestCode of Item
+	PropSystem::GetInstance()->SpawnItem();
+	PropSystem::GetInstance()->SpawnSpeedUp();
+	PropSystem::GetInstance()->SpawnShield();
+	PropSystem::GetInstance()->SpawnHeal();
+	PropSystem::GetInstance()->SpawnWeaponUp(); 
+
+	//AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	//AddEnemyToWorld(Vector3(5, 5, 0));
 	//AddBonusToWorld(Vector3(10, 5, 0));
+
 }
 
 void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius) {
@@ -1385,10 +1852,6 @@ void TutorialGame::InitMixedGridWorldtest(int numRows, int numCols, float rowSpa
 
 }
 
-
-
-
-
 void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims) {
 	for (int x = 1; x < numCols+1; ++x) {
 		for (int z = 1; z < numRows+1; ++z) {
@@ -1397,94 +1860,6 @@ void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing,
 		}
 	}
 }
-
-/*
-Every frame, this code will let you perform a raycast, to see if there's an object
-underneath the cursor, and if so 'select it' into a pointer, so that it can be 
-manipulated later. Pressing Q will let you toggle between this behaviour and instead
-letting you move the camera around. 
-
-*/
-bool TutorialGame::SelectObject() {
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
-		inSelectionMode = !inSelectionMode;
-		if (inSelectionMode) {
-			Window::GetWindow()->ShowOSPointer(true);
-			Window::GetWindow()->LockMouseToWindow(false);
-		}
-		else {
-			Window::GetWindow()->ShowOSPointer(false);
-			Window::GetWindow()->LockMouseToWindow(true);
-		}
-	}
-	if (inSelectionMode) {
-		Debug::Print("Press Q to change to camera mode!", Vector2(5, 85));
-
-		if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT)) {
-			if (selectionObject) {	//set colour to deselected;
-				selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
-				selectionObject = nullptr;
-			}
-
-			Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
-
-			RayCollision closestCollision;
-			if (world->Raycast(ray, closestCollision, true)) {
-				selectionObject = (GameObject*)closestCollision.node;
-
-				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-		if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
-			if (selectionObject) {
-				if (lockedObject == selectionObject) {
-					lockedObject = nullptr;
-				}
-				else {
-					lockedObject = selectionObject;
-				}
-			}
-		}
-	}
-	else {
-		Debug::Print("Press Q to change to select mode!", Vector2(5, 85));
-	}
-	return false;
-}
-
-/*
-If an object has been clicked, it can be pushed with the right mouse button, by an amount
-determined by the scroll wheel. In the first tutorial this won't do anything, as we haven't
-added linear motion into our physics system. After the second tutorial, objects will move in a straight
-line - after the third, they'll be able to twist under torque aswell.
-*/
-
-void TutorialGame::MoveSelectedObject() {
-	Debug::Print("Click Force:" + std::to_string(forceMagnitude), Vector2(5, 90));
-	forceMagnitude += Window::GetMouse()->GetWheelMovement() * 100.0f;
-
-	if (!selectionObject) {
-		return;//we haven't selected anything!
-	}
-	//Push the selected object!
-	if (Window::GetMouse()->ButtonPressed(NCL::MouseButtons::RIGHT)) {
-		Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
-
-		RayCollision closestCollision;
-		if (world->Raycast(ray, closestCollision, true)) {
-			if (closestCollision.node == selectionObject) {
-				selectionObject->GetPhysicsObject()->AddForceAtPosition(ray.GetDirection() * forceMagnitude, closestCollision.collidedAt);
-			}
-		}
-	}
-}
-
-
-
 
 
 StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
@@ -1502,30 +1877,38 @@ StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 	object->GetPhysicsObject()->SetInverseMass(1.0f);
 	object->GetPhysicsObject()->InitSphereInertia();
 
-	world->AddGameObject(object);
+	GameWorld::GetInstance()->AddGameObject(object);
 
 	return object;
 
 }
 
 
-void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius) {
+void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID, bool clearMask) {
 
 	Matrix4 modelMatrix = object->GetTransform().GetMatrix();
-	MESH_TRIANGLES_AND_UVS tris = object->GetRenderObject()->GetMesh()->GetAllTrianglesAndUVs();//TODO use vao instead
+	
 	triComputeShader->Bind();
+
+	
+
+	OGLMesh* mesh = (OGLMesh*)object->GetRenderObject()->GetMesh();
+	unsigned int numTris = mesh->GetIndexCount() / 3;
+	GLuint vao = mesh->vao;
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER,tempSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mesh->attributeBuffers[VertexAttribute::Positions]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mesh->attributeBuffers[VertexAttribute::TextureCoords]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mesh->indexBuffer);
 
 	Vector2 maskDims = object->GetRenderObject()->maskDimensions;
 	
-	/*glBindTexture(GL_TEXTURE_2D, (((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, maskDims.x, maskDims.y, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, zeros.data());
-	glBindTexture(GL_TEXTURE_2D, 0);*/
+	
+	if(clearMask)glClearTexImage((((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID()), 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, 0);
+	
 	
 #ifdef TRI_DEBUG
 	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16F);
+	glBindImageTexture(0, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_WRITE, GL_RGBA16);
 #endif
 
 	glActiveTexture(GL_TEXTURE1);
@@ -1536,61 +1919,129 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	int textureWidthLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureWidth");
 	int textureHeightLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "textureHeight");
 	int isComplexLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "isComplex");
+	int modelMatrixLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "modelMatrix");
+	int numTrisLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "numTris");
+	int teamIDLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "teamID");
+	int newMethodLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "newMethod");
 	glUniform1f(radiusLocation, sphereRadius);
 	glUniform3fv(centerLocation,1, spherePosition.array);
 	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
 	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
 	glUniform1i(isComplexLocation, object->GetRenderObject()->isComplex);
+	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
+	glUniform1i(numTrisLocation, numTris);
+	glUniform1i(teamIDLocation, teamID);
+	glUniform1i(newMethodLocation, renderer->newMethod);
 	
-	//TODO change all of this to use vao
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBO);
-	std::array<float, MAX_TRIS * 15> emptyArray{};
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(float) * MAX_TRIS * 15, emptyArray.data());
+	
+	
 
-	for (int i = 0; i < tris.size(); i++)
-	{
-		int offset = i * sizeof(float) * 3 * 5;
-		int numFloatsSent = 0;
-		std::tuple<std::array<Vector3, 3>, std::array<Vector2, 3>> tri = tris[i];
-		Vector3 vertA = modelMatrix * std::get<0>(tri)[0];
-		Vector3 vertB = modelMatrix * std::get<0>(tri)[1];
-		Vector3 vertC = modelMatrix * std::get<0>(tri)[2];
-
-		Vector2 uvA = std::get<1>(tri)[0];
-		Vector2 uvB = std::get<1>(tri)[1];
-		Vector2 uvC = std::get<1>(tri)[2];
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.y));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(vertA.z));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(uvA.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float),sizeof(float),&(uvA.y));
-
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.y));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertB.z));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvB.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvB.y));
-
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.y));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(vertC.z));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvC.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + numFloatsSent++ * sizeof(float), sizeof(float), &(uvC.y));
-	}
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, debugTriangleSSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, debugTriangleSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	int zero = 0;
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
+	glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32I, GL_RED_INTEGER, GL_INT, &zero);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, triangleBoolSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBO);
+	glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32I, GL_RED_INTEGER, GL_INT, &zero);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, triangleRasteriseSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	//int* ints = new int[highestTriCount];
 	
-	triComputeShader->Execute(object->GetRenderObject()->GetMesh()->GetIndexCount()/64+1, 1, 1);//todo change number of thread groups
+	triComputeShader->Execute((numTris)/64+1, 1, 1);//todo change number of thread groups
+	int* ints = (int*)glMapNamedBuffer(triangleBoolSSBO, GL_READ_ONLY);//todo store 32 bools in one int
+	unsigned int* ints2 = (unsigned int*)glMapNamedBuffer(triangleRasteriseSSBO, GL_READ_ONLY);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	
+	//glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, highestTriCount * sizeof(int), ints);
+	unsigned int numTrisHit = 0;
+	unsigned int maxWidth = 0;
+	unsigned int maxHeight = 0;
+
+
+	std::vector<std::tuple<unsigned int, unsigned int>> coords;
+	std::vector<int> indices;
+#pragma region 2 ints in 1
+	/*unsigned int rightHalf = 0;
+	for (int i = 0; i < sizeof(unsigned int) / 2; i++)
+	{
+		rightHalf += 1 << i;
+	}
+	unsigned int leftHalf = 0;
+	for (int i = sizeof(unsigned int) / 2; i < sizeof(unsigned int); i++)
+	{
+		leftHalf += 1 << i;
+	}*/
+#pragma endregion
+	for (int i = 0; i < highestTriCount; i++)
+	{
+		if (ints[i]) {
+			numTrisHit++;
+			indices.push_back(i);
+			if(ints2[4 * i + 0] > maxWidth) maxWidth = ints2[4 * i + 0];
+			if(ints2[4 * i + 1] > maxHeight) maxHeight = ints2[4 * i + 1];
+			coords.push_back({ ints2[4 * i + 2], ints2[4 * i + 3] });
+		}
+	}
+
+	glUnmapNamedBuffer(triangleBoolSSBO);
+	glUnmapNamedBuffer(triangleRasteriseSSBO);
+
+
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	triComputeShader->Unbind();
+
+	triRasteriseShader->Bind();
+
+	uint32_t* data = new uint32_t[numTrisHit * 3];
+	for (int i = 0; i < numTrisHit; i++)
+	{
+		data[3 * i + 0] = indices[i];
+		data[3 * i + 1] = std::get<0>(coords[i]);
+		data[3 * i + 2] = std::get<1>(coords[i]);
+	}
+	
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleRasteriseSSBOSecondShader);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, triangleRasteriseSSBOSecondShader);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER,0, sizeof(uint32_t) * numTrisHit * 3, data);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	radiusLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "sphereRadius");
+	centerLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "sphereCenter");
+	textureWidthLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "textureWidth");
+	textureHeightLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "textureHeight");
+	teamIDLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "teamID");
+	modelMatrixLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "modelMatrix");
+	int chunkWidthLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "chunkWidth");
+	int chunkHeightLocation = glGetUniformLocation(triRasteriseShader->GetProgramID(), "chunkHeight");
+
+	glUniform1f(radiusLocation, sphereRadius);
+	glUniform3fv(centerLocation, 1, spherePosition.array);
+	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
+	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
+	glUniform1i(teamIDLocation, teamID);
+	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
+	glUniform1i(chunkWidthLocation, maxWidth);
+	glUniform1i(chunkHeightLocation, maxHeight);
+
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 6, "second");
+	triRasteriseShader->Execute(maxWidth/8+1,maxHeight/8+1,numTrisHit);
+	glPopDebugGroup();
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	triRasteriseShader->Unbind();
+	delete[] data;
+	
 }
 
-void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
+void TutorialGame::SetUpTriangleSSBOAndDataTexture()
 {
 	
-
-	
-	
-
 	//todo delete this, just for testing
 	std::array<char, MAX_TRIS> noise;
 	for (int i = 0; i < MAX_TRIS; i++)
@@ -1603,6 +2054,14 @@ void NCL::CSC8503::TutorialGame::SetUpTriangleSSBOAndDataTexture()
 	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(float) * 15, NULL, GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, triangleSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	glGenBuffers(1, &(debugTriangleSSBO));
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, debugTriangleSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, MAX_TRIS * sizeof(float) * 15, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, debugTriangleSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	
 
 	/*glGenBuffers(1, &triangleBoolSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
@@ -1618,7 +2077,7 @@ void TutorialGame::AddDebugTriangleInfoToObject(GameObject* object) {
 	glBindTexture(GL_TEXTURE_1D, ((OGLTexture*)(object->GetRenderObject()->triDataTex))->GetObjectID());
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, MAX_TRIS, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16, MAX_TRIS, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glBindTexture(GL_TEXTURE_1D, 0);
 
 	
@@ -1664,4 +2123,25 @@ bool TutorialGame::SphereTriangleIntersection(Vector3 sphereCenter, float sphere
 	intersectionPoint = projection;
 	
 	return true;
+}
+
+void TutorialGame::UpdateAnimations(float dt) {
+
+	for (auto& i : animatedObjects) {
+		const Matrix4* invBindPose = i->GetMesh()->GetInverseBindPose().data();
+
+		const Matrix4* frameData = i->anim->GetJointData(i->currentFrame);
+
+		i->frameMatrices.clear();
+		for (unsigned int x = 0; x < i->GetMesh()->GetJointCount(); ++x) {
+			i->frameMatrices.emplace_back(frameData[x] * invBindPose[x]);
+		}
+		i->frameTime -= dt;
+		while (i->frameTime < 0.0f) {
+			i->currentFrame = (i->currentFrame + 1) % i->anim->GetFrameCount();
+			i->frameTime += 1.0f / i->anim->GetFrameRate();
+		}
+
+	}
+
 }

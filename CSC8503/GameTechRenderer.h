@@ -131,25 +131,7 @@ namespace NCL {
 			bool toneMap = true;
 			float exposure = 1;
 
-			//animaiton
-			OGLShader* characterShader;
-			void LoadPlayerAniamtion();
-			void RenderPlayerAnimation();
-			OGLMesh* playerMesh;
-			NCL::MeshAnimation* currentAniamtion;
-			MeshMaterial* playerMaterial;
-			vector<OGLTexture*> matTextures;
-			void SetCurrentAniamtion(NCL::MeshAnimation* anim)
-			{
-				if (anim != currentAniamtion)
-				{
-					currentFrame = 0;
-					frameTime = 0.0f;
-				}
-				currentAniamtion = anim;
-			}
-			int currentFrame;
-			float frameTime;
+			
 
 		protected:
 			void NewRenderLines();
@@ -177,6 +159,7 @@ namespace NCL {
 			void SetDebugLineBufferSizes(size_t newVertCount);
 
 			vector<const RenderObject*> activeObjects;
+			vector<RenderObject*> animatedObjects;
 			
 
 			

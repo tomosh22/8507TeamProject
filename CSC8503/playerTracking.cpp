@@ -31,7 +31,7 @@ playerTracking::playerTracking()
 		weaponPool.push_back(pistol);
 		weaponPool.push_back(rocket);
 
-		animationMap["Idle"] = new  NCL::MeshAnimation("DefaultCharacterWithTPose.anm");
+		animationMap["Idle"] = new  NCL::MeshAnimation("Idle.anm");
 		animationMap["MoveF"] = new  NCL::MeshAnimation("RunForward.anm");
 		animationMap["MoveB"] = new  NCL::MeshAnimation("RunBackward.anm");
 		animationMap["MoveL"] = new  NCL::MeshAnimation("RunLeft.anm");
@@ -49,6 +49,7 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 	{
 		TakeDamage(50);
 	}
+	GetRenderObject()->anim = currentAniamtion;
 }
 
 void NCL::CSC8503::playerTracking::Rotate()

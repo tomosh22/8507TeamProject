@@ -335,11 +335,12 @@ namespace NCL {
 
 			bool rayMarch = true;
 			//Player Animation 
-			ShaderBase* characterShader;
-			MeshAnimation* playerIdle;
+			OGLShader* characterShader;
 			MeshMaterial* playerMaterial;
 			int currentFrame;
 			float frameTime;
+			void UpdateAnimations(float dt);
+			std::vector<RenderObject*> animatedObjects;
 
 			bool pause = false;
 

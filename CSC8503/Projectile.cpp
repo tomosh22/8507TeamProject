@@ -30,6 +30,7 @@ Projectile::Projectile()
 	AffectedGravity = true;
 	SetActive(false);
 	GameWorld::GetInstance()->AddGameObject(this);
+	//GameWorld::GetInstance()->rayMarchSpheres.emplace_back(this);
 }
 
 

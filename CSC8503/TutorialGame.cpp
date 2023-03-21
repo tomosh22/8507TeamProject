@@ -759,7 +759,7 @@ void TutorialGame::SendRayMarchData() {
 	//just for testing, i know this is a horrible way of doing this
 	int numSpheresSent = 0;
 	unsigned int size = sizeof(RayMarchSphere);
-	for (RayMarchSphere* sphere : rayMarchSpheres)
+	for (RayMarchSphere* sphere : GameWorld::GetInstance()->rayMarchSpheres)
 	{
 		
 		int offset = numSpheresSent * sizeof(float) * 7;

@@ -4,6 +4,7 @@
 #include "Ray.h"
 #include "CollisionDetection.h"
 #include "QuadTree.h"
+#include "RayMarchSphere.h" 
 namespace NCL {
 		class Camera;
 		using Maths::Ray;
@@ -66,7 +67,7 @@ namespace NCL {
 				}
 				return _instance;
 			}
-
+			std::vector<RayMarchSphere*> rayMarchSpheres;
 		protected:
 			static GameWorld* _instance;
 

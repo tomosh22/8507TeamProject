@@ -5,6 +5,7 @@
 #include"GameObject.h"
 #include"GameWorld.h"
 #include <vector>
+#include "RayMarchSphere.h"
 
 
 namespace NCL {

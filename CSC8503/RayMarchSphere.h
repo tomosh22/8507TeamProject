@@ -6,6 +6,10 @@ namespace NCL {
         class RayMarchSphere :
             public GameObject
         {
+        public:
+            Vector3 center;
+            float radius;
+            Vector3 color;
         };
     }
     

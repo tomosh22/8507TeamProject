@@ -1153,12 +1153,12 @@ void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int
 void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated) {
 	int w, h;
 	if (!rotated) {
-		w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
-		h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+		h = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
+		w = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
 	}
 	else {
-		w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
-		h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+		h = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
+		w = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
 	}
 
 	object->GetRenderObject()->isPaintable = true;

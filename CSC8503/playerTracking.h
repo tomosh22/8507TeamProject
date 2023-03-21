@@ -9,6 +9,7 @@
 #include "NetworkObject.h"
 #include <map>
 #include "MeshAnimation.h"
+#include "RespawnPoint.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -204,7 +205,8 @@ namespace NCL {
 			Gun weaponInUse;
 			vector<Gun> weaponPool;
 			//Vector4 paintColor;
-		
+			RespawnPoint* respawn;
+
 			float moveSpeed;
 			float sprintTimer;
 			float speedUpTimer;

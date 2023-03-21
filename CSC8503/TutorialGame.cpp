@@ -1051,8 +1051,15 @@ void TutorialGame::InitSingleGameMode() {
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 
 	//InitGameObjects();
-	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
-	InitPaintableTextureOnObject(floor);
+	//floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	//InitPaintableTextureOnObject(floor);
+
+	//map
+	AddMapToWorld2();
+	AddStructureToWorld();
+	AddTowersToWorld();
+	AddPowerUps();
+	AddRespawnPoints();
 
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
@@ -1684,7 +1691,7 @@ void NCL::CSC8503::TutorialGame::AddStructureToWorld()
 
 	//platform 
 	AddCubeToWorld({ 75, 13, 0 }, { 13, 1, 9 }, 0.0f);
-	AddLadderToWorld({88, 6.5, 0}, 6.5f, false);
+	AddLadderToWorld({88.5, 7, 0}, 7.0f, false);
 
 	//pillars
 	AddCubeToWorld({ -87, 7, 8 }, { 1, 7, 1 }, 0.0f);
@@ -1694,7 +1701,7 @@ void NCL::CSC8503::TutorialGame::AddStructureToWorld()
 
 	//platform 
 	AddCubeToWorld({ -75, 13, 0 }, { 13, 1, 9 }, 0.0f);
-	AddLadderToWorld({ -88, 6.5, 0 }, 6.5f, false);
+	AddLadderToWorld({ -88.5, 7, 0 }, 7.0f, false);
 
 	//paths betweeen platforms
 	AddCubeToWorld({38, 13, 0}, {25, 1, 6}, 0.0f);
@@ -1726,7 +1733,7 @@ void NCL::CSC8503::TutorialGame::AddPlatformsToWorld()
 
 void NCL::CSC8503::TutorialGame::AddPowerUps()
 {
-	
+
 	PropSystem::GetInstance()->SpawnWeaponUp({ 0, 16, 0 }, grassWithWaterPBR);
 
 	PropSystem::GetInstance()->SpawnHeal({ 0, 5, 150 });
@@ -1768,7 +1775,7 @@ void NCL::CSC8503::TutorialGame::AddRespawnPoints()
 	respawnPoint->AddRespawnPoint(rp);
 }
 
-playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation, int team, RespawnPoint* rp) {
+playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation, int team , RespawnPoint* rp) {
 	float meshSize = 2.0f;
 	float inverseMass = 0.3f;
 

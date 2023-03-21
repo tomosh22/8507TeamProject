@@ -866,7 +866,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && playerObject->CanJump(floor)) {
 		playerObject->SpeedUp();
 	}
-	else 
+	else if (!playerObject->GetSpeedUp())
 	{
 		playerObject->SpeedDown();
 	}
@@ -1439,9 +1439,9 @@ GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position,
 	myWall->GetPhysicsObject()->SetInverseMass(0);
 	myWall->GetPhysicsObject()->InitCubeInertia();
 
+	
+	myWall->GetRenderObject()->pbrTextures = rockPBR;
 	InitPaintableTextureOnObject(myWall);
-	myWall->GetRenderObject()->pbrTextures = spaceShipPBR;
-
 	GameWorld::GetInstance()->AddGameObject(myWall);
 
 	return myWall;
@@ -1679,7 +1679,10 @@ void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 	walls.push_back(AddWallToWorld2({ 75, 2.5, -50 }, { 10, 2.5, 1 }));
 	walls.push_back(AddWallToWorld2({ -75, 2.5, -50 }, { 10, 2.5, 1 }));
 
-	//AddPowerUps();
+	for (GameObject*& wall : walls) {
+		InitPaintableTextureOnObject(wall);
+	}
+	
 }
 
 void NCL::CSC8503::TutorialGame::AddStructureToWorld()

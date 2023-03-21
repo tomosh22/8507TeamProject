@@ -130,6 +130,11 @@ namespace NCL {
 				speedUpTimer = 300.0f;
 			}
 
+			bool GetSpeedUp()
+			{
+				return speedUp;
+			}
+
 			void WeaponUp()
 			{
 				weaponInUse = rocket;

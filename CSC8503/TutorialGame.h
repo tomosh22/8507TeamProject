@@ -21,6 +21,8 @@
 #include <thread>
 #include <mutex>
 
+#include "RayMarchSphere.h"
+
 namespace NCL {
 	namespace CSC8503 {
 		const enum GameMode {

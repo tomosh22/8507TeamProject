@@ -193,6 +193,12 @@ namespace NCL {
 				return onLadder;
 			}
 
+			void AddScore(int score);
+			int GetScore()
+			{
+				return IndividualplayerScore;
+			}
+
 		protected:
 			bool canJump;
 			bool speedUp;

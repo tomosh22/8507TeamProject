@@ -92,11 +92,6 @@ void playerTracking::UpdateSpeed(float dt) {
 	{
 		sprintTimer = sprintTimer + 10 * dt;
 	}
-
-	/*if (onLadder && Window::GetKeyboard()->KeyDown(KeyboardKeys::W))
-	{
-		GetPhysicsObject()->ApplyLinearImpulse({ 0, 20, 0 });
-	}*/
 }
 
 void playerTracking::UpdateAimPosition(Camera* camera) {
@@ -318,4 +313,9 @@ void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
 		return;
 	}
 	currentAniamtion = animationMap[animationName];
+}
+
+void NCL::CSC8503::playerTracking::AddScore(int score)
+{
+	IndividualplayerScore += score; 
 }

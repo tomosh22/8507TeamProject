@@ -171,6 +171,8 @@ namespace NCL {
 			{
 				this->teamID = id;
 			}
+
+			
 		protected:
 			float explosionRadius;
 			float ProjectileRadius;

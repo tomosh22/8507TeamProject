@@ -647,6 +647,9 @@ void TutorialGame::UpdateGame(float dt) {
 	{
 		frameTime -= dt;
 		UpdateAnimations(dt);
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
+		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED,true);
+		glPopDebugGroup();
 		SelectMode();
 		break;
 	}
@@ -1624,7 +1627,10 @@ void TutorialGame::AddMapToWorld() {
 void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 {
 	//floor and enclosing walls 
-	AddFloorToWorld({0, 0, 0}, {100, 1, 200});
+	floor = AddFloorToWorld({0, 0, 0}, {100, 1, 200});
+
+	/*AddFloorToWorld({ 0, 0, -50 }, { 100, 1, 100 }); 
+	AddFloorToWorld({ 0, 0, 50 }, { 100, 1, 100 });*/
 
 	//visible walls
 	walls.push_back(AddWallToWorld2({ 100, 5, 0 }, { 1, 5, 200 }));
@@ -1789,7 +1795,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	float inverseMass = 0.3f;
 
 	playerTracking* character = new playerTracking();
-	AABBVolume* volume = new AABBVolume(Vector3{ 2,2,2 });
+	AABBVolume* volume = new AABBVolume(Vector3{ 1,1,1 });
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 

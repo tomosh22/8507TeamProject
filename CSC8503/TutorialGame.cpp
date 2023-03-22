@@ -1175,14 +1175,18 @@ void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int
 
 void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated) {
 	int w, h;
-	if (!rotated) {
-		h = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
-		w = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
-	}
-	else {
-		h = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
-		w = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
-	}
+	int x, y, z;
+	x = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
+	y = object->GetTransform().GetScale().y * TEXTURE_DENSITY;
+	z = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+
+
+
+	int dims[3] = { x,y,z };
+	std::sort(dims, dims + sizeof(dims) / sizeof(int));
+	w = dims[2] * TEXTURE_DENSITY;
+	h = dims[2] * TEXTURE_DENSITY;
+
 
 	object->GetRenderObject()->isPaintable = true;
 	object->GetRenderObject()->maskTex = new OGLTexture();
@@ -1194,8 +1198,8 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated
 	object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
 	object->GetRenderObject()->baseTex = spaceShipDiffuse;
 	object->GetRenderObject()->bumpTex = spaceShipBump;
-	
-	if(object->GetRenderObject()->pbrTextures == nullptr)object->GetRenderObject()->pbrTextures = crystalPBR;
+
+	if (object->GetRenderObject()->pbrTextures == nullptr)object->GetRenderObject()->pbrTextures = crystalPBR;
 }
 /*
 
@@ -1205,7 +1209,7 @@ A single function to add a large immoveable cube to the bottom of our world
 GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated) {
 	GameObject* floor = new GameObject();
 
-	
+
 	AABBVolume* volume = new AABBVolume(scale);
 	floor->SetBoundingVolume((CollisionVolume*)volume);
 	floor->GetTransform()
@@ -1213,17 +1217,17 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 		.SetPosition(position);
 
 	floor->isPaintable = true;
-	
+
 	srand(time(0));
 	int test;
 
 #ifdef OLD_PAINT
 	InitPaintableTextureOnObject(floor);
 	int radius = 10;
-	int startIndex, numInts, leftS,rightS,topT,bottomT;
+	int startIndex, numInts, leftS, rightS, topT, bottomT;
 	Vector2 center;
 
-	
+
 
 
 	floor->ApplyPaintAtPosition(Vector3(-50, 4, 0), floorSize, radius, startIndex, numInts, leftS, rightS, topT, bottomT, center);
@@ -1236,20 +1240,20 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 	RunComputeShader(floor, floorSize.x * 2, floorSize.z * 2, leftS, rightS, topT, bottomT, radius, center, 1);
 #endif
 
-	
+
 	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), floorMesh, nullptr, basicShader));
-	
-	InitPaintableTextureOnObject(floor,rotated);
+
+	InitPaintableTextureOnObject(floor, rotated);
 	floor->GetRenderObject()->useHeightMap = true;
 
 	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
-	floor->GetRenderObject()->pbrTextures = grassWithWaterPBR; 
+	floor->GetRenderObject()->pbrTextures = grassWithWaterPBR;
 
 	GameWorld::GetInstance()->AddGameObject(floor);
-	
+
 	floor->SetName("floor");
 	return floor;
 }

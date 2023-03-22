@@ -1359,7 +1359,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	OBBVolume* volume = new OBBVolume(dimensions);
 	cube->SetBoundingVolume((CollisionVolume*)volume);
 
-	cube->GetTransform().SetPosition(position).SetScale(dimensions * 2.0f);
+	cube->GetTransform().SetPosition(position).SetScale(dimensions);
 
 	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, nullptr, basicShader));
 	cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));
@@ -1456,7 +1456,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position,
 
 	myWall->GetTransform()
 		.SetPosition(position)
-		.SetScale(dimensions * 2);
+		.SetScale(dimensions);
 
 	
 	myWall->SetRenderObject(new RenderObject(&myWall->GetTransform(), cubeMesh, nullptr, basicShader));
@@ -1650,6 +1650,7 @@ void TutorialGame::AddMapToWorld() {
 
 void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 {
+	GameObject* invisWall;
 	//floor and enclosing walls 
 	floor = AddFloorToWorld({0, 0, 0}, {100, 1, 200});
 
@@ -1664,11 +1665,21 @@ void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 	walls.push_back(AddWallToWorld2({ 0, 5, -200 }, { 100, 5, 1 }));
 
 	//invisible walls
-	AddWallToWorld2({ 100, 5, 0 }, { 1, 50, 200 })->SetRenderObject(nullptr);
-	AddWallToWorld2({ -100, 5, 0 }, { 1, 50, 200 })->SetRenderObject(nullptr);
+	invisWall = AddWallToWorld2({ 100, 5, 0 }, { 1, 50, 200 });
+	invisWall->SetRenderObject(nullptr);
+	invisWall->SetName("invisible");
 
-	AddWallToWorld2({ 0, 5, 200 }, { 100, 50, 1 })->SetRenderObject(nullptr);
-	AddWallToWorld2({ 0, 5, -200 }, { 100, 50, 1 })->SetRenderObject(nullptr);
+	invisWall = AddWallToWorld2({ -100, 5, 0 }, { 1, 50, 200 });
+	invisWall->SetRenderObject(nullptr);
+	invisWall->SetName("invisible");
+
+	invisWall = AddWallToWorld2({ 0, 5, 200 }, { 100, 50, 1 });
+	invisWall->SetRenderObject(nullptr);
+	invisWall->SetName("invisible");
+
+	invisWall = AddWallToWorld2({ 0, 5, -200 }, { 100, 50, 1 });
+	invisWall->SetRenderObject(nullptr);
+	invisWall->SetName("invisible");
 
 	//dividing walls
 	/*walls.push_back(AddWallToWorld2({ -50, 7, 0 }, { 1, 7, 100 }));

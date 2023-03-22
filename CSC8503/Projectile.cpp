@@ -89,7 +89,6 @@ void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 	{
 		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(),explosionRadius, teamID);
 		player->AddScore(10);
-		std::cout << player->GetScore() << std::endl;
 	}
 	else if (otherObject->id() == "character" && otherObject != player)
 	{

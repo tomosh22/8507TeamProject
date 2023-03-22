@@ -21,6 +21,7 @@ playerTracking::playerTracking()
 		weaponUp = false; 
 		hp = 100;
 		shield = 0; 
+		respawnTimer = PLAYER_RESPAWN_TIME;
 
 		fireOffset = 10;
 		bulletPool = new ObjectPool<Projectile>();
@@ -45,6 +46,7 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 {
 	UpdateSpeed(dt);
 	UpdateCoolDownTime(dt);
+	Respawning(dt);
 	//test damage
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::L))
 	{
@@ -195,7 +197,6 @@ void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 	if (hp <= 0)
 	{
 		//Die and ReSpawn
-		std::cout << "Player Dead" << std::endl;
 		PlayerDie();
 	}
 }
@@ -216,7 +217,7 @@ void NCL::CSC8503::playerTracking::PlayerRespawn()
 	playerDead = false; 
 	hp = 100; 
 	position = respawn->FindSafeRespawn(teamID);
-	respawnTimer = 50.0f;
+	respawnTimer = PLAYER_RESPAWN_TIME;
 	GetTransform().SetPosition(position);
 }
 
@@ -281,17 +282,27 @@ void playerTracking::WriteActionMessage(int actionTp, int param) {
 }
 
 void playerTracking::PrintPlayerInfo() {
-	Debug::Print("Health: " + std::to_string(hp), Vector2(5, 90), Debug::RED);
-	Debug::Print("Shield: " + std::to_string(shield), Vector2(5, 95), Debug::CYAN);
+	if (!playerDead)
+	{
+		Debug::Print("Health: " + std::to_string(hp), Vector2(5, 90), Debug::RED);
+		Debug::Print("Shield: " + std::to_string(shield), Vector2(5, 95), Debug::CYAN);
+		Debug::Print("Score: " + std::to_string(IndividualplayerScore), Vector2(5, 10), Debug::WHITE);
 
-	string text;
-	if (weaponInUse.type == GUN_TYPE_PISTOL) {
-		text = "WEAPON: PISTOL";
-	} 
-	else if (weaponInUse.type == GUN_TYPE_ROCKET) {
-		text = "WEAPON: ROCKET";
+		string text;
+		if (weaponInUse.type == GUN_TYPE_PISTOL) {
+			text = "WEAPON: PISTOL";
+		}
+		else if (weaponInUse.type == GUN_TYPE_ROCKET) {
+			text = "WEAPON: ROCKET";
+		}
+		Debug::Print(text, Vector2(70, 95), Debug::WHITE);
 	}
-	Debug::Print(text, Vector2(70, 95), Debug::WHITE);
+	else
+	{
+		Debug::Print("You died!", Vector2(40, 50), Debug::RED);
+		Debug::Print("Respawning...", Vector2(40, 60), Debug::WHITE);
+	}
+
 }
 
 void playerTracking::UpdateAction(ActionPacket packet) {

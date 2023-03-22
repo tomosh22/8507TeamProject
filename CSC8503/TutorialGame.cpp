@@ -875,13 +875,13 @@ void TutorialGame::ControlPlayer(float dt) {
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 		if (playerObject->GetOnLadder() && Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 			playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + Vector3{0,1,0} *dt * speed);
-			std::cout << "going up " << std::endl;
+			//std::cout << "going up " << std::endl;
 		}
 		else
 		{
 			playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
 			playerObject->TransferAnimation("MoveF");
-			std::cout << "going forward " << std::endl;
+			//std::cout << "going forward " << std::endl;
 		}
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
@@ -1054,14 +1054,6 @@ void TutorialGame::InitSingleGameMode() {
 	GameWorld::GetInstance()->ClearAndErase();
 	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
-	//add player
-	auto q = Quaternion();
-	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
-	playerObject->SetTeamId(TEAM_RED);
-
-	//InitGameObjects();
-	//floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
-	//InitPaintableTextureOnObject(floor);
 
 	//map
 	AddMapToWorld2();
@@ -1069,6 +1061,17 @@ void TutorialGame::InitSingleGameMode() {
 	AddTowersToWorld();
 	AddPowerUps();
 	AddRespawnPoints();
+
+	//add player
+	auto q = Quaternion();
+	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q, 0, respawnPoint);
+	playerObject->SetTeamId(TEAM_RED);
+
+	//InitGameObjects();
+	//floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	//InitPaintableTextureOnObject(floor);
+
+	
 
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
@@ -1342,7 +1345,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	cube->GetPhysicsObject()->InitCubeInertia();
 
 	InitPaintableTextureOnObject(cube);
-
+	//cube->isPaintable = true;
 	GameWorld::GetInstance()->AddGameObject(cube);
 	cube->SetName("cube");
 	return cube;
@@ -1442,6 +1445,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position,
 	
 	myWall->GetRenderObject()->pbrTextures = rockPBR;
 	InitPaintableTextureOnObject(myWall);
+	myWall->isPaintable = true;
 	GameWorld::GetInstance()->AddGameObject(myWall);
 
 	return myWall;
@@ -1768,7 +1772,7 @@ void NCL::CSC8503::TutorialGame::AddPowerUps()
 void NCL::CSC8503::TutorialGame::AddRespawnPoints()
 {
 	//back respawn points
-	RespawnPoint* respawnPoint = new RespawnPoint({ 0, 5, 150 });
+	respawnPoint = new RespawnPoint({ 0, 5, 150 });
 	respawnPoint->AddRespawnPoint(respawnPoint);
 	RespawnPoint* rp = new RespawnPoint({ 0, 5, -150 });
 	respawnPoint->AddRespawnPoint(rp);
@@ -1822,7 +1826,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	character->GetPhysicsObject()->setCoeficient(0.55f);
 	character->GetPhysicsObject()->SetElasticity(0.0f);
 	InitPaintableTextureOnObject(character);
-
+	character->SetRespawn(rp);
 	GameWorld::GetInstance()->AddGameObject(character);
 	character->SetName("character");
 	character->SetTeamId(1);

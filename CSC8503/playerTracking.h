@@ -18,6 +18,7 @@ namespace NCL {
 		const float PLYAER_ITEM_SPEED_UP = 35.0f;
 		const float PLAYER_SPEED_UP = 20.0f;
 		const float PLAYER_JUMP_FORCE = 100.0f;
+		const float PLAYER_RESPAWN_TIME = 50.0f;
 
 		const enum PlayerAction {
 			PLAYER_ACTION_NONE,

@@ -151,6 +151,7 @@ namespace NCL {
 				Vector3 color;
 			};
 
+
 			GameObject* AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated = false);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddRayMarchSphereToWorld(const Vector3& position, float radius);
@@ -210,7 +211,7 @@ namespace NCL {
 			GameObject* selectionObject = nullptr;
 			GameObject* phantomCubeOutput = nullptr;
 
-
+			RespawnPoint* respawnPoint; 
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;

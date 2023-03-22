@@ -118,7 +118,7 @@ namespace NCL {
 			MeshGeometry* bonusMesh = nullptr;
 
 			MeshGeometry* playerMesh = nullptr;
-
+			std::vector<MeshGeometry*> playerMeshes;
 		protected:
 			void InitialiseAssets();
 
@@ -205,7 +205,8 @@ namespace NCL {
 			void AddPlatformsToWorld();
 			void AddPowerUps(); 
 			void AddRespawnPoints();
-
+			void LoadPlayerMesh(std::vector<MeshGeometry*> meshes);
+			MeshGeometry* GetPlayerMesh();
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
 #else
@@ -367,6 +368,7 @@ namespace NCL {
 			//Player Animation 
 			OGLShader* characterShader;
 			MeshMaterial* playerMaterial;
+
 			int currentFrame;
 			float frameTime;
 			float gameTime = 0.0f;

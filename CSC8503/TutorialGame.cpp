@@ -186,6 +186,10 @@ TutorialGame::~TutorialGame() {
 
 	delete objectpool;
 
+
+	delete playerMesh;
+	delete playerMaterial;
+	playerMeshes.clear();
 	//todo delete texture array
 	//todo delete compute shader
 }
@@ -313,9 +317,7 @@ void TutorialGame::InitialiseAssets() {
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
 	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
 
-	playerMesh = renderer->LoadMesh("Character/Character.msh", &meshes);
-
-	playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
+	LoadPlayerMesh(meshes);
 
 	for (MeshGeometry*& mesh : meshes) {
 		if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
@@ -1862,6 +1864,26 @@ void NCL::CSC8503::TutorialGame::AddRespawnPoints()
 	respawnPoint->AddRespawnPoint(rp);
 }
 
+void NCL::CSC8503::TutorialGame::LoadPlayerMesh(std::vector<MeshGeometry*> meshes)
+{
+	playerMeshes.push_back(renderer->LoadMesh("Character/Character.msh", &meshes));
+	playerMeshes.push_back(renderer->LoadMesh("Character/Character3.msh", &meshes));
+	playerMeshes.push_back(renderer->LoadMesh("Character/Character4.msh", &meshes));
+	playerMeshes.push_back(renderer->LoadMesh("Character/Character5.msh", &meshes));
+	playerMeshes.push_back(renderer->LoadMesh("Character/Character6.msh", &meshes));
+
+	for (int i = 0; i < playerMeshes.size(); i++)
+	{
+		playerMeshes[i]->SetPrimitiveType(GeometryPrimitive::Triangles);
+	}
+}
+
+MeshGeometry* NCL::CSC8503::TutorialGame::GetPlayerMesh()
+{
+	MeshGeometry* msh = playerMeshes[rand() % playerMeshes.size()];
+	return msh;
+}
+
 playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation, int team , RespawnPoint* rp) {
 	float meshSize = 2.0f;
 	float inverseMass = 0.3f;
@@ -1875,10 +1897,11 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, characterShader ));
+	MeshGeometry* playerMsh = GetPlayerMesh();
+	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMsh, nullptr, characterShader ));
 	character->GetRenderObject()->isAnimated = true;
 
-	for (int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
+	for (int i = 0; i < playerMsh->GetSubMeshCount(); ++i) {
 		const MeshMaterialEntry* matEntry = playerMaterial->GetMaterialForLayer(i);
 		const std::string* filename = nullptr;
 		matEntry->GetEntry("Diffuse", &filename);

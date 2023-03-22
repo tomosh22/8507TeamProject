@@ -113,7 +113,7 @@ TutorialGame::TutorialGame(GameWorld* gameWorld) :
 	glGenBuffers(1, &tempSSBO);
 
 
-	renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
+	//renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
 
 	playerMaterial = new MeshMaterial("Character/Character.mat");
 
@@ -469,13 +469,10 @@ void TutorialGame::UpdateKeys() {
 		float randX = (float)((rand() % 200) - 100);
 		float randZ = (float)((rand() % 200) - 100);
 		Vector3 randVec(randX, 2, randZ);
+
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
 		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10, TEAM_DEFAULT);
 		glPopDebugGroup();
-	}
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F)) {
-		renderer->renderFullScreenQuad = !renderer->renderFullScreenQuad;
-
 	}
 }
 
@@ -544,17 +541,12 @@ void TutorialGame::ControlPlayer(float dt) {
 	}
 	//Aiming
 	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT)){
-		renderer->drawCrosshair = true;
 		playerObject->UpdateAimPosition(world->GetMainCamera());
 		//shoot
 		if (Window::GetMouse()->ButtonHeld(MouseButtons::LEFT) && playerObject->CanShoot()) {
 			playerObject->StartShooting(playerObject->GetAimedTarget());
 			playerObject->WriteActionMessage(PLAYER_ACTION_SHOOT);
 		}
-	}
-	else 
-	{
-		renderer->drawCrosshair = false;
 	}
 	playerObject->PrintPlayerInfo();
 }
@@ -607,7 +599,6 @@ void TutorialGame::InitWorld() {
 }
 
 void TutorialGame::InitGraphicTest() {
-	renderer->drawCrosshair = true;
 	world->ClearAndErase();
 	physics->Clear();
 
@@ -653,7 +644,6 @@ void TutorialGame::InitGraphicTest() {
 }
 
 void TutorialGame::InitSingleGameMode() {
-	renderer->drawCrosshair = false;
 	world->ClearAndErase();
 	world->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
@@ -679,7 +669,6 @@ void TutorialGame::InitSingleGameMode() {
 }
 
 void TutorialGame::InitOnlineGame(int teamID) {
-	renderer->drawCrosshair = false;
 	world->ClearAndErase();
 	world->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
@@ -1732,7 +1721,6 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
 	glUniform1i(numTrisLocation, numTris);
 	glUniform1i(teamIDLocation, teamID);
-	glUniform1i(newMethodLocation, renderer->newMethod);
 	
 	
 	

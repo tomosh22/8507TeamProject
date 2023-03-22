@@ -36,7 +36,7 @@ namespace NCL::CSC8503 {
 
 		//Begin a new ImGui frame. We want to begin at the very start so that everything
 		//else is free to use ImGui whenever they want to
-		renderer->timePassed += dt * renderer->timeScale;
+		renderer->timePassed += dt;
 		renderer->BeginImGui();
 		
 		//Update and render the game

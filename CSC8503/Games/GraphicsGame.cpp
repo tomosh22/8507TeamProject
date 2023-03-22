@@ -247,7 +247,7 @@ namespace NCL::CSC8503 {
 			ImGui::SliderFloat("Noise Offset Size", &renderer->noiseOffsetSize, 0, 0.1f);
 			ImGui::SliderFloat("Noise Normal Strength", &renderer->noiseNormalStrength, 0, 10);
 			ImGui::SliderFloat("Noise Normal Multiplier", &renderer->noiseNormalNoiseMult, 0, 10);
-			ImGui::SliderFloat("Time Scale", &renderer->timeScale, 0, 1);
+			ImGui::SliderFloat("Time Scale", &renderer->noiseTimeScale, 0, 1);
 
 			if (ImGui::Button("Move to Center")) { testSphereCenter = Vector3(0, 0, 0); }
 
@@ -255,31 +255,24 @@ namespace NCL::CSC8503 {
 		}
 
 		if (ImGui::TreeNode("PBR")) {
-			ImGui::Checkbox("Bump Map", &renderer->useBumpMap);
-			ImGui::Checkbox("Metallic Map", &renderer->useMetallicMap);
-			ImGui::Checkbox("Roughness Map", &renderer->useRoughnessMap);
-			ImGui::Checkbox("Height Map", &renderer->useHeightMap);
-			ImGui::Checkbox("Emission Map", &renderer->useEmissionMap);
-			ImGui::Checkbox("AO Map", &renderer->useAOMap);
-			ImGui::Checkbox("Opacity Map", &renderer->useOpacityMap);
-			ImGui::Checkbox("Gloss Map", &renderer->useGlossMap);
-			ImGui::SliderFloat("Heightmap Strength", &renderer->heightMapStrength, 0, 10);
-
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNode("SMAA")) {
-			ImGui::Checkbox("Display Edges", &renderer->renderEdges);
-			ImGui::Checkbox("Display Blending", &renderer->renderBlend);
-			ImGui::Checkbox("Display SMAA Output", &renderer->renderAA);
-			ImGui::SliderFloat("Edge Threshold", &renderer->smaaThreshold, 0, 0.5);
+			auto& settings = renderer->pbrSettings;
+			ImGui::Checkbox("Bump Map", &settings.useBumpMap);
+			ImGui::Checkbox("Metallic Map", &settings.useMetallicMap);
+			ImGui::Checkbox("Roughness Map", &settings.useRoughnessMap);
+			ImGui::Checkbox("Height Map", &settings.useHeightMap);
+			ImGui::Checkbox("Emission Map", &settings.useEmissionMap);
+			ImGui::Checkbox("AO Map", &settings.useAOMap);
+			ImGui::Checkbox("Opacity Map", &settings.useOpacityMap);
+			ImGui::Checkbox("Gloss Map", &settings.useGlossMap);
+			ImGui::SliderFloat("Heightmap Strength", &settings.heightMapStrength, 0, 10);
 
 			ImGui::TreePop();
 		}
 
 		if (ImGui::TreeNode("FXAA")) {
-			ImGui::Checkbox("Use FXAA", &renderer->useFXAA);
-			ImGui::Checkbox("Edge Detection", &renderer->edgeDetection);
+			ImGui::Checkbox("Use FXAA", &renderer->fxaaEnabled);
+			ImGui::Checkbox("Edge Detection", &renderer->fxaaEdgeDetection);
+			ImGui::SliderFloat("Edge Threshold", &renderer->fxaaEdgeThreshold, 0, 0.5);
 
 			ImGui::TreePop();
 		}

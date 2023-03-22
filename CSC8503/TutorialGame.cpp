@@ -463,6 +463,11 @@ void TutorialGame::InitialiseAssets() {
 	InitWorld();
 }
 
+void NCL::CSC8503::TutorialGame::LoadAudio()
+{
+	audioMap["BK"] = new AudioSource("BKMusic.wav", FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
+}
+
 void TutorialGame::UpdateWorldCamera(float dt) {
 	if (!playerObject && !inSelectionMode) {
 		GameWorld::GetInstance()->GetMainCamera()->UpdateCamera(dt);
@@ -1082,7 +1087,7 @@ void TutorialGame::InitSingleGameMode() {
 	AddTowersToWorld();
 	AddPowerUps();
 	AddRespawnPoints();
-  InitGameObjects();
+  //InitGameObjects();
   floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
 
@@ -1569,10 +1574,7 @@ GameObject* TutorialGame::AddEnemyGoatToWorld(const Vector3& position) {
 	return BadGoat;
 }
 
-void NCL::CSC8503::TutorialGame::LoadAudio()
-{
-	audioMap["BK"] = new AudioSource("BKMusic.wav", FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
-}
+
 
 
 GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
@@ -1657,10 +1659,7 @@ void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 	walls.push_back(AddWallToWorld2({ 0, 5, 200 }, { 100, 5, 1 }));
 	walls.push_back(AddWallToWorld2({ 0, 5, -200 }, { 100, 5, 1 }));
 
-void NCL::CSC8503::TutorialGame::LoadAudio()
-{
-	audioMap["BK"] = new AudioSource("BKMusic.wav", FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
-}
+
 
 
 	//invisible walls

@@ -185,6 +185,12 @@ namespace NCL {
 
 			std::map<std::string, AudioSource*> audioMap;
 
+			bool GetOnLadder() {
+				return onLadder;
+			}
+			bool onLadder;
+			bool playerDead;
+
 		protected:
 			bool canJump; 
 			bool speedUp;
@@ -199,7 +205,7 @@ namespace NCL {
 			int IndividualplayerScore;
 			Projectile *playerProjectile;
 			Gun weaponInUse;
-			vector<Gun> weaponPool;
+			std::vector<Gun> weaponPool;
 			//Vector4 paintColor;
 		
 			float moveSpeed;
@@ -216,8 +222,8 @@ namespace NCL {
 			ObjectPool<Projectile> *bulletPool;
 			float coolDownTimer;   //this is timer of firing
 
-			vector<Projectile*> bulletsUsed;
-			vector<Projectile*> bulletsUsedAndMoved;
+			std::vector<Projectile*> bulletsUsed;
+			std::vector<Projectile*> bulletsUsedAndMoved;
 
 
 			std::map<std::string, NCL::MeshAnimation*> animationMap;

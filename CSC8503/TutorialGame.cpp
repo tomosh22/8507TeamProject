@@ -164,7 +164,7 @@ TutorialGame::TutorialGame()	{
 
 
 	timer = 60.0f;
-	endGameTimer = 10.0f;
+	endGameTimer = 5.0f;
 	return;
 
 	
@@ -189,6 +189,8 @@ TutorialGame::~TutorialGame() {
 	//todo delete texture array
 	//todo delete compute shader
 }
+
+
 
 void TutorialGame::InitQuadTexture() {
 	int width = (renderer->GetWindowWidth());
@@ -587,6 +589,7 @@ void TutorialGame::UpdateGame(float dt) {
 	switch (gameMode) {
 	case GAME_MODE_DEFAULT:
 	{
+		
 		SelectGameWorld();
 		renderer->Update(dt);
 		renderer->Render();
@@ -672,6 +675,14 @@ void TutorialGame::UpdateGame(float dt) {
 		}
 		break;
 	}
+	case GAME_MODE_MAIN_MENU:
+	{
+		MainMenu();
+		renderer->Update(dt);
+		renderer->Render();
+		Debug::UpdateRenderables(dt);
+		return;
+	}
 	default:
 		std::cout << "Game mode error" << std::endl;
 		return;
@@ -689,9 +700,8 @@ void TutorialGame::UpdateGame(float dt) {
 
 	if (timer <= 0)
 	{
-		//Game End 
 		EndGame();
-		std::cout << "Game end" << std::endl; 
+		gameEnded = true;
 	}
 	
 	int timerToInt = timer;
@@ -730,6 +740,21 @@ void TutorialGame::UpdateGame(float dt) {
 	//	UpdateRayMarchSpheres();
 	//	SendRayMarchData();
 	//}
+}
+
+void NCL::CSC8503::TutorialGame::MainMenu()
+{
+	Debug::Print("Play", Vector2(5, 80));
+	Debug::Print("Quit", Vector2(5, 90));
+	Debug::Print("NotSplatoon", Vector2(40, 10));
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
+		//play
+		gameMode = GAME_MODE_DEFAULT; //swap this for appropriate mode
+	}
+	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
+		//quit
+		std::exit(0);
+	}
 }
 
 void TutorialGame::SelectGameWorld() {
@@ -1025,7 +1050,8 @@ void TutorialGame::InitCamera() {
 void TutorialGame::InitWorld() {
 	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
-	gameMode = GAME_MODE_DEFAULT;
+	//gameMode = GAME_MODE_DEFAULT;
+	gameMode = GAME_MODE_MAIN_MENU;
 }
 
 void TutorialGame::InitGraphicTest() {
@@ -2451,9 +2477,10 @@ void TutorialGame::UpdateAnimations(float dt) {
 
 void NCL::CSC8503::TutorialGame::EndGame()
 {
-	//print which team wins
+	//print which team wins here
+
 	if (endGameTimer <= 0)
 	{
-		//back to menu 
+		gameMode = GAME_MODE_MAIN_MENU;
 	}
 }

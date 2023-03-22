@@ -274,7 +274,9 @@ namespace NCL {
 			OGLComputeShader* triRasteriseShader;
 			//OGLTexture* triDataTex;//1d texture
 			GLuint triangleBoolSSBO;
+			int* triangleBoolSSBOPtr;
 			GLuint triangleRasteriseSSBO;
+			unsigned int* triangleRasteriseSSBOPtr;
 			GLuint triangleRasteriseSSBOSecondShader;
 			bool SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint);
 

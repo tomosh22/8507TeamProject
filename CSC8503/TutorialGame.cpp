@@ -13,11 +13,9 @@
 #include "OrientationConstraint.h"
 #include "StateGameObject.h"
 
-#include"PropSystem.h"
 #include "Projectile.h"
 
 #include<iostream>
-#include"PropSystem.h"
 #include <chrono>
 #include "RespawnPoint.h"
 
@@ -28,49 +26,22 @@ using namespace CSC8503;
 //#define OLD_PAINT
 //#define DEBUG_SHADOW
 
-struct TextureThing {
-	char* texData = nullptr;
-	int width = 0;
-	int height = 0;
-	int channels = 0;
-	int flags = 0;
 
-	TextureBase** myPointer;
-
-	TextureThing(char* texData, int width, int height, int channels, int flags, TextureBase** myPointer) : texData(texData), width(width), height(height), channels(channels), flags(flags), myPointer(myPointer) {}
-};
-
-std::vector<TextureThing> things;
-std::mutex texturesMutex;
-
-
-void LoadTextureThread(const std::string& name, TextureBase** ptr) {
-	char* texData = nullptr;
-	int width = 0;
-	int height = 0;
-	int channels = 0;
-	int flags = 0;
-	TextureLoader::LoadTexture(name, texData, width, height, channels, flags);
-
-	TextureThing thing(texData, width, height, channels, flags, ptr);
-	texturesMutex.lock();
-	things.push_back(thing);
-	texturesMutex.unlock();
-}
-
-TutorialGame::TutorialGame()	{
+TutorialGame::TutorialGame(GameWorld* gameWorld) :
+	world(gameWorld)
+{
 	
 #ifdef USEVULKAN
 	renderer	= new GameTechVulkanRenderer(*world);
 #else 
-	renderer = new GameTechRenderer(*GameWorld::GetInstance());
+	renderer = new GameTechRenderer(Window::GetWindow());
 #endif
 
-	physics		= new PhysicsSystem(*GameWorld::GetInstance());
+	physics	= new PhysicsSystem(*world);
+	propSystem = new PropSystem(world);
 
 	forceMagnitude	= 10.0f;
 	useGravity		= false;
-	inSelectionMode = false;
 	testStateObject = nullptr;
 
 	objectpool = new ObjectPool<Projectile>();
@@ -90,12 +61,6 @@ TutorialGame::TutorialGame()	{
 	
 	
 	//this was me
-	maxRayMarchSpheres = 100;
-	glGenBuffers(1, &rayMarchSphereSSBO);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, maxRayMarchSpheres * sizeof(RayMarchSphere), NULL, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
 	glGenTextures(1, &depthBufferTex);
 	glBindTexture(GL_TEXTURE_2D, depthBufferTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
@@ -115,15 +80,14 @@ TutorialGame::TutorialGame()	{
 	
 	testSphereCenter = Vector3(320,190,230);
 	testSphereRadius = 10;
+	/*
 	renderer->imguiptrs.testSphereCenter = &testSphereCenter;
 	renderer->imguiptrs.testSphereRadius = &testSphereRadius;
 
 	
 	renderer->imguiptrs.newMethod = &renderer->newMethod;
 
-	renderer->imguiptrs.rayMarchBool = &rayMarch;
-
-	
+	renderer->imguiptrs.rayMarchBool = &rayMarch;*/
 
 	glGenBuffers(1, &triangleBoolSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleBoolSSBO);
@@ -145,7 +109,8 @@ TutorialGame::TutorialGame()	{
 	{
 		zeros[i] = 0;
 	}
-	glGenBuffers(1, &(tempSSBO));
+
+	glGenBuffers(1, &tempSSBO);
 
 
 	renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
@@ -156,10 +121,6 @@ TutorialGame::TutorialGame()	{
 
 	currentFrame = 0;
 	frameTime = 0.0f;
-
-	return;
-
-	
 }
 
 TutorialGame::~TutorialGame() {
@@ -174,6 +135,7 @@ TutorialGame::~TutorialGame() {
 
 	delete physics;
 	delete renderer;
+	delete propSystem;
 
 
 	delete objectpool;
@@ -187,105 +149,24 @@ void TutorialGame::InitQuadTexture() {
 	int height = (renderer->GetWindowHeight());
 	//std::array<float, 1280 * 720 * 4>* data = new std::array<float, 1280 * 720 * 4>();//todo dont hardcode
 	
-	renderer->quad = new RenderObject(nullptr, OGLMesh::GenerateQuadWithIndices(), nullptr, quadShader);
 	//for (int i = 0; i < 1280*720*4; i++)
 	//{ 
 	//	data->at(i) = (float)rand() / (float)RAND_MAX;
 	//}
-	
-	renderer->rayMarchTexture = new OGLTexture();
-	glBindTexture(GL_TEXTURE_2D, (renderer->rayMarchTexture->GetObjectID()));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 	//todo maybe move this somewhere else? still somewhat related
 
 	//may need to adjust if fps tanks
-	maxSteps = 500;
-	hitDistance = 0.001f;
-
-
-	noHitDistance = 1000;
-	debugValue = 1;
-	rayMarchDepthTest = true;
+	/*
 	renderer->imguiptrs.rayMarchMaxSteps = &maxSteps;
 	renderer->imguiptrs.rayMarchHitDistance = &hitDistance;
 	renderer->imguiptrs.rayMarchNoHitDistance = &noHitDistance;
 	renderer->imguiptrs.debugValue = &debugValue;
-	renderer->imguiptrs.depthTest = &rayMarchDepthTest;
+	renderer->imguiptrs.depthTest = &rayMarchDepthTest;*/
 	//renderer->imguiptrs.currentTeamInt = &currentTeamInt;
 }
 
 //raymarching
-void TutorialGame::DispatchComputeShaderForEachPixel() {
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, rayMarchSphereSSBO);
-	int width = renderer->GetWindowWidth();
-	int height = renderer->GetWindowHeight();
-
-	rayMarchComputeShader->Bind();
-
-	float screenAspect = (float)width / (float)height;
-	//GameWorld::GetInstance()->GetMainCamera()->SetFieldOfVision(90);
-
-	Matrix4 viewMatrix = GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
-	//std::cout << viewMatrix << '\n';
-	Matrix4 projMatrix = GameWorld::GetInstance()->GetMainCamera()->BuildProjectionMatrix(screenAspect);
-	Vector3 cameraPos = GameWorld::GetInstance()->GetMainCamera()->GetPosition();
-	
-	
-	
-
-	int projLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "projMatrix");
-	int viewLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewMatrix");
-	int cameraPosLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "cameraPos");
-	int maxStepsLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "maxSteps");
-	int hitDistanceLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "hitDistance");
-	int noHitDistanceLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "noHitDistance");
-	int viewportWidthLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportWidth");
-	int viewportHeightLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "viewportHeight");
-	int numSpheresLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "numSpheres");
-	int depthTexLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "depthTex");
-	int nearPlaneLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "nearPlane");
-	int farPlaneLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "farPlane");
-	int debugValueLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "debugValue");
-	int depthTestValueLocation = glGetUniformLocation(rayMarchComputeShader->GetProgramID(), "depthTest");
-
-
-	glUniformMatrix4fv(projLocation, 1, false, (float*)&projMatrix);
-	glUniformMatrix4fv(viewLocation, 1, false, (float*)&viewMatrix);
-	glUniform3fv(cameraPosLocation, 1, cameraPos.array);
-	glUniform1i(maxStepsLocation, maxSteps);
-	glUniform1f(hitDistanceLocation, hitDistance);
-	glUniform1f(noHitDistanceLocation, noHitDistance);
-	glUniform1i(viewportWidthLocation, width);
-	glUniform1i(viewportHeightLocation, height);
-	glUniform1i(numSpheresLocation, (GLint)rayMarchSpheres.size()+2);//one for debug sphere
-	glUniform1f(nearPlaneLocation, GameWorld::GetInstance()->GetMainCamera()->GetNearPlane());
-	glUniform1f(farPlaneLocation, GameWorld::GetInstance()->GetMainCamera()->GetFarPlane());
-	glUniform1f(debugValueLocation, debugValue);
-	glUniform1i(depthTestValueLocation, rayMarchDepthTest);
-
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindImageTexture(0, renderer->rayMarchTexture->GetObjectID(), 0, GL_FALSE, NULL, GL_WRITE_ONLY, GL_RGBA16);
-
-
-
-	glUniform1i(depthTexLocation, 1);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, renderer->sceneDepth);
-
-	rayMarchComputeShader->Execute(width/8+1, height/8+1, 1);
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-}
-
 
 
 void TutorialGame::InitialiseAssets() {
@@ -347,108 +228,22 @@ void TutorialGame::InitialiseAssets() {
 
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc", "scene.tese");
 
-	std::vector<std::thread> threads;
-
-
-	
 	
 	metalTex = renderer->LoadTexture("metal.png");
 
 	testBumpTex = renderer->LoadTexture("testBump.jpg");
 
 
-	ironDiffuse = renderer->LoadTexture("PBR/rustediron2_basecolor.png");
-	ironBump = renderer->LoadTexture("PBR/rustediron2_normal.png");
-	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
-	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
-
 	
-
-	crystalPBR = new PBRTextures();
-	TextureBase** test = &(crystalPBR->base);
-	//crystalPBR->base = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_diffuse.jpg");
-	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_diffuse.jpg", &(crystalPBR->base)));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_normal.jpg", &crystalPBR->bump));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_metallic.jpg", &crystalPBR->metallic));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_roughness.jpg", &crystalPBR->roughness));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_height.jpg", &crystalPBR->heightMap));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_emissive.jpg", &crystalPBR->emission));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_ao.jpg", &crystalPBR->ao));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_opacity.jpg", &crystalPBR->opacity));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_glossiness.jpg", &crystalPBR->gloss));
-
-	spaceShipPBR = new PBRTextures();
-	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_diffuse.jpg", &spaceShipPBR->base));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_normal.jpg", &spaceShipPBR->bump));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_metalness.jpg", &spaceShipPBR->metallic));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_roughness.jpg", &spaceShipPBR->roughness));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_height.jpg", &spaceShipPBR->heightMap));
-	spaceShipPBR->emission = nullptr;
-	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_ao.jpg", &spaceShipPBR->ao));
-	spaceShipPBR->opacity = nullptr;
-	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_glossiness.jpg", &spaceShipPBR->gloss));
-
-	rockPBR = new PBRTextures();
-	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_diffuse.jpg", &rockPBR->base));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_normal.jpg", &rockPBR->bump));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_metallic.jpg", &rockPBR->metallic));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_roughness.jpg", &rockPBR->roughness));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_height.jpg", &rockPBR->heightMap));
-	rockPBR->emission = nullptr;
-	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_ao.jpg", &rockPBR->ao));
-	rockPBR->opacity = nullptr;
-	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_glossiness.jpg", &rockPBR->gloss));
-
-	grassWithWaterPBR = new PBRTextures();
-	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_diffuse.jpg", &grassWithWaterPBR->base));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_normal.jpg", &grassWithWaterPBR->bump));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_metallic.jpg", &grassWithWaterPBR->metallic));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_roughness.jpg", &grassWithWaterPBR->roughness));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_height.jpg", &grassWithWaterPBR->heightMap));
-	grassWithWaterPBR->emission = nullptr;
-	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_ao.jpg", &grassWithWaterPBR->ao));
-	grassWithWaterPBR->opacity = nullptr;
-	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_glossiness.jpg", &grassWithWaterPBR->gloss));
-
-	fencePBR = new PBRTextures();
-	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_diffuse.jpg", &fencePBR->base));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_normal.jpg", &fencePBR->bump));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_metallic.jpg", &fencePBR->metallic));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_roughness.jpg", &fencePBR->roughness));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_height.jpg", &fencePBR->heightMap));
-	fencePBR->emission = nullptr;
-	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_ao.jpg", &fencePBR->ao));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg", &fencePBR->opacity));
-	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg", &fencePBR->gloss));
-
-	
-	
-	
-
-	for (std::thread& thread : threads) {
-		thread.join();
-	}
-	
-	for (TextureThing& thing : things)
-	{
-		TextureBase* tex = OGLTexture::RGBATextureFromData(thing.texData, thing.width, thing.height, thing.channels);
-		*(thing.myPointer) = (tex);
-		free(thing.texData);
-	}
-	threads.clear();
 
 	
 
 
 	//this was me
 	computeShader = new OGLComputeShader("compute.glsl");
-	quadShader = new OGLShader("quad.vert", "quad.frag");
-	renderer->quadShader = quadShader;
 
 	triComputeShader = new OGLComputeShader("tris.comp");
 	triRasteriseShader = new OGLComputeShader("rasteriseTriangle.comp");
-
-	rayMarchComputeShader = new OGLComputeShader("rayMarchCompute.glsl");
 
 	characterShader = new OGLShader("SkinningVertex.vert", "SkinningFrag.frag");
 
@@ -459,8 +254,8 @@ void TutorialGame::InitialiseAssets() {
 }
 
 void TutorialGame::UpdateWorldCamera(float dt) {
-	if (!playerObject && !inSelectionMode) {
-		GameWorld::GetInstance()->GetMainCamera()->UpdateCamera(dt);
+	if (!playerObject) {
+		world->GetMainCamera()->UpdateCamera(dt);
 		return;
 	}
 	CameraLockOnPlayer();
@@ -468,7 +263,6 @@ void TutorialGame::UpdateWorldCamera(float dt) {
 
 void TutorialGame::CameraLockOnPlayer() {
 	if (!playerObject) { return; }
-	auto world = GameWorld::GetInstance();
 	Vector3 objPos = playerObject->GetTransform().GetPosition();
 	//find object orientation
 	float yrot = playerObject->GetTransform().GetOrientation().ToEuler().y;
@@ -485,12 +279,10 @@ void TutorialGame::CameraLockOnPlayer() {
 	world->GetMainCamera()->SetPosition(camPos);
 	world->GetMainCamera()->SetYaw(angles.y);
 	world->GetMainCamera()->UpdateObjectViewPitch();
-	
 }
 
 void TutorialGame::RayCast() {
 	RayCollision closestCollision;
-	auto world = GameWorld::GetInstance();
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::K) && selectionObject) {
 		Vector3 rayPos;
 		Vector3 rayDir;
@@ -514,72 +306,14 @@ void TutorialGame::RayCast() {
 	Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
 }
 
-void TutorialGame::SelectMode() {
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
-		inSelectionMode = !inSelectionMode;
-		if (inSelectionMode) {
-			Window::GetWindow()->ShowOSPointer(true);
-			Window::GetWindow()->LockMouseToWindow(false);
-		}
-		else {
-			Window::GetWindow()->ShowOSPointer(false);
-			Window::GetWindow()->LockMouseToWindow(true);
-		}
-	}
-}
-
-bool TutorialGame::SelectObject() {
-	SelectMode();
-	auto world = GameWorld::GetInstance();
-	if (inSelectionMode) {
-		Debug::Print("Press Q to change to camera mode!", Vector2(5, 85));
-
-		if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT)) {
-			if (selectionObject) {	//set colour to deselected;
-				selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
-				selectionObject = nullptr;
-			}
-
-			Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
-
-			RayCollision closestCollision;
-			if (world->Raycast(ray, closestCollision, true)) {
-				selectionObject = (GameObject*)closestCollision.node;
-
-				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-		if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
-			if (selectionObject) {
-				if (lockedObject == selectionObject) {
-					lockedObject = nullptr;
-				}
-				else {
-					lockedObject = selectionObject;
-				}
-			}
-		}
-	}
-	else {
-		Debug::Print("Press Q to change to select mode!", Vector2(5, 85));
-	}
-	return false;
-}
-
 void TutorialGame::UpdateGame(float dt) {
 #ifdef DEBUG_SHADOW
 	renderer->lightPosition = world->GetMainCamera()->GetPosition();
 #endif
-	renderer->timePassed += dt * renderer->timeScale;
 
 	switch (gameMode) {
 	case GAME_MODE_DEFAULT:
 	{
-		SelectGameWorld();
 		renderer->Update(dt);
 		renderer->Render();
 		Debug::UpdateRenderables(dt);
@@ -601,10 +335,7 @@ void TutorialGame::UpdateGame(float dt) {
 			//DispatchComputeShaderForEachTriangle(wall);
 		//}
 		//glPopDebugGroup();
-		UpdateRayMarchSpheres();
-		SendRayMarchData();
 		RayCast();
-		SelectObject();
 		break;
 	}
 	case GAME_MODE_SELECT_TEAM:
@@ -647,7 +378,6 @@ void TutorialGame::UpdateGame(float dt) {
 	{
 		frameTime -= dt;
 		UpdateAnimations(dt);
-		SelectMode();
 		break;
 	}
 	default:
@@ -657,7 +387,7 @@ void TutorialGame::UpdateGame(float dt) {
 
 	timePassed += dt;
 
-	if (rayMarch)DispatchComputeShaderForEachPixel();
+//	if (rayMarch)DispatchComputeShaderForEachPixel();
 
 	UpdateWorldCamera(dt);
 
@@ -665,7 +395,7 @@ void TutorialGame::UpdateGame(float dt) {
 
 	UpdateKeys();
 
-	GameWorld::GetInstance()->UpdateWorld(dt);
+	world->UpdateWorld(dt);
 
 	renderer->Update(dt);
 	physics->Update(dt);
@@ -679,27 +409,6 @@ void TutorialGame::UpdateGame(float dt) {
 	//	UpdateRayMarchSpheres();
 	//	SendRayMarchData();
 	//}
-}
-
-void TutorialGame::SelectGameWorld() {
-	string text = "1. Graphic Test Mode.";
-	Debug::Print(text, Vector2(30, 30), Debug::GREEN);
-	text = "2. Single Player Mode.";
-	Debug::Print(text, Vector2(30, 40), Debug::GREEN);
-	text = "3. Online Game Mode.";
-	Debug::Print(text, Vector2(30, 50), Debug::GREEN);
-
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
-		gameMode = GAME_MODE_GRAPHIC_TEST;
-		InitGraphicTest();
-	}
-	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
-		gameMode = GAME_MODE_SINGLE_GAME;
-		InitSingleGameMode();
-	}
-	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM3)) {
-		gameMode = GAME_MODE_SELECT_TEAM;
-	}
 }
 
 int TutorialGame::SelectTeam() {
@@ -723,83 +432,6 @@ int TutorialGame::SelectTeam() {
 	return 0;
 }
 
-void TutorialGame::UpdateRayMarchSpheres() {
-	
-	std::map<unsigned int, std::function<Vector3(float)>> sinFunctions{
-		{0, [](float timePassed) {return Vector3(std::sin(timePassed) * 20,0,0); }},
-		{1, [](float timePassed) {return Vector3(std::sin(timePassed) * -20,0,0); }},
-		{2, [](float timePassed) {return Vector3(0, std::sin(timePassed) * 20, 0); }},
-		{3, [](float timePassed) {return Vector3(0, std::sin(timePassed) * -20, 0); }},
-		{4, [](float timePassed) {return Vector3(0, 0, std::sin(timePassed) * 20); }},
-		{5, [](float timePassed) {return Vector3(0, 0, std::sin(timePassed) * -20); }}
-	};
-	std::map<unsigned int, Vector3> colours{
-		{0, {1,0,0}},
-		{1, {0,1,0}},
-		{2, {0,0,1}},
-
-		{3, {0,1,1}},
-		{4, {1,0,1}},
-		{5, {1,1,0}},
-	};
-	unsigned int count = 0;
-	for (RayMarchSphere* sphere : rayMarchSpheres)
-	{
-		std::function<Vector3(float)> sinFunction = sinFunctions.at(count % 6);
-		sphere->GetTransform().SetPosition(sinFunction(timePassed) + Vector3(20,20,20));
-		sphere->center = sphere->GetTransform().GetPosition();
-		Vector3 scale = sphere->GetTransform().GetScale();
-		sphere->radius = scale.x;
-		sphere->color = colours.at(count %6);
-		count++;
-	}
-}
-
-void TutorialGame::SendRayMarchData() {
-	//just for testing, i know this is a horrible way of doing this
-	int numSpheresSent = 0;
-	unsigned int size = sizeof(RayMarchSphere);
-	for (RayMarchSphere* sphere : rayMarchSpheres)
-	{
-		
-		int offset = numSpheresSent * sizeof(float) * 7;
-
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(sphere->center.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(sphere->center.y));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(sphere->center.z));
-
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(sphere->radius));
-
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(sphere->color.x));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(sphere->color.y));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(sphere->color.z));
-
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		
-		numSpheresSent++;
-	}
-
-	return;
-	Vector3 position = testSphereCenter;
-	float radius = testSphereRadius;
-	int offset = numSpheresSent * sizeof(RayMarchSphere);
-	Vector3 color = { 1,1,0 };
-	float radiusExtension = radius / 2;
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2 * sizeof(float), sizeof(float), &(position.z));
-
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3 * sizeof(float), sizeof(float), &(radius));
-
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 4 * sizeof(float), sizeof(float), &(color.x));
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 5 * sizeof(float), sizeof(float), &(color.y));
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 6 * sizeof(float), sizeof(float), &(color.z));
-
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-}
-
 void TutorialGame::UpdateKeys() {
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1)) {
 		InitWorld(); //We can reset the simulation at any time with F1
@@ -820,17 +452,17 @@ void TutorialGame::UpdateKeys() {
 	//allowing the other one to stretch too much etc. Shuffling the order so that it
 	//is random every frame can help reduce such bias.
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F9)) {
-		GameWorld::GetInstance()->ShuffleConstraints(true);
+		world->SetShuffleConstraints(true);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) {
-		GameWorld::GetInstance()->ShuffleConstraints(false);
+		world->SetShuffleConstraints(false);
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
-		GameWorld::GetInstance()->ShuffleObjects(true);
+		world->SetShuffleObjects(true);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
-		GameWorld::GetInstance()->ShuffleObjects(false);
+		world->SetShuffleObjects(false);
 	}
 
   if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
@@ -913,7 +545,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	//Aiming
 	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT)){
 		renderer->drawCrosshair = true;
-		playerObject->UpdateAimPosition(GameWorld::GetInstance()->GetMainCamera());
+		playerObject->UpdateAimPosition(world->GetMainCamera());
 		//shoot
 		if (Window::GetMouse()->ButtonHeld(MouseButtons::LEFT) && playerObject->CanShoot()) {
 			playerObject->StartShooting(playerObject->GetAimedTarget());
@@ -928,7 +560,7 @@ void TutorialGame::ControlPlayer(float dt) {
 }
 
 void TutorialGame::LockedObjectMovement() {
-	Matrix4 view		= GameWorld::GetInstance()->GetMainCamera()->BuildViewMatrix();
+	Matrix4 view		= world->GetMainCamera()->BuildViewMatrix();
 	Matrix4 camWorld	= view.Inverse();
 
 	Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
@@ -960,58 +592,29 @@ void TutorialGame::LockedObjectMovement() {
 }
 
 void TutorialGame::InitCamera() {
-	GameWorld::GetInstance()->GetMainCamera()->SetNearPlane(0.1f);
-	GameWorld::GetInstance()->GetMainCamera()->SetFarPlane(500.0f);
-	GameWorld::GetInstance()->GetMainCamera()->SetPitch(-15.0f);
-	GameWorld::GetInstance()->GetMainCamera()->SetYaw(315.0f);
-	GameWorld::GetInstance()->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
+	world->GetMainCamera()->SetNearPlane(0.1f);
+	world->GetMainCamera()->SetFarPlane(500.0f);
+	world->GetMainCamera()->SetPitch(-15.0f);
+	world->GetMainCamera()->SetYaw(315.0f);
+	world->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
 	lockedObject = nullptr;
 }
 
 void TutorialGame::InitWorld() {
-	GameWorld::GetInstance()->ClearAndErase();
+	world->ClearAndErase();
 	physics->Clear();
 	gameMode = GAME_MODE_DEFAULT;
 }
 
 void TutorialGame::InitGraphicTest() {
 	renderer->drawCrosshair = true;
-	GameWorld::GetInstance()->ClearAndErase();
+	world->ClearAndErase();
 	physics->Clear();
 
 	//InitDefaultFloor();
 
 	//position is irrelevant at this point in testing as im overriding position later
 	//for raymarching
-	for (int i = 0; i < 10; i++)
-	{
-		AddRayMarchSphereToWorld({ 0,0,0 }, 10);
-	}
-	
-	testSphere0 = AddSphereToWorld({50,50,50},10,true,false);
-	InitPaintableTextureOnObject(testSphere0);
-	testSphere0->GetRenderObject()->pbrTextures = crystalPBR;
-	testSphere0->GetRenderObject()->useHeightMap = true;
-
-	testSphere1 = AddSphereToWorld({ 50,50,100 }, 10, true, false);
-	InitPaintableTextureOnObject(testSphere1);
-	testSphere1->GetRenderObject()->pbrTextures = spaceShipPBR;
-	testSphere1->GetRenderObject()->useHeightMap = true;
-
-	testSphere2 = AddSphereToWorld({ 50,50,150 }, 10, true, false);
-	InitPaintableTextureOnObject(testSphere2);
-	testSphere2->GetRenderObject()->pbrTextures = rockPBR;
-	testSphere2->GetRenderObject()->useHeightMap = true;
-
-	testSphere3 = AddSphereToWorld({ 100,50,50 }, 10, true, false);
-	InitPaintableTextureOnObject(testSphere3);
-	testSphere3->GetRenderObject()->pbrTextures = grassWithWaterPBR;
-	testSphere3->GetRenderObject()->useHeightMap = true;
-
-	testSphere4 = AddSphereToWorld({ 100,50,100 }, 10, true, false);
-	InitPaintableTextureOnObject(testSphere4);
-	testSphere4->GetRenderObject()->pbrTextures = fencePBR;
-	testSphere4->GetRenderObject()->useHeightMap = true;
 
 	
 	
@@ -1031,7 +634,7 @@ void TutorialGame::InitGraphicTest() {
 	walls.back()->SetName(std::string("back"));
 
 	bunny = AddBunnyToWorld({ 0,20,50 }, { 5,5,5 },false);
-	bunny->GetRenderObject()->pbrTextures = rockPBR;
+//	bunny->GetRenderObject()->pbrTextures = rockPBR;
 	bunny->GetRenderObject()->useHeightMap = true;
 
 	//max = AddMaxToWorld({ 10,10,-10 }, { 10,10,10 });
@@ -1051,8 +654,8 @@ void TutorialGame::InitGraphicTest() {
 
 void TutorialGame::InitSingleGameMode() {
 	renderer->drawCrosshair = false;
-	GameWorld::GetInstance()->ClearAndErase();
-	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
+	world->ClearAndErase();
+	world->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
 	//add player
 	auto q = Quaternion();
@@ -1077,8 +680,8 @@ void TutorialGame::InitSingleGameMode() {
 
 void TutorialGame::InitOnlineGame(int teamID) {
 	renderer->drawCrosshair = false;
-	GameWorld::GetInstance()->ClearAndErase();
-	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
+	world->ClearAndErase();
+	world->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
 	//add player
 	auto q = Quaternion();
@@ -1096,7 +699,7 @@ void TutorialGame::InitOnlineGame(int teamID) {
 }
 
 void TutorialGame::InitWorldtest2() {
-	GameWorld::GetInstance()->ClearAndErase();
+	world->ClearAndErase();
 	physics->Clear();
 	
 
@@ -1166,10 +769,10 @@ void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
-	object->GetRenderObject()->baseTex = spaceShipDiffuse;
-	object->GetRenderObject()->bumpTex = spaceShipBump;
+//	object->GetRenderObject()->baseTex = spaceShipDiffuse;
+//	object->GetRenderObject()->bumpTex = spaceShipBump;
 	
-	if(object->GetRenderObject()->pbrTextures == nullptr)object->GetRenderObject()->pbrTextures = crystalPBR;
+//	if(object->GetRenderObject()->pbrTextures == nullptr)object->GetRenderObject()->pbrTextures = crystalPBR;
 }
 /*
 
@@ -1219,9 +822,9 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
-	floor->GetRenderObject()->pbrTextures = grassWithWaterPBR; 
+//	floor->GetRenderObject()->pbrTextures = grassWithWaterPBR; 
 
-	GameWorld::GetInstance()->AddGameObject(floor);
+	world->AddGameObject(floor);
 	
 	floor->SetName("floor");
 	return floor;
@@ -1243,7 +846,7 @@ GameObject* TutorialGame::AddRunwayToWorld(const Vector3& position) {
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
 
-	GameWorld::GetInstance()->AddGameObject(floor);
+	world->AddGameObject(floor);
 
 	return floor;
 }
@@ -1257,7 +860,7 @@ physics worlds. You'll probably need another function for the creation of OBB cu
 
 */
 GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass, bool physics) {
-	RayMarchSphere* sphere = new RayMarchSphere();
+	GameObject* sphere = new GameObject();
 
 	Vector3 sphereSize = Vector3(radius, radius, radius);
 	SphereVolume* volume = new SphereVolume(radius);
@@ -1269,7 +872,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 
 	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
 	if (!render)sphere->GetRenderObject()->onlyForShadows = true;
-	
+
 	if (physics) {
 		sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
 
@@ -1277,54 +880,14 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 		sphere->GetPhysicsObject()->InitSphereInertia();
 	}
 
-	GameWorld::GetInstance()->AddGameObject(sphere);
+	world->AddGameObject(sphere);
 
-	sphere->color = { 1,0,0 };
-	sphere->radius = radius;
-	sphere->center = position;
-	//rayMarchSpheres.push_back(sphere);
-	spheres.push_back(sphere);
-	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2*sizeof(float), sizeof(float), &(position.z));
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3*sizeof(float), sizeof(float), &(radius));
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
 	return sphere;
 }
 
 GameObject* TutorialGame::AddRayMarchSphereToWorld(const Vector3& position, float radius) {
-	RayMarchSphere* sphere = new RayMarchSphere();
-
-	Vector3 sphereSize = Vector3(radius, radius, radius);
-	SphereVolume* volume = new SphereVolume(radius);
-	sphere->SetBoundingVolume((CollisionVolume*)volume);
-
-	sphere->GetTransform()
-		.SetScale(sphereSize)
-		.SetPosition(position);
-
-	sphere->SetRenderObject(new RenderObject(&sphere->GetTransform(), sphereMesh, basicTex, basicShader));
-	sphere->GetRenderObject()->onlyForShadows = true;
-
-	sphere->color = { 1,0,0 };
-	sphere->radius = radius;
-	sphere->center = position;
-	GameWorld::GetInstance()->AddGameObject(sphere);
-	rayMarchSpheres.push_back(sphere);
-	/*int offset = (rayMarchSpheres.size() - 1) * sizeof(RayMarchSphere);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayMarchSphereSSBO);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeof(float), &(position.x));
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + sizeof(float), sizeof(float), &(position.y));
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 2*sizeof(float), sizeof(float), &(position.z));
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset + 3*sizeof(float), sizeof(float), &(radius));
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
-	return sphere;
+	return nullptr;
 }
-
-
-
 
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* cube = new GameObject();
@@ -1342,7 +905,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 
 	InitPaintableTextureOnObject(cube);
 
-	GameWorld::GetInstance()->AddGameObject(cube);
+	world->AddGameObject(cube);
 	cube->SetName("cube");
 	return cube;
 }
@@ -1363,7 +926,7 @@ GameObject* TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfH
 
 	InitPaintableTextureOnObject(capsule);
 
-	GameWorld::GetInstance()->AddGameObject(capsule);
+	world->AddGameObject(capsule);
 	capsule->SetName("capsule");
 	return capsule;
 
@@ -1392,7 +955,7 @@ GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dime
 
 	InitPaintableTextureOnObject(monkey);
 
-	GameWorld::GetInstance()->AddGameObject(monkey);
+	world->AddGameObject(monkey);
 
 	return monkey;
 }
@@ -1415,7 +978,7 @@ GameObject* TutorialGame::AddWallToWorld(const Vector3& position, Vector3 dimens
 
 	InitPaintableTextureOnObject(wall);
 
-	GameWorld::GetInstance()->AddGameObject(wall);
+	world->AddGameObject(wall);
 
 	return wall;
 }
@@ -1439,9 +1002,9 @@ GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position,
 	myWall->GetPhysicsObject()->InitCubeInertia();
 
 	InitPaintableTextureOnObject(myWall);
-	myWall->GetRenderObject()->pbrTextures = spaceShipPBR;
+	//myWall->GetRenderObject()->pbrTextures = spaceShipPBR;
 
-	GameWorld::GetInstance()->AddGameObject(myWall);
+	world->AddGameObject(myWall);
 
 	return myWall;
 }
@@ -1469,7 +1032,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddLadderToWorld(const Vector3& position
 
 	ladder->SetName("ladder");
 
-	GameWorld::GetInstance()->AddGameObject(ladder);
+	world->AddGameObject(ladder);
 	return ladder;
 }
 
@@ -1491,7 +1054,7 @@ GameObject* TutorialGame::AddMaxToWorld(const Vector3& position, Vector3 dimensi
 
 	InitPaintableTextureOnObject(max);
 
-	GameWorld::GetInstance()->AddGameObject(max);
+	world->AddGameObject(max);
 
 	return max;
 }
@@ -1517,7 +1080,7 @@ GameObject* TutorialGame::AddBunnyToWorld(const Vector3& position, Vector3 dimen
 
 	InitPaintableTextureOnObject(bunny);
 
-	GameWorld::GetInstance()->AddGameObject(bunny);
+	world->AddGameObject(bunny);
 
 	return bunny;
 }
@@ -1546,7 +1109,7 @@ GameObject* TutorialGame::AddEnemyGoatToWorld(const Vector3& position) {
 	BadGoat->GetPhysicsObject()->setCoeficient(0.55f);
 	BadGoat->GetPhysicsObject()->InitSphereInertia();
 	TutorialGame::setEnemyGoat(BadGoat);
-	GameWorld::GetInstance()->AddGameObject(BadGoat);
+	world->AddGameObject(BadGoat);
 
 	return BadGoat;
 }
@@ -1558,7 +1121,7 @@ GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	triangle->GetTransform().SetPosition(position);
 
 	triangle->SetRenderObject(new RenderObject(&triangle->GetTransform(), triangleMesh, testCollisionTex, basicShader));
-	GameWorld::GetInstance()->AddGameObject(triangle);
+	world->AddGameObject(triangle);
 	return triangle;
 }
 
@@ -1728,11 +1291,11 @@ void NCL::CSC8503::TutorialGame::AddStructureToWorld()
 
 void NCL::CSC8503::TutorialGame::AddTowersToWorld()
 {
-	AddCubeToWorld({ 70, 12.5, 150 }, { 2.5 , 12.5, 2.5 }, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
+/*	AddCubeToWorld({70, 12.5, 150}, {2.5 , 12.5, 2.5}, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
 	AddLadderToWorld({ 70, 12.5, 153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;
 
 	AddCubeToWorld({ -70, 12.5, -150 }, { 2.5 , 12.5, 2.5 }, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
-	AddLadderToWorld({ -70, 12.5, -153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;
+	AddLadderToWorld({ -70, 12.5, -153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;*/
 }
 
 void NCL::CSC8503::TutorialGame::AddPlatformsToWorld()
@@ -1742,20 +1305,20 @@ void NCL::CSC8503::TutorialGame::AddPlatformsToWorld()
 void NCL::CSC8503::TutorialGame::AddPowerUps()
 {
 
-	PropSystem::GetInstance()->SpawnWeaponUp({ 0, 16, 0 }, grassWithWaterPBR);
+//	propSystem->SpawnWeaponUp({ 0, 16, 0 }, grassWithWaterPBR);
 
-	PropSystem::GetInstance()->SpawnHeal({ 0, 5, 150 });
-	PropSystem::GetInstance()->SpawnHeal({ 0, 5, -150 });
-	PropSystem::GetInstance()->SpawnHeal({ 70, 5, 100 });
-	PropSystem::GetInstance()->SpawnHeal({ -70, 5, -100 });
-	PropSystem::GetInstance()->SpawnHeal({ -70, 5, 100 });
-	PropSystem::GetInstance()->SpawnHeal({ 70, 5, -100 });
+	propSystem->SpawnHeal({ 0, 5, 150 });
+	propSystem->SpawnHeal({ 0, 5, -150 });
+	propSystem->SpawnHeal({ 70, 5, 100 });
+	propSystem->SpawnHeal({ -70, 5, -100 });
+	propSystem->SpawnHeal({ -70, 5, 100 });
+	propSystem->SpawnHeal({ 70, 5, -100 });
 
-	PropSystem::GetInstance()->SpawnSpeedUp({ 75, 5, 0 });
-	PropSystem::GetInstance()->SpawnSpeedUp({ -75, 5, 0 });
+	propSystem->SpawnSpeedUp({ 75, 5, 0 });
+	propSystem->SpawnSpeedUp({ -75, 5, 0 });
 
-	PropSystem::GetInstance()->SpawnShield({ 0, 5, 50 });
-	PropSystem::GetInstance()->SpawnShield({ 0, 5, -50 });
+	propSystem->SpawnShield({ 0, 5, 50 });
+	propSystem->SpawnShield({ 0, 5, -50 });
 }
 
 void NCL::CSC8503::TutorialGame::AddRespawnPoints()
@@ -1787,7 +1350,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	float meshSize = 2.0f;
 	float inverseMass = 0.3f;
 
-	playerTracking* character = new playerTracking();
+	playerTracking* character = new playerTracking(world);
 	AABBVolume* volume = new AABBVolume(Vector3{ 2,2,2 });
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
@@ -1816,7 +1379,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	character->GetPhysicsObject()->SetElasticity(0.0f);
 	InitPaintableTextureOnObject(character);
 
-	GameWorld::GetInstance()->AddGameObject(character);
+	world->AddGameObject(character);
 	character->SetName("character");
 	character->SetTeamId(1);
 	return character;
@@ -1859,7 +1422,7 @@ Projectile* TutorialGame::useNewBullet(playerTracking* passedPlayableCharacter) 
 	//sphere->GetPhysicsObject()->SetInverseMass(bulletsInverseMass);
 	//sphere->GetPhysicsObject()->InitSphereInertia();
 
-	//GameWorld::GetInstance()->AddGameObject(sphere);
+	//world->AddGameObject(sphere);
 	return nullptr;
 
 }
@@ -1910,7 +1473,7 @@ void TutorialGame::movePlayer(playerTracking* unitGoat) {
 	Ray r = Ray(rayPos, rayDir);
 
 	RayCollision grounded;
-	if (GameWorld::GetInstance()->Raycast(r, grounded, true)) {
+	if (world->Raycast(r, grounded, true)) {
 		/*if (objClosest) {
 			objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
 		}*/
@@ -1980,7 +1543,7 @@ GameObject* TutorialGame::AddEnemyToWorld(const Vector3& position) {
 	character->GetPhysicsObject()->SetInverseMass(inverseMass);
 	character->GetPhysicsObject()->InitSphereInertia();
 
-	GameWorld::GetInstance()->AddGameObject(character);
+	world->AddGameObject(character);
 
 	return character;
 }
@@ -2000,7 +1563,7 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 	apple->GetPhysicsObject()->SetInverseMass(1.0f);
 	apple->GetPhysicsObject()->InitSphereInertia();
 
-	GameWorld::GetInstance()->AddGameObject(apple);
+	world->AddGameObject(apple);
 
 	return apple;
 }
@@ -2025,15 +1588,15 @@ void TutorialGame::InitGameExamples() {
 	lockedObject = playerObject; 
 	//TestCode of Item
 	/*Item* p;
-	PropSystem::GetInstance()->SpawnItem(Vector3(6, 3, 6));
-	p = PropSystem::GetInstance()->SpawnSpeedUp(Vector3(9, 3, 6));
-	GameWorld::GetInstance()->AddGameObject(p);
-	p = PropSystem::GetInstance()->SpawnShield(Vector3(12, 3, 6));
-	GameWorld::GetInstance()->AddGameObject(p);
-	p = PropSystem::GetInstance()->SpawnHeal(Vector3(15, 3, 6));
-	GameWorld::GetInstance()->AddGameObject(p);
-	p = PropSystem::GetInstance()->SpawnWeaponUp(Vector3(18, 3, 6));
-	GameWorld::GetInstance()->AddGameObject(p);*/
+	propSystem->SpawnItem(Vector3(6, 3, 6));
+	p = propSystem->SpawnSpeedUp(Vector3(9, 3, 6));
+	world->AddGameObject(p);
+	p = propSystem->SpawnShield(Vector3(12, 3, 6));
+	world->AddGameObject(p);
+	p = propSystem->SpawnHeal(Vector3(15, 3, 6));
+	world->AddGameObject(p);
+	p = propSystem->SpawnWeaponUp(Vector3(18, 3, 6));
+	world->AddGameObject(p);*/
 
 	
 
@@ -2115,7 +1678,7 @@ StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 	object->GetPhysicsObject()->SetInverseMass(1.0f);
 	object->GetPhysicsObject()->InitSphereInertia();
 
-	GameWorld::GetInstance()->AddGameObject(object);
+	world->AddGameObject(object);
 
 	return object;
 

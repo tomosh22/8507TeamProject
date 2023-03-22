@@ -1,34 +1,16 @@
 #include "Window.h"
 
-#include "Debug.h"
-
-#include "StateMachine.h"
-#include "StateTransition.h"
-#include "State.h"
-
-#include "GameServer.h"
-#include "GameClient.h"
-
-#include "NavigationGrid.h"
-#include "NavigationMesh.h"
-
-#include "TutorialGame.h"
-#include "NetworkedGame.h"
-
-#include "PushdownMachine.h"
-
-#include "PushdownState.h"
-
-#include "BehaviourNode.h"
-#include "BehaviourSelector.h"
-#include "BehaviourSequence.h"
-#include "BehaviourAction.h"
+#include "Games/GameManager.h"
 
 using namespace NCL;
 using namespace CSC8503;
 
+#if 0
+NetworkedGame::GetInstance()->UpdateGame(dt);
+#endif
+
 int main() {
-	Window*w = Window::CreateGameWindow("CSC8503 Game technology!", 1280, 720);
+	Window*w = Window::CreateGameWindow("CSC8508 Game Demo", 1280, 720);
 	
 	if (!w->HasInitialised()) {
 		return -1;
@@ -37,8 +19,9 @@ int main() {
 	w->ShowOSPointer(false);
 	w->LockMouseToWindow(true);
 
-	w->GetTimer()->GetTimeDeltaSeconds(); //Clear the timer so we don't get a larget first dt!
-	while (w->UpdateWindow() && !Window::GetKeyboard()->KeyDown(KeyboardKeys::ESCAPE)) {
+	GameManager* gameManager = new GameManager(w);
+
+	while (w->UpdateWindow() && !gameManager->ShouldExit()) {
 		float dt = w->GetTimer()->GetTimeDeltaSeconds();
 
 		if (dt > 0.1f) {
@@ -46,21 +29,22 @@ int main() {
 			continue; //must have hit a breakpoint or something to have a 1 second frame time!
 		}
 
-		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::PRIOR)) {
+		if (w->GetKeyboard()->KeyPressed(KeyboardKeys::PRIOR)) {
 			w->ShowConsole(true);
 		}
 
-		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NEXT)) {
+		if (w->GetKeyboard()->KeyPressed(KeyboardKeys::NEXT)) {
 			w->ShowConsole(false);
 		}
 
-		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::T)) {
+		if (w->GetKeyboard()->KeyPressed(KeyboardKeys::T)) {
 			w->SetWindowPosition(0, 0);
 		}
 
-		w->SetTitle("Gametech frame time:" + std::to_string(1000.0f * dt));
-
-		NetworkedGame::GetInstance()->UpdateGame(dt);
+		gameManager->Update(dt);
 	}
+
+	delete gameManager;
+
 	Window::DestroyGameWindow();
 }

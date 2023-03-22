@@ -1,24 +1,8 @@
 #version 400 core
 #extension GL_ARB_shader_storage_buffer_object :     enable
 
-uniform vec4 		objectColour;
-uniform sampler2D 	mainTex;
-uniform sampler2DShadow shadowTex;
-
-uniform vec3	lightPos;
-uniform float	lightRadius;
-uniform vec4	lightColour;
-
-uniform vec3	cameraPos;
-
+uniform sampler2D mainTex;
 uniform bool hasTexture;
-
-uniform bool isPaintable;
-
-
-uniform int width;
-uniform int height;
-
 
 in Vertex
 {
@@ -31,15 +15,8 @@ in Vertex
 
 out vec4 fragColor;
 
-
-void main(void)
-{
-	if(hasTexture){
+void main(void) {
+	if(hasTexture) {
 		fragColor = texture(mainTex,IN.texCoord);
-		
-	}
-	else{fragColor = IN.colour;}
-	
+	} else { fragColor = IN.colour; }
 }
-
-

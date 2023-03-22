@@ -3,7 +3,7 @@
 
 namespace NCL {
     namespace CSC8503 {
-        class RayMarchSphere :
+        class PaintSphere :
             public GameObject
         {
         };

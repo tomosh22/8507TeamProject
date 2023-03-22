@@ -10,11 +10,13 @@ https://research.ncl.ac.uk/game/
 #include "Window.h"
 
 namespace NCL::Rendering {
+
 	enum class VerticalSyncState {
 		VSync_ON,
 		VSync_OFF,
 		VSync_ADAPTIVE
 	};
+
 	class RendererBase {
 	public:
 		friend class NCL::Window;
@@ -52,9 +54,11 @@ namespace NCL::Rendering {
 		virtual void RenderFrame()	= 0;
 		virtual void EndFrame()		= 0;
 		virtual void SwapBuffers()	= 0;
+
 		Window& hostWindow;
 
 		int windowWidth;
 		int windowHeight;
 	};
+
 }

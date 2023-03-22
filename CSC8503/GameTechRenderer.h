@@ -1,4 +1,5 @@
 #pragma once
+
 #include "OGLRenderer.h"
 #include "OGLShader.h"
 #include "OGLTexture.h"
@@ -15,169 +16,48 @@
 #include "SearchTex.h"
 
 //animation
-#include"MeshAnimation.h"
-#include"MeshMaterial.h"
+#include "MeshAnimation.h"
+#include "MeshMaterial.h"
 
-namespace NCL {
-	class Maths::Vector3;
-	class Maths::Vector4;
-	namespace CSC8503 {
-		class RenderObject;
+namespace NCL::CSC8503 {
 
-		class GameTechRenderer : public OGLRenderer	{
-		public:
-			GameTechRenderer(GameWorld& world);
-			~GameTechRenderer();
+	class RenderObject;
 
-			MeshGeometry*	LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes = nullptr);
-			TextureBase*	LoadTexture(const string& name);
-			ShaderBase*		LoadShader(const string& vertex, const string& fragment);
-			ShaderBase*		LoadShader(const string& vertex, const string& fragment, const string& domain, const string& hull);
+	class GameTechRenderer : public OGLRenderer
+	{
+	public:
+		struct RayMarchedSphere
+		{
+			Vector3 position;
+			Vector3 color;
+			float radius;
+		};
+	private:
+		OGLShader* quadShader;
+		RenderObject* quad;
 
-			//this was me
-			RenderObject* quad;
-			OGLTexture* rayMarchTexture;
-			RenderObject* crosshair;
+		int renderWidth;
+		int renderHeight;
 
-			struct ImGUIPtrs {
-				int* rayMarchMaxSteps;
-				float* rayMarchHitDistance;
-				float* rayMarchNoHitDistance;
-				float* debugValue;
-				bool* depthTest;
-				Vector3* testSphereCenter;
-				float* testSphereRadius;
-				//int* currentTeamInt;
-				bool* newMethod;
-				bool* rayMarchBool;
+		//Ray marching stuff
+		GLuint rayMarchSphereSSBO;
+		GLuint rayMarchTexture;
+		OGLComputeShader* rayMarchComputeShader;
 
-				
-			};
-			ImGUIPtrs imguiptrs;
+		std::vector<RayMarchedSphere> marchedSpheresToDraw;
+	public:
+		struct RayMarchingSettings
+		{
+			bool enabled = true;
+			int maxSteps;
+			float hitDistance;
+			float noHitDistance;
+			float debugValue;
+			bool rayMarchDepthTest;
+		} rayMarchingSettings;
 
-			float noiseScale = 1.8f;
-			float noiseOffsetSize = 0.009f;
-			float noiseNormalStrength = 10.0f;
-			float noiseNormalNoiseMult = 0.313f;
-
-			bool newMethod = true;
-
-			bool renderFullScreenQuad = true;
-
-			Vector4		lightColour;
-			float		lightRadius;
-			Vector3		lightPosition;
-
-			float heightMapStrength = 1;
-			bool useBumpMap = true;
-			bool useMetallicMap = true;
-			bool useRoughnessMap = true;
-			bool useHeightMap = true;
-			bool useEmissionMap = true;
-			bool useAOMap = true;
-			bool useOpacityMap = true;
-			bool useGlossMap = true;
-
-			float timePassed = 0.0f;
-			float timeScale = 0.419f;
-
-			OGLShader* debugShader;
-			OGLShader* quadShader;
-
-			bool drawCrosshair = false;
-
-			GLuint sceneFBO;
-			GLuint sceneColor;
-			GLuint sceneDepth;
-
-			void CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex, GLenum colorFormat = GL_RGBA8);
-			void CreateFBOColor(GLuint& fbo, GLuint& colorTex, GLenum colorFormat = GL_RGBA8);
-
-			GLuint edgesFBO;
-			GLuint edgesTex;
-			OGLShader* edgesShader;
-
-			GLuint weightCalcFBO;
-			GLuint blendTex;
-			GLuint areaTex;
-			GLuint searchTex;
-			OGLShader* weightCalcShader;
-
-			void EdgeDetection();
-			bool renderEdges = false;
-			float smaaThreshold = 0.05f;
-
-			GLuint blendingFBO;
-			void WeightCalculation();
-			bool renderBlend = true;
-
-			GLuint neighborhoodBlendingFBO;
-			OGLShader* neighborhoodBlendingShader;
-			GLuint smaaOutput;
-			void NeighborhoodBlending();
-			bool renderAA = true;
-
-			void SMAA();
-
-			GLuint fxaaFBO;
-			OGLShader* fxaaShader;
-			void FXAA();
-			bool useFXAA = true;
-			bool edgeDetection = true;
-
-			GLuint hdrFBO;
-			OGLShader* hdrShader;
-			GLuint tonemappedTexture;
-			bool toneMap = true;
-			float exposure = 1;
-
-			
-
-		protected:
-			void NewRenderLines();
-			void NewRenderText();
-
-			void RenderFrame()	override;
-
-			OGLShader*		defaultShader;
-
-			GameWorld&	gameWorld;
-
-			void BuildObjectList();
-			void SortObjectList();
-			void RenderShadowMap();
-			void RenderCamera(); 
-			void RenderSkybox();
-
-			//this was me
-			void RenderFullScreenQuadWithTexture(GLuint texture);
-			void DrawImGuiMainAssist();
-			void DrawImGuiStatistics();
-			void ImGui();
-
-			void LoadSkybox();
-
-			void SetDebugStringBufferSizes(size_t newVertCount);
-			void SetDebugLineBufferSizes(size_t newVertCount);
-
-			vector<const RenderObject*> activeObjects;
-			vector<RenderObject*> animatedObjects;
-			
-
-			
-			OGLShader*  skyboxShader;
-			OGLMesh*	skyboxMesh;
-			GLuint		skyboxTex;
-
-			//shadow mapping things
-			OGLShader*	shadowShader;
-			GLuint		shadowTex;
-			GLuint		shadowFBO;
-			Matrix4     shadowMatrix;
-
-			
-
-			//Debug data storage things
+		struct DebugData
+		{
 			vector<Vector3> debugLineData;
 
 			vector<Vector3> debugTextPos;
@@ -193,11 +73,157 @@ namespace NCL {
 			GLuint textColourVBO;
 			GLuint textTexVBO;
 			size_t textCount;
+		} debugData;
+	private:
+		void CreateViewDependent();
+		void DestroyViewDependent();
 
-			void DrawCrossHair();
+		void InitializeImGui();
 
-			
-		};
-	}
+		void LoadSkybox();
+		void UnloadSkybox();
+
+		void CreateShadowFbo();
+		void DestroyShadowFbo();
+
+		void CreateDebugData();
+		void DestroyDebugData();
+
+		void NewRenderLines();
+		void NewRenderText();
+		void SetDebugStringBufferSizes(size_t newVertCount);
+		void SetDebugLineBufferSizes(size_t newVertCount);
+
+		void SendRayMarchData();
+		void ExecuteRayMarching();
+	public:
+		GameTechRenderer(Window* window);
+		~GameTechRenderer();
+
+		MeshGeometry* LoadMesh(const string& name, std::vector<MeshGeometry*>* meshes = nullptr);
+		TextureBase* LoadTexture(const string& name);
+		ShaderBase* LoadShader(const string& vertex, const string& fragment);
+		ShaderBase* LoadShader(const string& vertex, const string& fragment, const string& domain, const string& hull);
+
+		void BeginImGui();
+		void EndImGui();
+
+		void OnWindowResize(int w, int h) override;
+		void BeginFrame() override;
+		void RenderFrame() override;
+		void EndFrame() override;
+
+		inline void SubmitRayMarchedSphere(const RayMarchedSphere& sphere) { marchedSpheresToDraw.push_back(sphere); }
+		inline void SubmitRenderObject(const RenderObject* renderObj) { activeObjects.push_back(renderObj); }
+
+		inline void SetActiveCamera(Camera* camera) { this->activeCamera = camera; }
+
+		/********************************** Seal of approval **********************************/
+
+		//this was me
+		RenderObject* crosshair;
+
+		float noiseScale = 1.8f;
+		float noiseOffsetSize = 0.009f;
+		float noiseNormalStrength = 10.0f;
+		float noiseNormalNoiseMult = 0.313f;
+
+		bool newMethod = true;
+
+		bool renderFullScreenQuad = true;
+
+		Vector4		lightColour;
+		float		lightRadius;
+		Vector3		lightPosition;
+
+		float heightMapStrength = 1;
+		bool useBumpMap = true;
+		bool useMetallicMap = true;
+		bool useRoughnessMap = true;
+		bool useHeightMap = true;
+		bool useEmissionMap = true;
+		bool useAOMap = true;
+		bool useOpacityMap = true;
+		bool useGlossMap = true;
+
+		float timePassed = 0.0f;
+		float timeScale = 0.419f;
+
+		OGLShader* debugShader;
+
+		bool drawCrosshair = false;
+
+		GLuint sceneFBO;
+		GLuint sceneColor;
+		GLuint sceneDepth;
+
+		void CreateFBOColorDepth(GLuint& fbo, GLuint& colorTex, GLuint& depthTex, GLenum colorFormat = GL_RGBA8);
+		void CreateFBOColor(GLuint& fbo, GLuint& colorTex, GLenum colorFormat = GL_RGBA8);
+
+		GLuint edgesFBO;
+		GLuint edgesTex;
+		OGLShader* edgesShader;
+
+		GLuint weightCalcFBO;
+		GLuint blendTex;
+		GLuint areaTex;
+		GLuint searchTex;
+		OGLShader* weightCalcShader;
+
+		void EdgeDetection();
+		bool renderEdges = false;
+		float smaaThreshold = 0.05f;
+
+		GLuint blendingFBO;
+		void WeightCalculation();
+		bool renderBlend = true;
+
+		GLuint neighborhoodBlendingFBO;
+		OGLShader* neighborhoodBlendingShader;
+		GLuint smaaOutput;
+		void NeighborhoodBlending();
+		bool renderAA = true;
+
+		void SMAA();
+
+		GLuint fxaaFBO;
+		OGLShader* fxaaShader;
+		void FXAA();
+		bool useFXAA = true;
+		bool edgeDetection = true;
+
+		GLuint hdrFBO;
+		OGLShader* hdrShader;
+		GLuint tonemappedTexture;
+		bool toneMap = true;
+		float exposure = 1;
+	protected:
+
+		void RenderShadowMap();
+		void RenderCamera(); 
+		void RenderSkybox();
+
+		//this was me
+		void RenderFullScreenQuadWithTexture(GLuint texture);
+
+
+		std::vector<const RenderObject*> activeObjects;
+		std::vector<RenderObject*> animatedObjects;
+
+		Camera* activeCamera = nullptr;
+
+		OGLShader* defaultShader;
+		OGLShader*  skyboxShader;
+		OGLMesh*	skyboxMesh;
+		GLuint		skyboxTex;
+
+		//shadow mapping things
+		OGLShader*	shadowShader;
+		GLuint		shadowTex;
+		GLuint		shadowFBO;
+		Matrix4     shadowMatrix;
+
+		void DrawCrossHair();
+	};
+
 }
-

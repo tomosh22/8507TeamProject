@@ -7,7 +7,8 @@
 using namespace NCL;
 using namespace CSC8503;
 
-playerTracking::playerTracking() 
+playerTracking::playerTracking(GameWorld* gameWorld) :
+	world(gameWorld)
 {
 		playerYawOrientation = 0.0f;
 		playerPitchOrientation = 0.0f;
@@ -55,7 +56,7 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 
 void NCL::CSC8503::playerTracking::Rotate()
 {
-	float yaw = GameWorld::GetInstance()->GetMainCamera()->GetYaw();
+	float yaw = world->GetMainCamera()->GetYaw();
 
 	Quaternion qua = Quaternion::EulerAnglesToQuaternion(0, yaw, 0);
 	transform.SetOrientation(qua);

@@ -8,7 +8,11 @@
 #define NETWORK_ID_OFFSET 1000
 
 NetworkedGame* NetworkedGame::_instance = nullptr;
-NetworkedGame::NetworkedGame() {
+GameWorld* NetworkedGame::_gameWorld = nullptr;
+
+NetworkedGame::NetworkedGame(GameWorld* gameWorld) :
+	TutorialGame(gameWorld)
+{
 	client = nullptr;
 
 	NetworkBase::Initialise();
@@ -208,7 +212,7 @@ void NetworkedGame::HandlePlayerDisconnect(int pid) {
 		return;
 	}
 	//remove all objects of this server in the world
-	GameWorld::GetInstance()->RemoveGameObject(it->second, true);
+	world->RemoveGameObject(it->second, true);
 	serverPlayers.erase(it);
 }
 

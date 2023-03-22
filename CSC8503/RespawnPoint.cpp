@@ -26,7 +26,7 @@ NCL::CSC8503::RespawnPoint::RespawnPoint(Vector3 pos)
 	team1Safe = true;
 	team2Safe = true;
 	SetActive(true);
-	GameWorld::GetInstance()->AddGameObject(this);
+//	GameWorld::GetInstance()->AddGameObject(this);
 
 	
 }

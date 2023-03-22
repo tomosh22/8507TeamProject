@@ -29,7 +29,7 @@ Projectile::Projectile()
 	SetName("Bullet");
 	AffectedGravity = true;
 	SetActive(false);
-	GameWorld::GetInstance()->AddGameObject(this);
+//	GameWorld::GetInstance()->AddGameObject(this);
 }
 
 
@@ -58,7 +58,7 @@ Projectile::Projectile(Vector3& position)
 	GetPhysicsObject()->SetInverseMass(1.0f);
 	GetPhysicsObject()->InitSphereInertia();
 
-	GameWorld::GetInstance()->AddGameObject(this);
+//	GameWorld::GetInstance()->AddGameObject(this);
 }
 	
 

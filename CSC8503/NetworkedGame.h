@@ -14,7 +14,7 @@ namespace NCL {
 		};
 		class NetworkedGame : public TutorialGame, public PacketReceiver {
 		public:
-			NetworkedGame();
+			NetworkedGame(GameWorld* gameWorld);
 			~NetworkedGame();
 			void StartClient();
 			void CloseClient();
@@ -36,13 +36,15 @@ namespace NCL {
 			{
 				if (_instance == nullptr)
 				{
-					_instance = new NetworkedGame();
+					_gameWorld = new GameWorld();
+					_instance = new NetworkedGame(_gameWorld);
 				}
 				return _instance;
 			}
 		protected:
-
 			static NetworkedGame* _instance;
+			static GameWorld* _gameWorld;
+
 			void UpdateToServer(float dt);
 
 			void BroadcastSnapshot();

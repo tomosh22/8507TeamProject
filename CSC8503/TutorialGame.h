@@ -14,8 +14,8 @@
 #include "PropSystem.h"
 #include "RespawnPoint.h"
 
-#include"MeshAnimation.h"
-#include"MeshMaterial.h"
+#include "MeshAnimation.h"
+#include "MeshMaterial.h"
 
 #include <thread>
 #include <mutex>
@@ -44,13 +44,12 @@ namespace NCL {
 		};
 
 		class Projectile;
-		class TutorialGame		{
+		class TutorialGame {
 		public:
-			TutorialGame();
+			TutorialGame(GameWorld* gameWorld);
 			~TutorialGame();
 
 			virtual void UpdateGame(float dt);
-			void SelectGameWorld();
 			int SelectTeam();
 			//void InitWorld(); //moved from protected
 			void InitGraphicTest();
@@ -137,19 +136,12 @@ namespace NCL {
 			void UpdateWorldCamera(float dt);
 			void CameraLockOnPlayer();
 			void RayCast();
-			void SelectMode();
-			bool SelectObject();
 			void LockedObjectMovement();
 			void ControlPlayer(float dt);
 			void movePlayer(playerTracking* unitGoat);
 			void setLockedObject(GameObject* goatPlayer);
 
-			class RayMarchSphere : public GameObject {
-			public:
-				Vector3 center;
-				float radius;
-				Vector3 color;
-			};
+			
 
 			GameObject* AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated = false);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass = 10.0f, bool physics = true);
@@ -195,13 +187,13 @@ namespace NCL {
 			GameTechVulkanRenderer*	renderer;
 #else
 
-			GameTechRenderer* renderer;
+			GameTechRenderer* renderer = nullptr;
 #endif
-
-			PhysicsSystem*		physics;
+			GameWorld* world = nullptr;
+			PhysicsSystem* physics = nullptr;
+			PropSystem* propSystem = nullptr;
 
 			bool useGravity;
-			bool inSelectionMode;
 
 			float		forceMagnitude;
 
@@ -242,7 +234,6 @@ namespace NCL {
 			//this was me
 			OGLComputeShader* computeShader;
 			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center, int teamID);
-			OGLShader* quadShader;
 			
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
@@ -262,22 +253,9 @@ namespace NCL {
 			GLuint triangleRasteriseSSBOSecondShader;
 			bool SphereTriangleIntersection(Vector3 sphereCenter, float sphereRadius, Vector3 v0, Vector3 v1, Vector3 v2, Vector3& intersectionPoint);
 
-			void DispatchComputeShaderForEachPixel();
-			OGLComputeShader* rayMarchComputeShader;
-			int maxSteps;
-			float hitDistance;
-			float noHitDistance;
-			float debugValue;
-
-			
-
 			std::vector<GameObject*> spheres;
-			std::vector<RayMarchSphere*> rayMarchSpheres;
-			GLuint rayMarchSphereSSBO;
-			int maxRayMarchSpheres;
 			float timePassed = 0;
 			GLuint depthBufferTex;//for depth testing after raymarch
-			bool rayMarchDepthTest;
 			OGLTexture* testCollisionTex;
 			void InitTestCollisionTexture();
 			GameObject* testCube;
@@ -291,11 +269,9 @@ namespace NCL {
 			
 			TextureBase* metalTex;
 			TextureBase* testBumpTex;
-			void SendRayMarchData();
 			GameObject* floor;
 			GameObject* max;
 			std::vector<GameObject*> walls;
-			void UpdateRayMarchSpheres();
 
 			int gameMode = GAME_MODE_DEFAULT;
 
@@ -307,36 +283,6 @@ namespace NCL {
 			
 			int highestTriCount = 0;
 
-			TextureBase* ironDiffuse = nullptr;
-			TextureBase* ironBump = nullptr;
-			TextureBase* ironMetallic = nullptr;
-			TextureBase* ironRoughness = nullptr;
-
-			TextureBase* crystalDiffuse = nullptr;
-			TextureBase* crystalBump = nullptr;
-			TextureBase* crystalMetallic = nullptr;
-			TextureBase* crystalRoughness = nullptr;
-			TextureBase* crystalHeightMap = nullptr;
-			TextureBase* crystalEmissionMap = nullptr;
-			TextureBase* crystalAOMap = nullptr;
-			TextureBase* crystalOpacityMap = nullptr;
-			TextureBase* crystalGlossMap = nullptr;
-
-			TextureBase* spaceShipDiffuse = nullptr;
-			TextureBase* spaceShipBump = nullptr;
-			TextureBase* spaceShipMetallic = nullptr;
-			TextureBase* spaceShipRoughness = nullptr;
-			TextureBase* spaceShipHeightMap = nullptr;
-			TextureBase* spaceShipEmissionMap = nullptr;
-			TextureBase* spaceShipAOMap = nullptr;
-			TextureBase* spaceShipOpacityMap = nullptr;
-			TextureBase* spaceShipGlossMap = nullptr;
-
-			PBRTextures* crystalPBR;
-			PBRTextures* spaceShipPBR;
-			PBRTextures* rockPBR;
-			PBRTextures* grassWithWaterPBR;
-			PBRTextures* fencePBR;
 			
 
 			GameObject* testSphere0 = nullptr;
@@ -345,7 +291,6 @@ namespace NCL {
 			GameObject* testSphere3 = nullptr;
 			GameObject* testSphere4 = nullptr;
 
-			bool rayMarch = true;
 			//Player Animation 
 			OGLShader* characterShader;
 			MeshMaterial* playerMaterial;

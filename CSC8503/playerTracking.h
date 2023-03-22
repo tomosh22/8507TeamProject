@@ -32,7 +32,7 @@ namespace NCL {
 		class playerTracking :public NetworkObject {
 		public:
 
-			playerTracking();
+			playerTracking(GameWorld* gameWorld);
 
 			~playerTracking() {
 				delete playerProjectile;
@@ -234,6 +234,8 @@ namespace NCL {
 
 			std::map<std::string, NCL::MeshAnimation*> animationMap;
 			NCL::MeshAnimation* currentAniamtion;
+
+			GameWorld* world = nullptr;
 		};
 
 

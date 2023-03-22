@@ -8,8 +8,6 @@
 using namespace NCL;
 using namespace NCL::CSC8503;
 
-GameWorld* GameWorld::_instance = nullptr;
-
 GameWorld::GameWorld()	{
 	mainCamera = new Camera();
 

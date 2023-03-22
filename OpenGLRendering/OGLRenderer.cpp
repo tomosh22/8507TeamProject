@@ -35,7 +35,7 @@ using namespace NCL::Rendering;
 
 #ifdef OPENGL_DEBUGGING
 static void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam);
-#endif;
+#endif
 
 OGLRenderer::OGLRenderer(Window& w) : RendererBase(w)	{
 	initState = false;
@@ -61,27 +61,27 @@ OGLRenderer::~OGLRenderer()	{
 #endif
 }
 
-void OGLRenderer::OnWindowResize(int w, int h)	 {
+void OGLRenderer::OnWindowResize(int w, int h) {
 	windowWidth	= w;
-	windowHeight	= h;
+	windowHeight = h;
 	glViewport(0, 0, windowWidth, windowHeight);
 }
 
-void OGLRenderer::BeginFrame()		{
+void OGLRenderer::BeginFrame() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	BindShader(nullptr);
 	BindMesh(nullptr);
 }
 
-void OGLRenderer::RenderFrame()		{
+void OGLRenderer::RenderFrame() {
 
 }
 
-void OGLRenderer::EndFrame()		{
+void OGLRenderer::EndFrame() {
 }
 
-void OGLRenderer::SwapBuffers()   {
+void OGLRenderer::SwapBuffers() {
 	::SwapBuffers(deviceContext);
 }
 

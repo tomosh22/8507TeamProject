@@ -370,6 +370,11 @@ void	Win32Window::ShowOSPointer(bool show)	{
 	}
 }
 
+bool Win32Window::IsPointerVisible() const
+{
+	return showMouse;
+}
+
 void	Win32Window::SetConsolePosition(int x, int y)	{
 	HWND consoleWindow = GetConsoleWindow();
 

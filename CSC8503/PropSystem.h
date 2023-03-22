@@ -1,32 +1,23 @@
 #pragma once
+
 #include "Item.h"
 #include "RenderObject.h"
+#include "GameWorld.h"
 
-namespace NCL {
-	namespace CSC8503 {
-		class PropSystem
-		{
-		public:
-		
-			static PropSystem* GetInstance()
-			{
-				if (_instance == nullptr)
-				{
-					_instance = new PropSystem();
-				}
-				return _instance;
-			}
+namespace NCL::CSC8503 {
 
-			void SpawnItem(Vector3 pos);
-			Item* SpawnHeal(Vector3 pos);
-			Item* SpawnSpeedUp(Vector3 pos);
-			Item* SpawnShield(Vector3 pos); 
-			Item* SpawnWeaponUp(Vector3 pos, PBRTextures* pbr);
+	class PropSystem
+	{
+	public:
+		PropSystem(GameWorld* gameWorld);
 
-		protected:
-			static PropSystem* _instance;
-		};
+		Item* SpawnItem(Vector3 pos);
+		Item* SpawnHeal(Vector3 pos);
+		Item* SpawnSpeedUp(Vector3 pos);
+		Item* SpawnShield(Vector3 pos); 
+		Item* SpawnWeaponUp(Vector3 pos, PBRTextures* pbr);
+	private:
+		GameWorld* world = nullptr;
+	};
 
-
-	}
 }

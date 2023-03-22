@@ -47,7 +47,10 @@ set(Header_Files
     "AreaTex.h"
     "SearchTex.h"
 
-	"GameManager.h"
+	"Games/GameManager.h"
+	"Games/GraphicsGame.h"
+	"Games/MainMenuGame.h"
+	"Games/SinglePlayerGame.h"
 	"AudioSystem.h"
     "RayMarchSphere.h"
 
@@ -64,13 +67,16 @@ set(Source_Files
     "Projectile.cpp"
 	"PropSystem.cpp"
 	"Item.cpp"
-	"GameManager.cpp"
     "AudioSystem.cpp"
 
     "RespawnPoint.cpp"
 
     "RayMarchSphere.cpp"
 
+	"Games/GameManager.cpp"
+	"Games/GraphicsGame.cpp"
+	"Games/MainMenuGame.cpp"
+	"Games/SinglePlayerGame.cpp"
 )
 
 if(USE_VULKAN)
@@ -265,6 +271,8 @@ include_directories("../NCLCoreClasses/")
 include_directories("../CSC8503CoreClasses/")
 include_directories("../FMOD/core/inc")
 include_directories("../FMOD/studio/inc")
+
+target_include_directories(${PROJECT_NAME} PRIVATE ".")
 
 target_link_directories(${PROJECT_NAME} PUBLIC "../FMOD/studio/lib/x64")
 target_link_directories(${PROJECT_NAME} PUBLIC "../FMOD/core/lib/x64")

@@ -45,7 +45,6 @@ NCL::CSC8503::PowerUpItem::PowerUpItem(const Vector3 pos)
 	SetName("Item");
 	
 	SetActive(true);
-	GameWorld::GetInstance()->AddGameObject(this);
 }
 
 NCL::CSC8503::PowerUpItem::PowerUpItem()
@@ -71,7 +70,6 @@ NCL::CSC8503::WeaponUpItem::WeaponUpItem(const Vector3 pos,PBRTextures* pbr)
 	originalPos = pos;
 	SetActive(true);
 	GetRenderObject()->pbrTextures = pbr;
-	GameWorld::GetInstance()->AddGameObject(this);
 }
 
 NCL::CSC8503::SpeedUpItem::SpeedUpItem(const Vector3 pos)
@@ -92,7 +90,6 @@ NCL::CSC8503::SpeedUpItem::SpeedUpItem(const Vector3 pos)
 	SetName("Speed");
 	originalPos = pos;
 	SetActive(true);
-	GameWorld::GetInstance()->AddGameObject(this);
 }
 
 NCL::CSC8503::ShieldItem::ShieldItem(const Vector3 pos)
@@ -113,7 +110,6 @@ NCL::CSC8503::ShieldItem::ShieldItem(const Vector3 pos)
 	SetName("Shield");
 	originalPos = pos;
 	SetActive(true);
-	GameWorld::GetInstance()->AddGameObject(this);
 }
 
 NCL::CSC8503::HealItem::HealItem(const Vector3 pos)
@@ -134,5 +130,4 @@ NCL::CSC8503::HealItem::HealItem(const Vector3 pos)
 	SetName("Heal");
 	originalPos = pos;
 	SetActive(true);
-	GameWorld::GetInstance()->AddGameObject(this);
 }

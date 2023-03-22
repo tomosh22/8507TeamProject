@@ -43,6 +43,7 @@ namespace NCL::Win32Code {
 		friend class Window;
 		void	LockMouseToWindow(bool lock)		override;
 		void	ShowOSPointer(bool show)			override;
+		bool    IsPointerVisible() const            override;
 		void	SetConsolePosition(int x, int y)	override;
 		void	ShowConsole(bool state)				override;
 		void	SetFullScreen(bool state)			override;

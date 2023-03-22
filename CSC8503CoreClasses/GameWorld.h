@@ -28,18 +28,6 @@ namespace NCL {
 			void AddConstraint(Constraint* c);
 			void RemoveConstraint(Constraint* c, bool andDelete = false);
 
-			Camera* GetMainCamera() const {
-				return mainCamera;
-			}
-
-			void ShuffleConstraints(bool state) {
-				shuffleConstraints = state;
-			}
-
-			void ShuffleObjects(bool state) {
-				shuffleObjects = state;
-			}
-
 			bool Raycast(Ray& r, RayCollision& closestCollision, bool closestObject = false, GameObject* ignore = nullptr) const;
 
 			virtual void UpdateWorld(float dt);
@@ -54,22 +42,12 @@ namespace NCL {
 				std::vector<Constraint*>::const_iterator& first,
 				std::vector<Constraint*>::const_iterator& last) const;
 
-			int GetWorldStateID() const {
-				return worldStateCounter;
-			}
+			inline void SetShuffleConstraints(bool state) { shuffleConstraints = state; }
+			inline void SetShuffleObjects(bool state) { shuffleObjects = state; }
 
-			static GameWorld* GetInstance()
-			{
-				if (_instance == nullptr)
-				{
-					_instance = new GameWorld();
-				}
-				return _instance;
-			}
-
+			inline Camera* GetMainCamera() const { return mainCamera; }
+			inline int GetWorldStateID() const { return worldStateCounter; }
 		protected:
-			static GameWorld* _instance;
-
 			std::vector<GameObject*> gameObjects;
 			std::vector<Constraint*> constraints;
 
@@ -77,8 +55,8 @@ namespace NCL {
 
 			bool shuffleConstraints;
 			bool shuffleObjects;
-			int		worldIDCounter;
-			int		worldStateCounter;
+			int worldIDCounter;
+			int	worldStateCounter;
 		};
 	}
 }

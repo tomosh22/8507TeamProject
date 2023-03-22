@@ -6,19 +6,26 @@
 #endif
 #include "PhysicsSystem.h"
 
+
 #include "playerTracking.h"
+
 #include "StateGameObject.h"
 #include <array>
 #include "ObjectPool.h"
 #include "RenderObject.h"
 #include "PropSystem.h"
+
 #include "RespawnPoint.h"
+
 
 #include"MeshAnimation.h"
 #include"MeshMaterial.h"
+#include "AudioSource.h"
 
 #include <thread>
 #include <mutex>
+#include <map>
+
 
 #include "RayMarchSphere.h"
 #include <map>
@@ -177,7 +184,8 @@ namespace NCL {
 			GameObject* AddWallToWorld2(const Vector3& position, Vector3 dimensions); 
 			GameObject* AddLadderToWorld(const Vector3& position, float height, bool rotated);
 
-			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation, int team = 0, RespawnPoint* rp = nullptr);
+			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation, int team = 0, 
+      * rp = nullptr);
 			GameObject* AddEnemyGoatToWorld(const Vector3& position);
 			GameObject* AddEnemyToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);
@@ -193,6 +201,8 @@ namespace NCL {
 			void AddPowerUps(); 
 			void AddRespawnPoints();
 
+
+			void LoadAudio();
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
 #else

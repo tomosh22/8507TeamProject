@@ -1,8 +1,8 @@
+
 #include"playerTracking.h"
 #include <iostream>
 #include"PhysicsObject.h"
 #include "TutorialGame.h"
-#include "RespawnPoint.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -31,12 +31,11 @@ playerTracking::playerTracking()
 		weaponInUse = pistol;
 		weaponPool.push_back(pistol);
 		weaponPool.push_back(rocket);
-
 		LoadAniamtion();
 		LoadAudio();
 		audioMap["walk"]->Play();
 		audioMap["walk"]->SetVolume(5.0f);
-
+		
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
@@ -51,10 +50,10 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 	GetRenderObject()->anim = currentAniamtion;
 	audioMap["walk"]->Pause(currentAniamtion == animationMap["Idle"]);
 
-
+	
 	for (auto const& [key, val] : audioMap)
 	{
-		val->update(transform.GetPosition().x, transform.GetPosition().y, transform.GetPosition().z);
+		val->update(transform.GetPosition().x,transform.GetPosition().y,transform.GetPosition().z);
 	}
 }
 
@@ -97,11 +96,6 @@ void playerTracking::UpdateSpeed(float dt) {
 	{
 		sprintTimer = sprintTimer + 10 * dt;
 	}
-
-	/*if (onLadder && Window::GetKeyboard()->KeyDown(KeyboardKeys::W))
-	{
-		GetPhysicsObject()->ApplyLinearImpulse({ 0, 20, 0 });
-	}*/
 }
 
 void playerTracking::UpdateAimPosition(Camera* camera) {
@@ -122,8 +116,8 @@ void playerTracking::UpdateCoolDownTime(float dt) {
 void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 {
 	Projectile* newBullet = bulletPool->GetObject2();
-	ResetBullet(newBullet);
 	audioMap["shoot"]->Play();
+	ResetBullet(newBullet);
 	coolDownTimer = weaponInUse.rateOfFire;
 	Shooting(newBullet, target);
 }
@@ -183,18 +177,6 @@ void NCL::CSC8503::playerTracking::Weapon(float dt)
 	}
 }
 
-void NCL::CSC8503::playerTracking::OnCollisionBegin(GameObject* otherObject)
-{
-	if (otherObject->GetName() == "ladder")
-		onLadder = true;
-}
-
-void NCL::CSC8503::playerTracking::OnCollisionEnd(GameObject* otherObject)
-{
-	if (otherObject->GetName() == "ladder")
-		onLadder = false;
-}
-
 void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 {
 	if (shield <= 0)
@@ -207,40 +189,6 @@ void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 	{
 		//Die and ReSpawn
 		std::cout << "Player Dead" << std::endl;
-		PlayerDie();
-	}
-}
-
-void NCL::CSC8503::playerTracking::PlayerDie()
-{
-	playerDead = true;
-	speedUp = false;
-	weaponUp = false;
-
-	GetTransform().SetPosition(Vector3(2000, 2000, 2000));
-	setWeponType(pistol);
-
-}
-
-void NCL::CSC8503::playerTracking::PlayerRespawn()
-{
-	Vector3 position;
-	playerDead = false; 
-	hp = 100; 
-	position = respawn->FindSafeRespawn(teamID);
-	respawnTimer = 50.0f;
-	GetTransform().SetPosition(position);
-}
-
-void NCL::CSC8503::playerTracking::Respawning(float dt)
-{
-	if (playerDead)
-	{
-		respawnTimer = respawnTimer - 10 * dt;
-		if (respawnTimer <= 0)
-		{
-			PlayerRespawn();
-		}
 	}
 }
 
@@ -317,6 +265,8 @@ void playerTracking::UpdateAction(ActionPacket packet) {
 	}
 }
 
+//UPDATE audioSource Pos 
+
 void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
 {
 
@@ -339,8 +289,9 @@ void NCL::CSC8503::playerTracking::LoadAniamtion()
 
 void NCL::CSC8503::playerTracking::LoadAudio()
 {
-	audioMap["walk"] = new AudioSource("footStep.wav", FMOD_3D || FMOD_LOOP_NORMAL);
-	audioMap["shoot"] = new AudioSource("shoot.wav", FMOD_3D);
-	audioMap["powerUp"] = new AudioSource("powerUp.wav", FMOD_3D);
-	audioMap["die"] = new AudioSource("die.wav", FMOD_3D);
+	audioMap["walk"] = new AudioSource("footStep.wav", FMOD_3D||FMOD_LOOP_NORMAL );
+	audioMap["shoot"] = new AudioSource("shoot.wav", FMOD_3D );
+	audioMap["powerUp"] = new AudioSource("powerUp.wav", FMOD_3D );
+	audioMap["die"] = new AudioSource("die.wav", FMOD_3D );
 }
+

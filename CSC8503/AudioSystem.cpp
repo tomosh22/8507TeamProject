@@ -43,7 +43,9 @@ void AudioSystem::update(float x, float y, float z) {
 	pos->x = x;
 	pos->y = y;
 	pos->z = z;
+
 	lowLevelSystem->set3DListenerAttributes(0, pos, 0, 0, 0);
+
 	lowLevelSystem->update();
 }
 
@@ -71,4 +73,6 @@ AudioSystem::~AudioSystem() {
 	delete system;
 	delete lowLevelSystem;
 	delete pos;
+
 }
+

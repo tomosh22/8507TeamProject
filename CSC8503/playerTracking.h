@@ -10,7 +10,6 @@
 #include "NetworkObject.h"
 #include <map>
 #include "MeshAnimation.h"
-#include "RespawnPoint.h"
 #include "AudioSource.h"
 #include "AudioSystem.h"
 
@@ -28,7 +27,7 @@ namespace NCL {
 			//New behaviour added to previous
 			PLAYER_ACTION_MAX = 8,
 		};
-
+			
 
 		class Team;
 		class playerTracking :public NetworkObject {
@@ -74,13 +73,9 @@ namespace NCL {
 			}
 
 			void setWeponType(Gun newWeponType) {
-				weaponInUse = newWeponType;
+				weaponInUse = newWeponType; 
 			}
 
-			void SetRespawn(RespawnPoint* rp)
-			{
-				respawn = rp;
-			}
 
 			void addToBulletsUsed(Projectile* bulletToAdd) {
 				bulletsUsed.push_back(bulletToAdd);
@@ -113,7 +108,7 @@ namespace NCL {
 
 			void ShieldUp()
 			{
-				shield = 100;
+				shield = 100; 
 			}
 
 			int GetHealth()
@@ -123,20 +118,20 @@ namespace NCL {
 
 			void Heal()
 			{
-				hp = 100;
+				hp = 100; 
 			}
 
 			void TakeSpeedUpItem()
 			{
 				speedUp = true;
-				speedUpTimer = 300.0f;
+				speedUpTimer = 300.0f; 
 			}
 
 			void WeaponUp()
 			{
 				weaponInUse = rocket;
-				weaponUp = true;
-				weaponUpTimer = 300.0f;
+				weaponUp = true; 
+				weaponUpTimer = 300.0f; 
 			}
 
 			void Weapon(float dt);
@@ -145,17 +140,12 @@ namespace NCL {
 				playerProjectile->setGunType(weponType);
 			}*/
 
-			void OnCollisionBegin(GameObject* otherObject);
-			void OnCollisionEnd(GameObject* otherObject);
-
 			Projectile* getPlayerProjectile() {
 				return playerProjectile;
 			}
 
 			void TakeDamage(int damage);
-			void PlayerDie();
-			void PlayerRespawn();
-			void Respawning(float dt);
+
 
 
 			void FireBullet();
@@ -173,7 +163,7 @@ namespace NCL {
 				weaponInUse = weaponPool[index];
 			}
 
-			std::string id()
+			 std::string id()
 			{
 				return "character";
 			}
@@ -190,42 +180,32 @@ namespace NCL {
 				return currentAniamtion;
 			}
 			void TransferAnimation(std::string animationName);
-
 			void LoadAniamtion();
-
-			bool GetOnLadder() {
-				return onLadder;
-			}
-
 			void LoadAudio();
 
 			std::map<std::string, AudioSource*> audioMap;
 
 		protected:
-			bool canJump;
+			bool canJump; 
 			bool speedUp;
-			bool weaponUp;
-			bool onLadder;
-			bool playerDead;
+			bool weaponUp; 
 
 			float playerYawOrientation;
 			float playerPitchOrientation;
-
+			
 			int hp;
-			int shield;
+			int shield; 
 			int playerID;
 			int IndividualplayerScore;
-			Projectile* playerProjectile;
+			Projectile *playerProjectile;
 			Gun weaponInUse;
-			std::vector<Gun> weaponPool;
+			vector<Gun> weaponPool;
 			//Vector4 paintColor;
-			RespawnPoint* respawn;
-
+		
 			float moveSpeed;
 			float sprintTimer;
 			float speedUpTimer;
-			float weaponUpTimer;
-			float respawnTimer;
+			float weaponUpTimer; 
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;
@@ -233,11 +213,11 @@ namespace NCL {
 			Vector3 aimPos;
 			//This is me 
 
-			ObjectPool<Projectile>* bulletPool;
+			ObjectPool<Projectile> *bulletPool;
 			float coolDownTimer;   //this is timer of firing
 
-			std::vector<Projectile*> bulletsUsed;
-			std::vector<Projectile*> bulletsUsedAndMoved;
+			vector<Projectile*> bulletsUsed;
+			vector<Projectile*> bulletsUsedAndMoved;
 
 
 			std::map<std::string, NCL::MeshAnimation*> animationMap;
@@ -245,6 +225,8 @@ namespace NCL {
 		};
 
 
-	}
 
+
+	}
 }
+

@@ -16,10 +16,12 @@
 #include"PropSystem.h"
 #include "Projectile.h"
 
+
 #include<iostream>
 #include"PropSystem.h"
 #include <chrono>
 #include "RespawnPoint.h"
+
 #include "AudioSystem.h"
 
 using namespace NCL;
@@ -454,6 +456,7 @@ void TutorialGame::InitialiseAssets() {
 	characterShader = new OGLShader("SkinningVertex.vert", "SkinningFrag.frag");
 
 	LoadAudio();
+
 	InitQuadTexture();
 
 	InitCamera();
@@ -930,7 +933,9 @@ void TutorialGame::ControlPlayer(float dt) {
 
 	Vector3 pos = playerObject->GetTransform().GetPosition();
 
+
 	AudioSystem::GetInstance()->update(pos.x, pos.y, pos.z);
+
 }
 
 void TutorialGame::LockedObjectMovement() {
@@ -1063,6 +1068,7 @@ void TutorialGame::InitSingleGameMode() {
 	//add player
 	auto q = Quaternion();
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+
 	playerObject->SetTeamId(TEAM_RED);
 
 	//InitGameObjects();
@@ -1076,6 +1082,10 @@ void TutorialGame::InitSingleGameMode() {
 	AddTowersToWorld();
 	AddPowerUps();
 	AddRespawnPoints();
+  InitGameObjects();
+  floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	InitPaintableTextureOnObject(floor);
+
 
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
@@ -1634,6 +1644,7 @@ void TutorialGame::AddMapToWorld() {
 
 }
 
+
 void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 {
 	//floor and enclosing walls 
@@ -1645,6 +1656,12 @@ void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 
 	walls.push_back(AddWallToWorld2({ 0, 5, 200 }, { 100, 5, 1 }));
 	walls.push_back(AddWallToWorld2({ 0, 5, -200 }, { 100, 5, 1 }));
+
+void NCL::CSC8503::TutorialGame::LoadAudio()
+{
+	audioMap["BK"] = new AudioSource("BKMusic.wav", FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
+}
+
 
 	//invisible walls
 	AddWallToWorld2({ 100, 5, 0 }, { 1, 50, 200 })->SetRenderObject(nullptr);

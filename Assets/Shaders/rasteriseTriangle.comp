@@ -118,13 +118,18 @@ void main() {
 
     uvec2 topLeftCorner = uvec2(triangleRasteriseSSBO[3 * id + 1], triangleRasteriseSSBO[3 * id + 2]);
     imageStore(triDataTex,id,vec4(uvB,1,1));
-    
+  
     if((barycentric = pointInTriangle(texCoordA,texCoordB,texCoordC,topLeftCorner + uvec2(x,y))) != vec3(-1)){
                 
                 if(pointInSphere(triA,triB,triC,barycentric) && x < textureWidth-1 && y < textureHeight-1){
                     
+
                     imageStore(outputTex,ivec2(topLeftCorner) + ivec2(x,y) + ivec2(0),uvec4(teamID,0,0,0));
-                    imageStore(outputTex,ivec2(x,y),uvec4(teamID,0,0,0));
+                    
+
+                    
+                    //imageStore(outputTex,ivec2(x,y),uvec4(teamID,0,0,0));
+
                 }
             }
             else{

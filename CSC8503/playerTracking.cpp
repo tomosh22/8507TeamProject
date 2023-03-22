@@ -2,6 +2,7 @@
 #include <iostream>
 #include"PhysicsObject.h"
 #include "TutorialGame.h"
+#include "RespawnPoint.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -14,12 +15,13 @@ playerTracking::playerTracking()
 		teamID = 0;
 		IndividualplayerScore = 0;
 		
-		moveSpeed = 10;
+		moveSpeed = PLAYER_MOVE_SPEED;
 		sprintTimer = 5.0f; 
 		speedUp = false; 
 		weaponUp = false; 
 		hp = 100;
 		shield = 0; 
+		respawnTimer = PLAYER_RESPAWN_TIME;
 
 		fireOffset = 10;
 		bulletPool = new ObjectPool<Projectile>();
@@ -30,17 +32,27 @@ playerTracking::playerTracking()
 		weaponInUse = pistol;
 		weaponPool.push_back(pistol);
 		weaponPool.push_back(rocket);
+
+		animationMap["Idle"] = new  NCL::MeshAnimation("Idle.anm");
+		animationMap["MoveF"] = new  NCL::MeshAnimation("RunForward.anm");
+		animationMap["MoveB"] = new  NCL::MeshAnimation("RunBackward.anm");
+		animationMap["MoveL"] = new  NCL::MeshAnimation("RunLeft.anm");
+		animationMap["MoveR"] = new  NCL::MeshAnimation("RunRight.anm");
+		currentAniamtion = animationMap["Idle"];
+
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
 {
 	UpdateSpeed(dt);
 	UpdateCoolDownTime(dt);
+	Respawning(dt);
 	//test damage
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::L))
 	{
 		TakeDamage(50);
 	}
+	GetRenderObject()->anim = currentAniamtion;
 }
 
 void NCL::CSC8503::playerTracking::Rotate()
@@ -53,12 +65,15 @@ void NCL::CSC8503::playerTracking::Rotate()
 }
 
 void playerTracking::SpeedUp() {
+
 	if (sprintTimer > 0.0f) {
 		moveSpeed = PLAYER_SPEED_UP;
 	}
+
 }
 
-void playerTracking::SpeedDown() {
+void playerTracking::SpeedDown() 
+{
 	moveSpeed = PLAYER_MOVE_SPEED;
 }
 
@@ -71,7 +86,7 @@ void playerTracking::UpdateSpeed(float dt) {
 		if (speedUpTimer <= 0)
 			speedUp = false;
 	}
-	else if (MINIMAL_NUMBER > moveSpeed - PLYAER_ITEM_SPEED_UP || MINIMAL_NUMBER < moveSpeed - PLYAER_ITEM_SPEED_UP)
+	else if (MINIMAL_NUMBER > moveSpeed - PLAYER_SPEED_UP && MINIMAL_NUMBER < moveSpeed - PLAYER_SPEED_UP)
 	{
 		sprintTimer = sprintTimer - 20 * dt;
 	}
@@ -99,6 +114,7 @@ void playerTracking::UpdateCoolDownTime(float dt) {
 void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 {
 	Projectile* newBullet = bulletPool->GetObject2();
+	newBullet->SetName("Bulllet");
 	ResetBullet(newBullet);
 	coolDownTimer = weaponInUse.rateOfFire;
 	Shooting(newBullet, target);
@@ -107,7 +123,6 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 //Call this function to init a new Bullet
 void playerTracking::ResetBullet(Projectile* bullet)
 {
-
 	CapsuleVolume* volume = new CapsuleVolume(weaponInUse.ProjectileSize * 2.0f, weaponInUse.ProjectileSize);
 	bullet->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -133,12 +148,10 @@ void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
 }
 
 bool NCL::CSC8503::playerTracking::CanJump(GameObject* floor){
-	if (!floor) { return false; }
 	RayCollision closetCollision;
-
 	Ray r = Ray(transform.GetPosition(), Vector3(0, -1, 0));
 
-	if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 0.8f) {
+	if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 1.0f) {
 		return true;
 	}
 	else {
@@ -161,6 +174,18 @@ void NCL::CSC8503::playerTracking::Weapon(float dt)
 	}
 }
 
+void NCL::CSC8503::playerTracking::OnCollisionBegin(GameObject* otherObject)
+{
+	if (otherObject->GetName() == "ladder")
+		onLadder = true;
+}
+
+void NCL::CSC8503::playerTracking::OnCollisionEnd(GameObject* otherObject)
+{
+	if (otherObject->GetName() == "ladder")
+		onLadder = false;
+}
+
 void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 {
 	if (shield <= 0)
@@ -172,7 +197,39 @@ void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 	if (hp <= 0)
 	{
 		//Die and ReSpawn
-		std::cout << "Player Dead" << std::endl;
+		PlayerDie();
+	}
+}
+
+void NCL::CSC8503::playerTracking::PlayerDie()
+{
+	playerDead = true;
+	speedUp = false;
+	weaponUp = false;
+
+	GetTransform().SetPosition(Vector3(2000, 2000, 2000));
+	setWeponType(pistol);
+}
+
+void NCL::CSC8503::playerTracking::PlayerRespawn()
+{
+	Vector3 position;
+	playerDead = false; 
+	hp = 100; 
+	position = respawn->FindSafeRespawn(teamID);
+	respawnTimer = PLAYER_RESPAWN_TIME;
+	GetTransform().SetPosition(position);
+}
+
+void NCL::CSC8503::playerTracking::Respawning(float dt)
+{
+	if (playerDead)
+	{
+		respawnTimer = respawnTimer - 10 * dt;
+		if (respawnTimer <= 0)
+		{
+			PlayerRespawn();
+		}
 	}
 }
 
@@ -225,17 +282,27 @@ void playerTracking::WriteActionMessage(int actionTp, int param) {
 }
 
 void playerTracking::PrintPlayerInfo() {
-	Debug::Print("Health: " + std::to_string(hp), Vector2(5, 90), Debug::RED);
-	Debug::Print("Shield: " + std::to_string(shield), Vector2(5, 95), Debug::CYAN);
+	if (!playerDead)
+	{
+		Debug::Print("Health: " + std::to_string(hp), Vector2(5, 90), Debug::RED);
+		Debug::Print("Shield: " + std::to_string(shield), Vector2(5, 95), Debug::CYAN);
+		Debug::Print("Score: " + std::to_string(IndividualplayerScore), Vector2(5, 10), Debug::WHITE);
 
-	string text;
-	if (weaponInUse.type == GUN_TYPE_PISTOL) {
-		text = "WEAPON: PISTOL";
-	} 
-	else if (weaponInUse.type == GUN_TYPE_ROCKET) {
-		text = "WEAPON: ROCKET";
+		string text;
+		if (weaponInUse.type == GUN_TYPE_PISTOL) {
+			text = "WEAPON: PISTOL";
+		}
+		else if (weaponInUse.type == GUN_TYPE_ROCKET) {
+			text = "WEAPON: ROCKET";
+		}
+		Debug::Print(text, Vector2(70, 95), Debug::WHITE);
 	}
-	Debug::Print(text, Vector2(70, 95), Debug::WHITE);
+	else
+	{
+		Debug::Print("You died!", Vector2(40, 50), Debug::RED);
+		Debug::Print("Respawning...", Vector2(40, 60), Debug::WHITE);
+	}
+
 }
 
 void playerTracking::UpdateAction(ActionPacket packet) {
@@ -249,3 +316,17 @@ void playerTracking::UpdateAction(ActionPacket packet) {
 	}
 }
 
+void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
+{
+
+	if (currentAniamtion == animationMap[animationName])
+	{
+		return;
+	}
+	currentAniamtion = animationMap[animationName];
+}
+
+void NCL::CSC8503::playerTracking::AddScore(int score)
+{
+	IndividualplayerScore += score; 
+}

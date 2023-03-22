@@ -5,10 +5,13 @@ uniform mat4 viewMatrix;
 uniform mat4 projMatrix;
 
 
-in vec3 position;
-in vec2 texCoord;
-in vec4 jointWeights;
-in ivec4 jointIndices;
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec4 colour;
+layout(location = 2) in vec2 texCoord;
+layout(location = 3) in vec3 normal;
+layout(location = 4) in vec4 tangent;
+layout(location = 5) in vec4 jointWeights;
+layout(location = 6) in ivec4 jointIndices;
 
 uniform mat4 joints [128];
 
@@ -22,9 +25,9 @@ void main (void) {
 	for (int i = 0; i < 4; ++i ) {
 	int jointIndex = jointIndices[i];
 	float jointWeight = jointWeights[i];
-	skelPos += joints[jointIndex] * localPos * jointWeight ;
+		skelPos += joints[jointIndex] * localPos * jointWeight ;
 	}
 	mat4 mvp = projMatrix * viewMatrix * modelMatrix ;
 	gl_Position = mvp * vec4 (skelPos.xyz , 1.0);
-	OUT.texCoord = texCoord ;
+	OUT.texCoord = texCoord;
 }

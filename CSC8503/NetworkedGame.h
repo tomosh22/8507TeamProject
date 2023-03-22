@@ -21,6 +21,7 @@ namespace NCL {
 
 			void UpdateGame(float dt) override;
 			void ReceivePacket(int type, GamePacket* payload, int source) override;
+
 			void SetLocalPlayer(NetworkObject* object) { this->localPlayer = object; }
 
 			int GetNetworkPlayerNum() { return serverPlayers.size() + 1; }

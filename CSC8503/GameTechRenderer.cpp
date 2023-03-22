@@ -197,6 +197,8 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	ImGuiIO& io = ImGui::GetIO();
 	ImGui::StyleColorsDark();
 
+	
+
 
 	Win32Code::Win32Window* realWindow = (Win32Code::Win32Window*)&hostWindow;
 
@@ -267,6 +269,7 @@ void GameTechRenderer::RenderFrame() {
 	RenderSkybox();
 	RenderCamera();
 	
+
 	if(renderFullScreenQuad)RenderFullScreenQuadWithTexture(rayMarchTexture->GetObjectID());//raymarching
 	
 
@@ -300,6 +303,8 @@ void GameTechRenderer::RenderFrame() {
 
 	ImGui();
 	if(drawCrosshair)DrawCrossHair();
+
+	
 }
 
 void GameTechRenderer::BuildObjectList() {
@@ -351,6 +356,15 @@ void GameTechRenderer::RenderShadowMap() {
 		Vector3 lightDir = (lightPosition - newTransform.GetPosition()).Normalised();
 		newTransform.SetPosition(newTransform.GetPosition() - lightDir);
 		Matrix4 modelMatrix = newTransform.GetMatrix();
+
+		if (i->isAnimated) {
+			glUniform1i(glGetUniformLocation(shadowShader->GetProgramID(), "isAnimated"), true);
+			int j = glGetUniformLocation(((OGLShader*)i->GetShader())->GetProgramID(), "joints");
+			glUniformMatrix4fv(j, i->frameMatrices.size(), false, (float*)i->frameMatrices.data());
+		}
+		else {
+			glUniform1i(glGetUniformLocation(shadowShader->GetProgramID(), "isAnimated"), false);
+		}
 
 
 		Matrix4 mvpMatrix	= mvMatrix * modelMatrix;
@@ -594,12 +608,20 @@ void GameTechRenderer::RenderCamera() {
 				glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
 			}
 		}
-		
+		if (i->isAnimated) {
+			int j = glGetUniformLocation(shader->GetProgramID(), "joints");
+			glUniformMatrix4fv(j, i->frameMatrices.size(), false, (float*)i->frameMatrices.data());
+		}
 //		glDisable(GL_CULL_FACE);//todo turn back on
 		BindMesh((*i).GetMesh());
 		int layerCount = (*i).GetMesh()->GetSubMeshCount();
-		for (int i = 0; i < layerCount; ++i) {
-			DrawBoundMesh(i);
+		for (int x = 0; x < layerCount; ++x) {
+			if (i->isAnimated) {
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)i->matTextures[x])->GetObjectID());
+				glUniform1i(glGetUniformLocation(shader->GetProgramID(), "diffuseTex"), 0);
+			}
+			DrawBoundMesh(x);
 		}
 	}
 	glEnable(GL_BLEND);
@@ -1176,4 +1198,5 @@ void GameTechRenderer::CreateFBOColor(GLuint& fbo, GLuint& colorTex, GLenum colo
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glPopDebugGroup();
 }
+
 

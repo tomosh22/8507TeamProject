@@ -85,19 +85,27 @@ void Projectile::setGunType(Gun wepType) {
 
 void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 {
-	if (otherObject->isPaintable)
+	if (otherObject->GetLayerMask() == Trigger)
+		return;
+	if (otherObject->isPaintable && otherObject != player && otherObject->GetName() != "invisible")
 	{
 		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(),explosionRadius, teamID);
-		//Bullet Recycle
-		if (player!=nullptr)
-		{
-			player->ReTurnBullet(this);
-		}
+		player->AddScore(10);
 	}
-	else if (otherObject->id() == "character")
+	else if (otherObject->id() == "character" && otherObject != player)
 	{
 		playerTracking* enemy = static_cast<playerTracking*>(otherObject);   // safe conversion
-		enemy->TakeDamage(5); //Up To bullet
+		enemy->TakeDamage(20); //Up To bullet
+		if (enemy->GetHealth() == 0)
+		{
+			player->AddScore(50);
+			std::cout << player->GetScore() << std::endl;
+		}
+	}
+	//Bullet Recycle
+	if (player != nullptr)
+	{
+		player->ReTurnBullet(this);
 	}
 }
 

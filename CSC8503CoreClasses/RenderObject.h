@@ -2,6 +2,7 @@
 #include "TextureBase.h"
 #include "ShaderBase.h"
 #include <array>
+#include "MeshAnimation.h"
 #define MAX_TRIS 10000
 
 namespace NCL {
@@ -42,7 +43,7 @@ namespace NCL {
 				return mesh;
 			}
 
-			Transform*		GetTransform() const {
+			Transform*	GetTransform() const {
 				return transform;
 			}
 
@@ -76,7 +77,13 @@ namespace NCL {
 
 			bool onlyForShadows = false;
 
-			
+			bool isAnimated = false;
+			std::vector<Matrix4> frameMatrices;
+			MeshAnimation* anim;
+			float frameTime = 0;
+			int currentFrame = 0;
+			std::vector<TextureBase*> matTextures;
+
 
 		protected:
 			MeshGeometry*	mesh;

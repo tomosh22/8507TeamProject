@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include"GameObject.h"
@@ -7,14 +8,17 @@
 #include"ObjectPool.h"
 #include "GameWorld.h"
 #include "NetworkObject.h"
-
+#include <map>
+#include "MeshAnimation.h"
+#include "RespawnPoint.h"
 
 namespace NCL {
 	namespace CSC8503 {
 		const float PLAYER_MOVE_SPEED = 10.0f;
 		const float PLYAER_ITEM_SPEED_UP = 35.0f;
-		const float PLAYER_SPEED_UP = 30.0f;
-		const float PLAYER_JUMP_FORCE = 20.0f;
+		const float PLAYER_SPEED_UP = 20.0f;
+		const float PLAYER_JUMP_FORCE = 100.0f;
+		const float PLAYER_RESPAWN_TIME = 50.0f;
 
 		const enum PlayerAction {
 			PLAYER_ACTION_NONE,
@@ -23,7 +27,7 @@ namespace NCL {
 			//New behaviour added to previous
 			PLAYER_ACTION_MAX = 8,
 		};
-			
+
 
 		class Team;
 		class playerTracking :public NetworkObject {
@@ -69,9 +73,13 @@ namespace NCL {
 			}
 
 			void setWeponType(Gun newWeponType) {
-				weaponInUse = newWeponType; 
+				weaponInUse = newWeponType;
 			}
 
+			void SetRespawn(RespawnPoint* rp)
+			{
+				respawn = rp;
+			}
 
 			void addToBulletsUsed(Projectile* bulletToAdd) {
 				bulletsUsed.push_back(bulletToAdd);
@@ -104,7 +112,7 @@ namespace NCL {
 
 			void ShieldUp()
 			{
-				shield = 100; 
+				shield = 100;
 			}
 
 			int GetHealth()
@@ -114,20 +122,25 @@ namespace NCL {
 
 			void Heal()
 			{
-				hp = 100; 
+				hp = 100;
 			}
 
 			void TakeSpeedUpItem()
 			{
 				speedUp = true;
-				speedUpTimer = 300.0f; 
+				speedUpTimer = 300.0f;
+			}
+
+			bool GetSpeedUp()
+			{
+				return speedUp;
 			}
 
 			void WeaponUp()
 			{
 				weaponInUse = rocket;
-				weaponUp = true; 
-				weaponUpTimer = 300.0f; 
+				weaponUp = true;
+				weaponUpTimer = 300.0f;
 			}
 
 			void Weapon(float dt);
@@ -136,12 +149,17 @@ namespace NCL {
 				playerProjectile->setGunType(weponType);
 			}*/
 
+			void OnCollisionBegin(GameObject* otherObject);
+			void OnCollisionEnd(GameObject* otherObject);
+
 			Projectile* getPlayerProjectile() {
 				return playerProjectile;
 			}
 
 			void TakeDamage(int damage);
-
+			void PlayerDie();
+			void PlayerRespawn();
+			void Respawning(float dt);
 
 
 			void FireBullet();
@@ -159,7 +177,7 @@ namespace NCL {
 				weaponInUse = weaponPool[index];
 			}
 
-			 std::string id()
+			std::string id()
 			{
 				return "character";
 			}
@@ -171,27 +189,47 @@ namespace NCL {
 
 			void PrintPlayerInfo();
 
+			NCL::MeshAnimation* GetCurrentAnimation()
+			{
+				return currentAniamtion;
+			}
+			void TransferAnimation(std::string animationName);
+
+			bool GetOnLadder() {
+				return onLadder;
+			}
+
+			void AddScore(int score);
+			int GetScore()
+			{
+				return IndividualplayerScore;
+			}
+
 		protected:
-			bool canJump; 
+			bool canJump;
 			bool speedUp;
-			bool weaponUp; 
+			bool weaponUp;
+			bool onLadder;
+			bool playerDead;
 
 			float playerYawOrientation;
 			float playerPitchOrientation;
-			
+
 			int hp;
-			int shield; 
+			int shield;
 			int playerID;
 			int IndividualplayerScore;
-			Projectile *playerProjectile;
+			Projectile* playerProjectile;
 			Gun weaponInUse;
-			vector<Gun> weaponPool;
+			std::vector<Gun> weaponPool;
 			//Vector4 paintColor;
-		
+			RespawnPoint* respawn;
+
 			float moveSpeed;
 			float sprintTimer;
 			float speedUpTimer;
-			float weaponUpTimer; 
+			float weaponUpTimer;
+			float respawnTimer;
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;
@@ -199,15 +237,18 @@ namespace NCL {
 			Vector3 aimPos;
 			//This is me 
 
-			ObjectPool<Projectile> *bulletPool;
+			ObjectPool<Projectile>* bulletPool;
 			float coolDownTimer;   //this is timer of firing
 
-			vector<Projectile*> bulletsUsed;
-			vector<Projectile*> bulletsUsedAndMoved;
+			std::vector<Projectile*> bulletsUsed;
+			std::vector<Projectile*> bulletsUsedAndMoved;
+
+
+			std::map<std::string, NCL::MeshAnimation*> animationMap;
+			NCL::MeshAnimation* currentAniamtion;
 		};
 
 
-
-
 	}
+
 }

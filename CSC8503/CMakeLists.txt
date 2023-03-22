@@ -40,14 +40,16 @@ set(Header_Files
     "playerTracking.h"
     "ObjectPool.h"
     "Projectile.h"
-	"PropSystem.h"
-	"Item.h"
+    "PropSystem.h"
+    "Item.h"
+    "RespawnPoint.h"
 
     "AreaTex.h"
     "SearchTex.h"
 
 	"GameManager.h"
 	"AudioSystem.h"
+    "RayMarchSphere.h"
 
 
 )
@@ -64,6 +66,10 @@ set(Source_Files
 	"Item.cpp"
 	"GameManager.cpp"
     "AudioSystem.cpp"
+
+    "RespawnPoint.cpp"
+
+    "RayMarchSphere.cpp"
 
 )
 

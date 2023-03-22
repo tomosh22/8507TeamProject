@@ -6,20 +6,23 @@
 #endif
 #include "PhysicsSystem.h"
 
-#include"playerTracking.h"
+#include "playerTracking.h"
 
 
 #include "StateGameObject.h"
 #include <array>
-#include"ObjectPool.h"
+#include "ObjectPool.h"
 #include "RenderObject.h"
 #include "PropSystem.h"
+#include "RespawnPoint.h"
 
 #include"MeshAnimation.h"
 #include"MeshMaterial.h"
 
 #include <thread>
 #include <mutex>
+
+#include "RayMarchSphere.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -49,7 +52,7 @@ namespace NCL {
 			~TutorialGame();
 
 			virtual void UpdateGame(float dt);
-			void SelectMode();
+			void SelectGameWorld();
 			int SelectTeam();
 			//void InitWorld(); //moved from protected
 			void InitGraphicTest();
@@ -75,8 +78,20 @@ namespace NCL {
 				return false;
 			}
 
+			float GetGameTime() {
+				return gameTime;
+			}
+
+			void AddToGameTime(float timeIncrement) {
+				gameTime += timeIncrement;
+			}
+
 			void setEnemyGoat(GameObject* assignCharcter);
 
+
+			void TogglePause() {
+				pause = !pause;
+			}
 
 			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID, bool clearMask = false);
 
@@ -93,6 +108,7 @@ namespace NCL {
 			MeshGeometry* bunnyMesh = nullptr;
 
 			TextureBase* basicTex = nullptr;
+			TextureBase* wallTex = nullptr;
 			ShaderBase* basicShader = nullptr;
 
 
@@ -118,7 +134,7 @@ namespace NCL {
 			in the module. Feel free to mess around with them to see different objects being created in different
 			test scenarios (constraints, collision types, and so on). 
 			*/
-			void InitGameObjects();
+			//void InitGameObjects();
 
 			void InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius);
 			void InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing);
@@ -130,9 +146,12 @@ namespace NCL {
 			void InitDefaultFloor();
 			void InitDefaultFloorRunway();
 
+			void InitGameExamples();
+
 			void UpdateWorldCamera(float dt);
 			void CameraLockOnPlayer();
 			void RayCast();
+			void SelectMode();
 			bool SelectObject();
 			void LockedObjectMovement();
 			void ControlPlayer(float dt);
@@ -145,6 +164,7 @@ namespace NCL {
 				float radius;
 				Vector3 color;
 			};
+
 
 			GameObject* AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated = false);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass = 10.0f, bool physics = true);
@@ -167,8 +187,10 @@ namespace NCL {
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddBunnyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddWallToWorld2(const Vector3& position, Vector3 dimensions); 
+			GameObject* AddLadderToWorld(const Vector3& position, float height, bool rotated);
 
-			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation);
+			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation, int team = 0, RespawnPoint* rp = nullptr);
 			GameObject* AddEnemyGoatToWorld(const Vector3& position);
 			GameObject* AddEnemyToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);
@@ -177,6 +199,12 @@ namespace NCL {
 			GameObject* AddDebugTriangleToWorld(const Vector3& position);
 
 			void AddMapToWorld();
+			void AddMapToWorld2();
+			void AddStructureToWorld();
+			void AddTowersToWorld();
+			void AddPlatformsToWorld();
+			void AddPowerUps(); 
+			void AddRespawnPoints();
 
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
@@ -197,7 +225,7 @@ namespace NCL {
 			GameObject* selectionObject = nullptr;
 			GameObject* phantomCubeOutput = nullptr;
 
-
+			RespawnPoint* respawnPoint; 
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;
@@ -224,6 +252,7 @@ namespace NCL {
 
 			ObjectPool<Projectile>* objectpool;
 
+			
 			
 			
 			//this was me
@@ -295,7 +324,7 @@ namespace NCL {
 			//int currentTeamInt = 1;
 			
 			int highestTriCount = 0;
-
+			
 			TextureBase* ironDiffuse = nullptr;
 			TextureBase* ironBump = nullptr;
 			TextureBase* ironMetallic = nullptr;
@@ -336,15 +365,19 @@ namespace NCL {
 
 			bool rayMarch = true;
 			//Player Animation 
-			ShaderBase* characterShader;
-			MeshAnimation* playerIdle;
+			OGLShader* characterShader;
 			MeshMaterial* playerMaterial;
 			int currentFrame;
 			float frameTime;
+			float gameTime = 0.0f;
+			void UpdateAnimations(float dt);
+			std::vector<RenderObject*> animatedObjects;
 
 			bool pause = false;
 
 			int playerNum = 0;
+			
+
 		};
 
 		/*

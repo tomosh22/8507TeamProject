@@ -158,15 +158,8 @@ TutorialGame::TutorialGame()	{
 	frameTime = 0.0f;
 
 
-	renderer->crosshair = new RenderObject(nullptr,  OGLMesh::GenerateCrossHair(), nullptr, renderer->debugShader);
-
-	playerMaterial = new MeshMaterial("Character/Character.mat");
-
-
-
-	currentFrame = 0;
-	frameTime = 0.0f;
-
+	timer = 60.0f;
+	endGameTimer = 10.0f;
 	return;
 
 	
@@ -678,18 +671,39 @@ void TutorialGame::UpdateGame(float dt) {
 		TogglePause();
 	}
 
+	if (timer <= 0)
+	{
+		//Game End 
+		EndGame();
+		std::cout << "Game end" << std::endl; 
+	}
+	
+	int timerToInt = timer;
+	Debug::Print(std::to_string(timerToInt), Vector2(45, 10));
+
 	ControlPlayer(dt);
 
 	UpdateKeys();
 
 	GameWorld::GetInstance()->UpdateWorld(dt);
+	
 	if (!pause) {
 		AddToGameTime(dt);
-		renderer->Update(dt);
 		physics->Update(dt);
+		renderer->Update(dt);
 		renderer->Render();
 		Debug::UpdateRenderables(dt);
+
+		timer -= dt;
 	}
+
+	if (gameEnded)
+		endGameTimer -= dt;
+	
+	
+	
+		
+
 	
 	//std::cout <<"GameTime: " << GetGameTime() << std::endl;
 
@@ -1368,7 +1382,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	cube->GetPhysicsObject()->InitCubeInertia();
 
 	InitPaintableTextureOnObject(cube);
-	//cube->isPaintable = true;
+	cube->isPaintable = true;
 	GameWorld::GetInstance()->AddGameObject(cube);
 	cube->SetName("cube");
 	return cube;
@@ -2426,4 +2440,13 @@ void TutorialGame::UpdateAnimations(float dt) {
 
 	}
 
+}
+
+void NCL::CSC8503::TutorialGame::EndGame()
+{
+	//print which team wins
+	if (endGameTimer <= 0)
+	{
+		//back to menu 
+	}
 }

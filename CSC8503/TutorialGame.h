@@ -374,7 +374,10 @@ namespace NCL {
 			bool pause = false;
 
 			int playerNum = 0;
-			
+			float timer;
+			float endGameTimer;
+			bool gameEnded;
+			void EndGame();
 
 		};
 

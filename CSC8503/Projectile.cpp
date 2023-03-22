@@ -85,6 +85,8 @@ void Projectile::setGunType(Gun wepType) {
 
 void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 {
+	if (otherObject->GetLayerMask() == Trigger)
+		return;
 	if (otherObject->isPaintable && otherObject != player && otherObject->GetName() != "invisible")
 	{
 		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(),explosionRadius, teamID);

@@ -207,7 +207,7 @@ void GameTechRenderer::RenderFrame() {
 	
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+	glEnable(GL_FRAMEBUFFER_SRGB);
 	
 	if(useFXAA)FXAA();
 	RenderFullScreenQuadWithTexture(sceneColor);//todo fix rotation

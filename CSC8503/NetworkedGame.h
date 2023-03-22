@@ -24,7 +24,7 @@ namespace NCL {
 
 			void SetLocalPlayer(NetworkObject* object) { this->localPlayer = object; }
 
-			int GetNetworkPlayerNum() { return serverPlayers.size() + 1; }
+			int GetNetworkPlayerNum() { return (int)serverPlayers.size() + 1; }
 
 			void HandleConnectConfirmed(GamePacket* packet);
 			void HandlePlayerDisconnect(int pid);

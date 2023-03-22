@@ -281,7 +281,7 @@ void GameTechRenderer::RenderShadowMap() {
 		if (i->isAnimated) {
 			glUniform1i(glGetUniformLocation(shadowShader->GetProgramID(), "isAnimated"), true);
 			int j = glGetUniformLocation(((OGLShader*)i->GetShader())->GetProgramID(), "joints");
-			glUniformMatrix4fv(j, i->frameMatrices.size(), false, (float*)i->frameMatrices.data());
+			glUniformMatrix4fv(j, (GLsizei)i->frameMatrices.size(), false, (float*)i->frameMatrices.data());
 		}
 		else {
 			glUniform1i(glGetUniformLocation(shadowShader->GetProgramID(), "isAnimated"), false);
@@ -471,8 +471,8 @@ void GameTechRenderer::RenderCamera() {
 
 		//this was me
 		Vector2 maskDims = (*i).maskDimensions;
-		glUniform1i(widthLocation, maskDims.x);
-		glUniform1i(heightLocation, maskDims.y);
+		glUniform1i(widthLocation, (int)maskDims.x);
+		glUniform1i(heightLocation, (int)maskDims.y);
 
 		glUniform1f(noiseScaleLocation, noiseScale);
 		glUniform1f(noiseOffsetSizeLocation, noiseOffsetSize / 1000.0f * i->GetTransform()->GetScale().Length());
@@ -530,7 +530,7 @@ void GameTechRenderer::RenderCamera() {
 		}
 		if (i->isAnimated) {
 			int j = glGetUniformLocation(shader->GetProgramID(), "joints");
-			glUniformMatrix4fv(j, i->frameMatrices.size(), false, (float*)i->frameMatrices.data());
+			glUniformMatrix4fv(j, (GLsizei)i->frameMatrices.size(), false, (float*)i->frameMatrices.data());
 		}
 //		glDisable(GL_CULL_FACE);//todo turn back on
 		BindMesh((*i).GetMesh());
@@ -717,7 +717,7 @@ void GameTechRenderer::NewRenderLines() {
 
 	debugLineData.clear();
 
-	int frameLineCount = lines.size() * 2;
+	int frameLineCount = (int)lines.size() * 2;
 
 	SetDebugLineBufferSizes(frameLineCount);
 

@@ -55,10 +55,10 @@ namespace NCL {
 			};
 			ImGUIPtrs imguiptrs;
 
-			float noiseScale = 1.8;
-			float noiseOffsetSize = 0.009;
-			float noiseNormalStrength = 10;
-			float noiseNormalNoiseMult = 0.313;
+			float noiseScale = 1.8f;
+			float noiseOffsetSize = 0.009f;
+			float noiseNormalStrength = 10.0f;
+			float noiseNormalNoiseMult = 0.313f;
 
 			bool newMethod = true;
 
@@ -78,8 +78,8 @@ namespace NCL {
 			bool useOpacityMap = true;
 			bool useGlossMap = true;
 
-			float timePassed = 0;
-			float timeScale = 0.419;
+			float timePassed = 0.0f;
+			float timeScale = 0.419f;
 
 			OGLShader* debugShader;
 			OGLShader* quadShader;
@@ -105,7 +105,7 @@ namespace NCL {
 
 			void EdgeDetection();
 			bool renderEdges = false;
-			float smaaThreshold = 0.05;
+			float smaaThreshold = 0.05f;
 
 			GLuint blendingFBO;
 			void WeightCalculation();

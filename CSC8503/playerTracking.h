@@ -85,7 +85,7 @@ namespace NCL {
 			}
 
 			int getBulletVectorSize() {
-				return bulletsUsed.size();
+				return (int)bulletsUsed.size();
 			}
 
 			Projectile* reuseBullet();

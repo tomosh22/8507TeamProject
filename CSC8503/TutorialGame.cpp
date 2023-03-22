@@ -203,7 +203,7 @@ void TutorialGame::InitQuadTexture() {
 
 	//may need to adjust if fps tanks
 	maxSteps = 500;
-	hitDistance = 0.001;
+	hitDistance = 0.001f;
 
 
 	noHitDistance = 1000;
@@ -260,7 +260,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 	glUniform1f(noHitDistanceLocation, noHitDistance);
 	glUniform1i(viewportWidthLocation, width);
 	glUniform1i(viewportHeightLocation, height);
-	glUniform1i(numSpheresLocation, rayMarchSpheres.size()+2);//one for debug sphere
+	glUniform1i(numSpheresLocation, (GLint)rayMarchSpheres.size()+2);//one for debug sphere
 	glUniform1f(nearPlaneLocation, GameWorld::GetInstance()->GetMainCamera()->GetNearPlane());
 	glUniform1f(farPlaneLocation, GameWorld::GetInstance()->GetMainCamera()->GetFarPlane());
 	glUniform1f(debugValueLocation, debugValue);
@@ -311,7 +311,7 @@ void TutorialGame::InitialiseAssets() {
 
 	for (MeshGeometry*& mesh : meshes) {
 		if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
-		if (mesh->GetIndexCount() / 3 > highestTriCount) {
+		if (mesh->GetIndexCount() / 3 > (unsigned int)highestTriCount) {
 			highestTriCount = mesh->GetIndexCount() / 3;
 		}
 	}
@@ -473,7 +473,7 @@ void TutorialGame::CameraLockOnPlayer() {
 	//find object orientation
 	float yrot = playerObject->GetTransform().GetOrientation().ToEuler().y;
 	//set camera position
-	Vector3 offSet = Vector3(viewOffset.x * cos((yrot + 270.0f) * M_PI / 180), viewOffset.y, viewOffset.z * sin((yrot - 270.0f) * M_PI / 180));
+	Vector3 offSet = Vector3(viewOffset.x * cosf((yrot + 270.0f) * M_PI / 180), viewOffset.y, viewOffset.z * sinf((yrot - 270.0f) * M_PI / 180));
 
 	Vector3 camPos = objPos + offSet + Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), offSet).Normalised() * 2.0f;
 	//targeting in front of the object
@@ -834,8 +834,8 @@ void TutorialGame::UpdateKeys() {
 	}
 
   if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::R)) {
-		float randX = (rand() % 200) - 100;
-		float randZ = (rand() % 200) - 100;
+		float randX = (float)((rand() % 200) - 100);
+		float randZ = (float)((rand() % 200) - 100);
 		Vector3 randVec(randX, 2, randZ);
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
 		DispatchComputeShaderForEachTriangle(floor, {randX,5,randZ},10, TEAM_DEFAULT);
@@ -1135,7 +1135,7 @@ void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int
 	glUniform1i(radiusLocation, radius * TEXTURE_DENSITY);
 
 	int centerLocation = glGetUniformLocation(computeShader->GetProgramID(), "center");
-	glUniform2i(centerLocation, center.x,center.y);
+	glUniform2i(centerLocation, (GLint)center.x, (GLint)center.y);
 
 	int teamIDLocation = glGetUniformLocation(computeShader->GetProgramID(), "teamID");
 	glUniform1i(teamIDLocation, teamID);
@@ -1150,12 +1150,12 @@ void TutorialGame::RunComputeShader(GameObject* floor,int width, int height, int
 void TutorialGame::InitPaintableTextureOnObject(GameObject* object, bool rotated) {
 	int w, h;
 	if (!rotated) {
-		w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
-		h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+		w = (int)(object->GetTransform().GetScale().x * TEXTURE_DENSITY);
+		h = (int)(object->GetTransform().GetScale().z * TEXTURE_DENSITY);
 	}
 	else {
-		w = object->GetTransform().GetScale().x * TEXTURE_DENSITY;
-		h = object->GetTransform().GetScale().z * TEXTURE_DENSITY;
+		w = (int)(object->GetTransform().GetScale().x * TEXTURE_DENSITY);
+		h = (int)(object->GetTransform().GetScale().z * TEXTURE_DENSITY);
 	}
 
 	object->GetRenderObject()->isPaintable = true;
@@ -1188,8 +1188,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 
 	floor->isPaintable = true;
 	
-	srand(time(0));
-	int test;
+	srand((int)time(0));
 
 #ifdef OLD_PAINT
 	InitPaintableTextureOnObject(floor);
@@ -1800,7 +1799,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, characterShader ));
 	character->GetRenderObject()->isAnimated = true;
 
-	for (int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
+	for (unsigned int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
 		const MeshMaterialEntry* matEntry = playerMaterial->GetMaterialForLayer(i);
 		const std::string* filename = nullptr;
 		matEntry->GetEntry("Diffuse", &filename);
@@ -1829,6 +1828,7 @@ Projectile* TutorialGame::AddBulletToWorld(playerTracking* playableCharacter) {
 		return useNewBullet(playableCharacter);
 	}
 
+	return nullptr;
 }
 
 
@@ -2163,8 +2163,8 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	int newMethodLocation = glGetUniformLocation(triComputeShader->GetProgramID(), "newMethod");
 	glUniform1f(radiusLocation, sphereRadius);
 	glUniform3fv(centerLocation,1, spherePosition.array);
-	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
-	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
+	glUniform1i(textureWidthLocation, (GLint)object->GetRenderObject()->maskDimensions.x);
+	glUniform1i(textureHeightLocation, (GLint)object->GetRenderObject()->maskDimensions.y);
 	glUniform1i(isComplexLocation, object->GetRenderObject()->isComplex);
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
 	glUniform1i(numTrisLocation, numTris);
@@ -2238,7 +2238,7 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 	triRasteriseShader->Bind();
 
 	uint32_t* data = new uint32_t[numTrisHit * 3];
-	for (int i = 0; i < numTrisHit; i++)
+	for (int i = 0; i < (int)numTrisHit; i++)
 	{
 		data[3 * i + 0] = indices[i];
 		data[3 * i + 1] = std::get<0>(coords[i]);
@@ -2261,8 +2261,8 @@ void TutorialGame::DispatchComputeShaderForEachTriangle(GameObject* object, Vect
 
 	glUniform1f(radiusLocation, sphereRadius);
 	glUniform3fv(centerLocation, 1, spherePosition.array);
-	glUniform1i(textureWidthLocation, object->GetRenderObject()->maskDimensions.x);
-	glUniform1i(textureHeightLocation, object->GetRenderObject()->maskDimensions.y);
+	glUniform1i(textureWidthLocation, (GLint)object->GetRenderObject()->maskDimensions.x);
+	glUniform1i(textureHeightLocation, (GLint)object->GetRenderObject()->maskDimensions.y);
 	glUniform1i(teamIDLocation, teamID);
 	glUniformMatrix4fv(modelMatrixLocation, 1, false, (float*)&modelMatrix);
 	glUniform1i(chunkWidthLocation, maxWidth);

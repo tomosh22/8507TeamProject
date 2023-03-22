@@ -38,23 +38,22 @@ void NCL::CSC8503::RespawnPoint::AddRespawnPoint(RespawnPoint* rp)
 
 Vector3 NCL::CSC8503::RespawnPoint::FindSafeRespawn(int team)
 {
-	Vector3 position;
 	for (int i = 0; i < respawnPoints.size(); i++)
 	{
 		if (team == 1)
 		{
-			if (respawnPoints[i]->team1Safe == true)
+			if (respawnPoints[i]->team1Safe)
 			{
-				position = respawnPoints[i]->GetTransform().GetPosition();
-				return position;
+				return respawnPoints[i]->GetTransform().GetPosition();
 			}
 		}
-		else if (respawnPoints[i]->team2Safe == true)
+		else if (respawnPoints[i]->team2Safe)
 		{
-			position = respawnPoints[i]->GetTransform().GetPosition();
-			return position;
+			return respawnPoints[i]->GetTransform().GetPosition();
 		}
-	} 
+	}
+
+	return Vector3(0, 100, 0);
 }
 
 void NCL::CSC8503::RespawnPoint::OnCollisionBegin(GameObject* otherObject)

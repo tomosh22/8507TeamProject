@@ -128,7 +128,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	CapsuleVolume* volume = new CapsuleVolume(weaponInUse.ProjectileSize * 2.0f, weaponInUse.ProjectileSize);
 	bullet->SetBoundingVolume((CollisionVolume*)volume);
 
-	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize*2.0, weaponInUse.ProjectileSize)).SetPosition(transform.GetPosition() + Vector3(0.0f, 2.0f, 0.0f));
+	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize*2.0f, weaponInUse.ProjectileSize)).SetPosition(transform.GetPosition() + Vector3(0.0f, 2.0f, 0.0f));
 
 	bullet->SetPhysicsObject(new PhysicsObject(&bullet->GetTransform(), bullet->GetBoundingVolume()));
 

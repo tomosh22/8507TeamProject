@@ -672,10 +672,10 @@ void TutorialGame::UpdateGame(float dt) {
 		UpdateAnimations(dt);
 		SelectMode();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED,true);
+		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED,false);
 		glPopDebugGroup();
 		for (GameObject*& wall : walls) {
-			DispatchComputeShaderForEachTriangle(wall, testSphereCenter, testSphereRadius, TEAM_RED, true);
+			DispatchComputeShaderForEachTriangle(wall, testSphereCenter, testSphereRadius, TEAM_RED, false);
 		}
 		break;
 	}

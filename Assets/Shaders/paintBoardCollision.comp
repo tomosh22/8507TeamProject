@@ -1,0 +1,72 @@
+#version 430 core
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(binding=0, std430) buffer UniformVars {
+	mat4 modelMatrix;
+
+	vec4 sphere; /* [0:3] center, [4] radius */
+	uint totalTriangleCount;
+	uint writtenTriangleCount;
+};
+
+layout(binding=1, std430) buffer CollidedTriangleIDs {
+    uint outTriangleIndices[];
+};
+
+layout(binding=2, std430) buffer Positions {
+    float positions[];
+};
+
+layout(binding=3, std430) buffer Indices {
+    uint indices[];
+};
+
+vec3 position(uint index) {
+	return vec3(positions[3 * index + 0], positions[3 * index + 1], positions[3 * index + 2]);
+}
+
+void main() {
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= totalTriangleCount) return;
+	
+	vec3 pos0 = position(indices[3 * id + 0]);
+	vec3 pos1 = position(indices[3 * id + 1]);
+	vec3 pos2 = position(indices[3 * id + 2]);
+	
+	pos0 = vec4(modelMatrix * vec4(pos0, 1)).xyz;
+	pos1 = vec4(modelMatrix * vec4(pos1, 1)).xyz;
+	pos2 = vec4(modelMatrix * vec4(pos2, 1)).xyz;
+	
+	vec3 edge0 = pos1 - pos0;
+	vec3 edge1 = pos2 - pos0;
+	vec3 normal = cross(edge0, edge1);
+	
+	mat4 baryToWorld = mat4(
+		vec4(edge0, 0.0),
+		vec4(normal, 0.0),	
+		vec4(edge1, 0.0),
+		vec4(pos0, 1.0)
+	);
+	
+	mat4 worldToBary = inverse(baryToWorld);
+	
+	//
+	vec2 uv = vec4(worldToBary * vec4(sphere.xyz, 1)).xz;
+	
+	const float invSqrtTwo = 1.0 / sqrt(2.0);
+	float projLength = (uv.x + uv.y) * invSqrtTwo;
+	float clampedLength = min(projLength, sqrt(0.5));
+	float correction = (projLength - clampedLength) * invSqrtTwo;
+	
+	uv.x = min(max(0, uv.x - correction), 1);
+	uv.y = min(max(0, uv.y - correction), 1);
+	
+	//
+	vec3 pointOnTriangle = vec3(baryToWorld * vec4(uv.x, 0.0, uv.y, 1.0)).xyz;
+	vec3 distanceToSphere = sphere.xyz - pointOnTriangle;
+	
+	if (dot(distanceToSphere, distanceToSphere) <= sphere.w * sphere.w) {
+		outTriangleIndices[atomicAdd(writtenTriangleCount, 1)] = id;
+	}
+}

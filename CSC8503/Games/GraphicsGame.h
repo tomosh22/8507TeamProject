@@ -24,6 +24,8 @@ namespace NCL::CSC8503 {
 		Vector3 testSphereCenter;
 		float testSphereRadius;
 
+		GameObject* wall;
+
 		MeshGeometry* sphereMesh = nullptr;
 		MeshGeometry* floorMesh = nullptr;
 		TextureBase* basicTex = nullptr;

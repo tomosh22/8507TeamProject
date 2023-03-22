@@ -36,6 +36,9 @@ GameTechRenderer::GameTechRenderer(Window* window) :
 	rayMarchComputeShader = new OGLComputeShader("rayMarchCompute.glsl");
 	edgesShader = new OGLShader("smaaEdgeDetection.vert", "smaaEdgeDetectionColor.frag");
 	fxaaShader = new OGLShader("fxaa.vert", "fxaa.frag"); //https://stackoverflow.com/questions/12105330/how-does-this-simple-fxaa-work
+	maskRasterShader = new OGLComputeShader("triMaskRasterizer.comp");
+	paintCollisionShader = new OGLComputeShader("paintBoardCollision.comp");
+	drawPaintCollisionsShader = new OGLShader("debugPaintCollisions.vert", "debugPaintCollisions.frag");
 
 	LoadSkybox();
 	CreateDebugData();
@@ -46,7 +49,10 @@ GameTechRenderer::GameTechRenderer(Window* window) :
 
 	//Create OpenGL resources
 	glGenBuffers(1, &rayMarchSphereSSBO);
+	glGenBuffers(1, &paintCollideUniforms);
+	glGenBuffers(1, &paintCollideTriangleIds);
 	glGenTextures(1, &rayMarchTexture);
+	glGenVertexArrays(1, &paintCollisionDrawVAO);
 
 	//Create view-dependent resources
 	this->renderWidth = windowWidth;
@@ -62,8 +68,11 @@ GameTechRenderer::GameTechRenderer(Window* window) :
 GameTechRenderer::~GameTechRenderer() {
 	DestroyViewDependent();
 
+	glDeleteVertexArrays(1, &paintCollisionDrawVAO);
 	glDeleteTextures(1, &shadowTex);
 	glDeleteTextures(1, &rayMarchTexture);
+	glDeleteBuffers(1, &paintCollideUniforms);
+	glDeleteBuffers(1, &paintCollideTriangleIds);
 	glDeleteBuffers(1, &rayMarchSphereSSBO);
 
 	delete quad;
@@ -72,6 +81,9 @@ GameTechRenderer::~GameTechRenderer() {
 	DestroyDebugData();
 	UnloadSkybox();
 
+	delete drawPaintCollisionsShader;
+	delete paintCollisionShader;
+	delete maskRasterShader;
 	delete fxaaShader;
 	delete edgesShader;
 	delete rayMarchComputeShader;
@@ -146,6 +158,8 @@ void GameTechRenderer::RenderFrame()
 		SendRayMarchData();
 	}
 
+//	FindTrianglesToPaint();
+
 	//////////////////////////////////////////////////////////////////
 	// Draw the scene
 	//////////////////////////////////////////////////////////////////
@@ -160,6 +174,8 @@ void GameTechRenderer::RenderFrame()
 
 	RenderSkybox();
 	RenderCamera();
+
+	FindTrianglesToPaint();
 
 	//////////////////////////////////////////////////////////////////
 	// Apply post-processing
@@ -208,6 +224,7 @@ void GameTechRenderer::EndFrame()
 {
 	marchedSpheresToDraw.clear();
 	activeObjects.clear();
+	paintedSpots.clear();
 }
 
 void GameTechRenderer::CreateViewDependent()
@@ -689,6 +706,76 @@ void GameTechRenderer::ExecuteRayMarching()
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void GameTechRenderer::FindTrianglesToPaint()
+{
+	paintCollisionShader->Bind();
+	
+	struct
+	{
+		Matrix4 modelMatrix;
+		Vector4 sphere;
+		uint32_t totalTriangleCount = 0;
+		uint32_t writtenTriangleCount = 0;
+	} collUniforms;
+
+	for (PaintSpot spot : paintedSpots)
+	{
+		if (!spot.object->isPaintable) continue;
+
+		OGLTexture* maskTexture = (OGLTexture*)spot.object->GetRenderObject()->maskTex;
+		OGLMesh* mesh = (OGLMesh*)spot.object->GetRenderObject()->GetMesh();
+
+		uint32_t triangleCount = mesh->GetIndexCount() / 3;
+
+		//Update uniforms
+		collUniforms = {};
+		collUniforms.modelMatrix = spot.object->GetTransform().GetMatrix();
+		collUniforms.sphere = Vector4(spot.position.x, spot.position.y, spot.position.z, spot.radius);
+		collUniforms.totalTriangleCount = triangleCount;
+		collUniforms.writtenTriangleCount = 0;
+
+		//Update buffers
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, paintCollideUniforms);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(collUniforms), &collUniforms, GL_STATIC_DRAW);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, paintCollideTriangleIds);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, triangleCount * sizeof(uint32_t), nullptr, GL_STATIC_DRAW);
+
+		//Bind buffers
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, paintCollideUniforms);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, paintCollideTriangleIds);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mesh->attributeBuffers[VertexAttribute::Positions]);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mesh->indexBuffer);
+
+		//Execute
+		paintCollisionShader->Execute(triangleCount / 64 + 1);
+
+		glMemoryBarrier(GL_UNIFORM_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
+
+		//
+		if (true)
+		{
+			BindShader(drawPaintCollisionsShader);
+
+			Matrix4 viewMatrix = activeCamera->BuildViewMatrix();
+			Matrix4 projMatrix = activeCamera->BuildProjectionMatrix((float)renderWidth / (float)renderHeight);
+
+			Matrix4 mvp = collUniforms.modelMatrix;
+
+			glUniformMatrix4fv(glGetUniformLocation(drawPaintCollisionsShader->GetProgramID(), "mvpMatrix"), 1, false, (float*)mvp.array);
+			glUniform4f(glGetUniformLocation(drawPaintCollisionsShader->GetProgramID(), "color"), 0.9f, 0, 0, 1);
+
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mesh->attributeBuffers[VertexAttribute::Positions]);
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mesh->indexBuffer);
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, paintCollideTriangleIds);
+
+			glBindVertexArray(paintCollisionDrawVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 2);
+			glBindVertexArray(0);
+		}
+	}
 }
 
 void GameTechRenderer::RenderShadowMap() {

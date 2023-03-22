@@ -206,16 +206,16 @@ namespace NCL::CSC8503 {
 
 	void GraphicsGame::Render()
 	{
-		//Submit raymarched spheres
 		for (size_t i = 0; i < rayMarchSpheres.size(); i++)
 		{
-			GameTechRenderer::RayMarchedSphere sphere = {};
-			sphere.position = rayMarchSpheres[i]->GetTransform().GetPosition();
-			sphere.color = rayMarchSpheres[i]->color;
-			sphere.radius = rayMarchSpheres[i]->radius;
+			Vector3 position = rayMarchSpheres[i]->GetTransform().GetPosition();
+			Vector3 color = rayMarchSpheres[i]->color;
+			float radius = rayMarchSpheres[i]->radius;
 
-			renderer->SubmitRayMarchedSphere(sphere);
+			renderer->SubmitRayMarchedSphere(position, color, radius);
 		}
+
+		renderer->ApplyPaintTo(wall, Vector3(0, 0, 0), 300.0f, 0);
 	}
 
 	void GraphicsGame::DrawImGuiSettings()
@@ -242,14 +242,13 @@ namespace NCL::CSC8503 {
 		if (ImGui::TreeNode("Paint Testing")) {
 			ImGui::SliderFloat3("Position", testSphereCenter.array, -200, 500);
 			ImGui::SliderFloat("Sphere Radius", &testSphereRadius, 0, 2000);
-			ImGui::Checkbox("New Method", &renderer->newMethod);
 			ImGui::SliderFloat("Noise Scale", &renderer->noiseScale, 0, 10);
 			ImGui::SliderFloat("Noise Offset Size", &renderer->noiseOffsetSize, 0, 0.1f);
 			ImGui::SliderFloat("Noise Normal Strength", &renderer->noiseNormalStrength, 0, 10);
 			ImGui::SliderFloat("Noise Normal Multiplier", &renderer->noiseNormalNoiseMult, 0, 10);
 			ImGui::SliderFloat("Time Scale", &renderer->noiseTimeScale, 0, 1);
 
-			if (ImGui::Button("Move to Center")) { testSphereCenter = Vector3(0, 0, 0); }
+			if (ImGui::Button("Move to Center")) testSphereCenter = Vector3(0, 0, 0);
 
 			ImGui::TreePop();
 		}
@@ -327,35 +326,24 @@ namespace NCL::CSC8503 {
 		testSphere4->GetRenderObject()->useHeightMap = true;
 
 		AddFloorToWorld(Vector3(0, -20, 0), { 100,1,100 },false);
-		GameObject* wall = AddFloorToWorld({ 0,25,-50 }, { 100,1,25 }, true);
+		wall = AddFloorToWorld({ 0,25,-50 }, { 100,1,25 }, true);
 		wall->GetTransform().SetOrientation(Quaternion::EulerAnglesToQuaternion(90, 0, 0));
 	}
 
-
 	void GraphicsGame::InitPaintableTextureOnObject(GameObject* object, bool rotated)
 	{
-		int w, h;
-		if (!rotated) {
-			w = (int)(object->GetTransform().GetScale().x * TEXTURE_DENSITY);
-			h = (int)(object->GetTransform().GetScale().z * TEXTURE_DENSITY);
-		}
-		else {
-			w = (int)(object->GetTransform().GetScale().x * TEXTURE_DENSITY);
-			h = (int)(object->GetTransform().GetScale().z * TEXTURE_DENSITY);
-		}
+		int w = (int)(object->GetTransform().GetScale().x * TEXTURE_DENSITY);
+		int h = (int)(object->GetTransform().GetScale().z * TEXTURE_DENSITY);
 
 		object->GetRenderObject()->isPaintable = true;
 		object->GetRenderObject()->maskTex = new OGLTexture();
+		object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
+
 		glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID());
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 		glBindTexture(GL_TEXTURE_2D, 0);
-		object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
-		//	object->GetRenderObject()->baseTex = spaceShipDiffuse;
-		//	object->GetRenderObject()->bumpTex = spaceShipBump;
-
-		//	if(object->GetRenderObject()->pbrTextures == nullptr)object->GetRenderObject()->pbrTextures = crystalPBR;
 	}
 
 	GameObject* GraphicsGame::AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass, bool physics) {

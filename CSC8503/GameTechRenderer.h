@@ -25,14 +25,10 @@ namespace NCL::CSC8503 {
 
 	class GameTechRenderer : public OGLRenderer
 	{
-	public:
-		struct RayMarchedSphere
-		{
-			Vector3 position;
-			Vector3 color;
-			float radius;
-		};
 	private:
+		struct RayMarchedSphere { Vector3 position; Vector3 color; float radius; };
+		struct PaintSpot { GameObject* object; Vector3 position; float radius; uint8_t teamID; };
+
 		OGLShader* debugShader;
 		OGLShader* quadShader;
 		RenderObject* quad;
@@ -41,6 +37,17 @@ namespace NCL::CSC8503 {
 		int renderHeight;
 
 		std::vector<const RenderObject*> activeObjects;
+
+		//Paint stuff
+		OGLComputeShader* paintCollisionShader;
+		OGLComputeShader* maskRasterShader;
+		OGLShader* drawPaintCollisionsShader;
+		GLuint paintCollisionDrawVAO;
+
+		GLuint paintCollideUniforms;
+		GLuint paintCollideTriangleIds;
+
+		std::vector<PaintSpot> paintedSpots;
 
 		//Ray marching stuff
 		GLuint rayMarchSphereSSBO;
@@ -90,7 +97,7 @@ namespace NCL::CSC8503 {
 
 			vector<Vector3> debugTextPos;
 			vector<Vector4> debugTextColours;
-			vector<Vector2> debugTextUVs;
+			std::vector<Vector2> debugTextUVs;
 
 			GLuint lineVAO;
 			GLuint lineVertVBO;
@@ -161,6 +168,8 @@ namespace NCL::CSC8503 {
 		void SendRayMarchData();
 		void ExecuteRayMarching();
 
+		void FindTrianglesToPaint();
+
 		void RenderShadowMap();
 		void RenderCamera();
 		void RenderSkybox();
@@ -183,8 +192,21 @@ namespace NCL::CSC8503 {
 		void RenderFrame() override;
 		void EndFrame() override;
 
-		inline void SubmitRayMarchedSphere(const RayMarchedSphere& sphere) { marchedSpheresToDraw.push_back(sphere); }
-		inline void SubmitRenderObject(const RenderObject* renderObj) { activeObjects.push_back(renderObj); }
+		//TODO: Create paintable object
+		inline void ApplyPaintTo(GameObject* object, Vector3 paintPos, float radius, uint8_t teamID)
+		{
+			paintedSpots.push_back(PaintSpot{ object, paintPos, radius, teamID });
+		}
+
+		inline void SubmitRayMarchedSphere(Vector3 paintPos, Vector3 color, float radius)
+		{
+			marchedSpheresToDraw.push_back(RayMarchedSphere{ paintPos, color, radius });
+		}
+
+		inline void SubmitRenderObject(const RenderObject* renderObj)
+		{
+			activeObjects.push_back(renderObj); 
+		}
 
 		inline void SetActiveCamera(Camera* camera) { this->activeCamera = camera; }
 	};

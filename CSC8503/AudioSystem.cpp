@@ -24,6 +24,12 @@ FMOD::Channel* AudioSystem::playSound(FMOD::Sound* sound, float volume) const
 	return channel;
 }
 
+FMOD::Channel* AudioSystem::playSound(FMOD::Sound* sound, FMOD::Channel* channel) const
+{
+	lowLevelSystem->playSound(sound, nullptr, false, &channel);
+	return channel;
+}
+
 FMOD::Channel* AudioSystem::pauseSound(FMOD::Sound* sound) const
 {
 	FMOD::Channel* channel;

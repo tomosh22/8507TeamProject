@@ -48,7 +48,7 @@ set(Header_Files
 
 	"GameManager.h"
 	"AudioSystem.h"
-
+	"AudioSource.h"
 
 )
 source_group("Header Files" FILES ${Header_Files})
@@ -64,7 +64,7 @@ set(Source_Files
 	"Item.cpp"
 	"GameManager.cpp"
     "AudioSystem.cpp"
-
+    "AudioSource.cpp"
 )
 
 if(USE_VULKAN)

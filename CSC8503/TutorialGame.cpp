@@ -15,7 +15,7 @@
 
 #include"PropSystem.h"
 #include "Projectile.h"
-
+#include "AudioSystem.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -871,23 +871,28 @@ void TutorialGame::ControlPlayer(float dt) {
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
 		playerObject->TransferAnimation("MoveF");
+		playerObject->audioMap["walk"]->UnPause();
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - fwdAxis * dt * speed);
 		playerObject->TransferAnimation("MoveB");
+		playerObject->audioMap["walk"]->UnPause();
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - rightAxis * dt * speed);
 		playerObject->TransferAnimation("MoveL");
+		playerObject->audioMap["walk"]->UnPause();
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + rightAxis * dt * speed);
 		playerObject->TransferAnimation("MoveR");
+		playerObject->audioMap["walk"]->UnPause();
 	}
 	if(!Window::GetKeyboard()->KeyDown(KeyboardKeys::W)&& !Window::GetKeyboard()->KeyDown(KeyboardKeys::S)
 		&&!Window::GetKeyboard()->KeyDown(KeyboardKeys::A)&& !Window::GetKeyboard()->KeyDown(KeyboardKeys::D))
 	{
 		playerObject->TransferAnimation("Idle");
+		playerObject->audioMap["walk"]->Pause();
 	}
 	//jump
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump(floor)) {
@@ -1046,7 +1051,8 @@ void TutorialGame::InitSingleGameMode() {
 	auto q = Quaternion();
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 
-	AudioSystem::GetInstance()-> playSound(audioMap["BK"],0.2);
+	audioMap["BK"]->Play();
+	audioMap["BK"]->SetVolume(0.25f);
 
 	InitGameObjects();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
@@ -1550,11 +1556,8 @@ void TutorialGame::AddMapToWorld() {
 
 void NCL::CSC8503::TutorialGame::LoadAudio()
 {
-	audioMap["BK"] = AudioSystem::GetInstance()->loadSound("BKMusic.wav", FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
-
+	audioMap["BK"] = new AudioSource("BKMusic.wav", FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
 }
-
-
 
 playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation) {
 	float meshSize = 2.0f;

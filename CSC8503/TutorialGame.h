@@ -13,7 +13,8 @@
 #include "PropSystem.h"
 #include"MeshAnimation.h"
 #include"MeshMaterial.h"
-#include "AudioSystem.h"
+#include "AudioSource.h"
+
 #include <thread>
 #include <mutex>
 #include <map>
@@ -346,7 +347,7 @@ namespace NCL {
 
 			int playerNum = 0;
 			
-			std::map<std::string, FMOD::Sound*> audioMap;
+			std::map<std::string, AudioSource*> audioMap;
 		};
 
 		/*

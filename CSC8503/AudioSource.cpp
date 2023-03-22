@@ -51,7 +51,7 @@ void AudioSource::update(float x,float y ,float z)
 	channel->set3DAttributes(pos, 0);
 }
 
-void AudioSource::Pause()
+void AudioSource::Pause(bool pause)
 {
-	channel->setPaused(true);
+	channel->setPaused(pause);
 }

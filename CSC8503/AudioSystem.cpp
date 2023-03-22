@@ -37,8 +37,13 @@ FMOD::Channel* AudioSystem::pauseSound(FMOD::Sound* sound) const
 	return channel;
 }
 
-void AudioSystem::update() {
+void AudioSystem::update(float x, float y, float z) {
 	system->update();
+
+	pos->x = x;
+	pos->y = y;
+	pos->z = z;
+	lowLevelSystem->set3DListenerAttributes(0,pos,0,0,0);
 	lowLevelSystem->update();
 }
 
@@ -55,10 +60,15 @@ AudioSystem::AudioSystem() : system(NULL) {
 		printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
 	}
 	system->getCoreSystem(&lowLevelSystem);
+	pos = new FMOD_VECTOR();
 }
 
 
 AudioSystem::~AudioSystem() {
 	system->unloadAll();
 	system->release();
+	delete _instance;
+	delete system;
+	delete lowLevelSystem;
+	delete pos;
 }

@@ -33,7 +33,8 @@ playerTracking::playerTracking()
 		LoadAniamtion();
 		LoadAudio();
 		audioMap["walk"]->Play();
-		audioMap["walk"]->SetVolume(2.0f);
+		audioMap["walk"]->SetVolume(5.0f);
+		
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
@@ -46,7 +47,13 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 		TakeDamage(50);
 	}
 	GetRenderObject()->anim = currentAniamtion;
+	audioMap["walk"]->Pause(currentAniamtion == animationMap["Idle"]);
+
 	
+	for (auto const& [key, val] : audioMap)
+	{
+		val->update(transform.GetPosition().x,transform.GetPosition().y,transform.GetPosition().z);
+	}
 }
 
 void NCL::CSC8503::playerTracking::Rotate()

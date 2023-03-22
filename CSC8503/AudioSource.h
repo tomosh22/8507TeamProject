@@ -16,7 +16,7 @@ class AudioSource
 		void LoadAudio(const std::string& file, FMOD_MODE mode);
 		void Play();
 		void SetVolume(float volume);
-		void Pause();
+		void Pause(bool pause);
 		void UnPause();
 		void update(float x, float y, float z);
 	private:

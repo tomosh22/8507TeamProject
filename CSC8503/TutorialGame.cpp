@@ -871,28 +871,23 @@ void TutorialGame::ControlPlayer(float dt) {
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
 		playerObject->TransferAnimation("MoveF");
-		playerObject->audioMap["walk"]->UnPause();
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - fwdAxis * dt * speed);
 		playerObject->TransferAnimation("MoveB");
-		playerObject->audioMap["walk"]->UnPause();
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - rightAxis * dt * speed);
 		playerObject->TransferAnimation("MoveL");
-		playerObject->audioMap["walk"]->UnPause();
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
 		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + rightAxis * dt * speed);
 		playerObject->TransferAnimation("MoveR");
-		playerObject->audioMap["walk"]->UnPause();
 	}
 	if(!Window::GetKeyboard()->KeyDown(KeyboardKeys::W)&& !Window::GetKeyboard()->KeyDown(KeyboardKeys::S)
 		&&!Window::GetKeyboard()->KeyDown(KeyboardKeys::A)&& !Window::GetKeyboard()->KeyDown(KeyboardKeys::D))
 	{
 		playerObject->TransferAnimation("Idle");
-		playerObject->audioMap["walk"]->Pause();
 	}
 	//jump
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump(floor)) {
@@ -918,6 +913,10 @@ void TutorialGame::ControlPlayer(float dt) {
 		renderer->drawCrosshair = false;
 	}
 	playerObject->PrintPlayerInfo();
+
+	Vector3 pos = playerObject->GetTransform().GetPosition();
+
+	AudioSystem::GetInstance()->update(pos.x,pos.y,pos.z);
 }
 
 void TutorialGame::LockedObjectMovement() {

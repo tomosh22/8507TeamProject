@@ -20,6 +20,7 @@
 #include"PropSystem.h"
 #include <chrono>
 #include "RespawnPoint.h"
+#include "AudioSystem.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -452,6 +453,7 @@ void TutorialGame::InitialiseAssets() {
 
 	characterShader = new OGLShader("SkinningVertex.vert", "SkinningFrag.frag");
 
+	LoadAudio();
 	InitQuadTexture();
 
 	InitCamera();
@@ -925,6 +927,10 @@ void TutorialGame::ControlPlayer(float dt) {
 		renderer->drawCrosshair = false;
 	}
 	playerObject->PrintPlayerInfo();
+
+	Vector3 pos = playerObject->GetTransform().GetPosition();
+
+	AudioSystem::GetInstance()->update(pos.x, pos.y, pos.z);
 }
 
 void TutorialGame::LockedObjectMovement() {
@@ -1062,7 +1068,8 @@ void TutorialGame::InitSingleGameMode() {
 	//InitGameObjects();
 	//floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	//InitPaintableTextureOnObject(floor);
-
+	audioMap["BK"]->Play();
+	audioMap["BK"]->SetVolume(0.25f);
 	//map
 	AddMapToWorld2();
 	AddStructureToWorld();
@@ -1551,6 +1558,12 @@ GameObject* TutorialGame::AddEnemyGoatToWorld(const Vector3& position) {
 
 	return BadGoat;
 }
+
+void NCL::CSC8503::TutorialGame::LoadAudio()
+{
+	audioMap["BK"] = new AudioSource("BKMusic.wav", FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
+}
+
 
 GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	GameObject* triangle = new GameObject();

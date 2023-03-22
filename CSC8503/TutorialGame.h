@@ -21,7 +21,8 @@
 #include <mutex>
 
 #include "RayMarchSphere.h"
-
+#include <map>
+#include "AudioSource.h"
 namespace NCL {
 	namespace CSC8503 {
 		const enum GameMode {
@@ -81,6 +82,7 @@ namespace NCL {
 
 			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID, bool clearMask = false);
 
+			void LoadAudio();
 			MeshGeometry* capsuleMesh = nullptr;
 			MeshGeometry* cubeMesh = nullptr;
 			MeshGeometry* sphereMesh = nullptr;
@@ -358,7 +360,7 @@ namespace NCL {
 
 			int playerNum = 0;
 			
-
+			std::map<std::string, AudioSource*> audioMap;
 		};
 
 		/*

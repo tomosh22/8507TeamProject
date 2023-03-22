@@ -207,6 +207,8 @@ include_directories("../NCLCoreClasses/")
 include_directories("../OpenGLRendering/")
 include_directories("../CSC8503/")
 include_directories("./")
+include_directories("../FMOD/core/inc")
+include_directories("../FMOD/studio/inc")
 
 if(MSVC)
     target_link_libraries(${PROJECT_NAME} PRIVATE "ws2_32.lib")

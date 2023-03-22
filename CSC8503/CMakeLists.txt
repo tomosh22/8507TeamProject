@@ -50,6 +50,7 @@ set(Header_Files
 	"GameManager.h"
 	"AudioSystem.h"
     "RayMarchSphere.h"
+    "AudioSource.h"
 
 
 )
@@ -70,7 +71,7 @@ set(Source_Files
     "RespawnPoint.cpp"
 
     "RayMarchSphere.cpp"
-
+     "AudioSource.cpp"
 )
 
 if(USE_VULKAN)

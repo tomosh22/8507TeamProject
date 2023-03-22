@@ -11,6 +11,8 @@
 #include <map>
 #include "MeshAnimation.h"
 #include "RespawnPoint.h"
+#include "AudioSource.h"
+#include "AudioSystem.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -189,9 +191,15 @@ namespace NCL {
 			}
 			void TransferAnimation(std::string animationName);
 
+			void LoadAniamtion();
+
 			bool GetOnLadder() {
 				return onLadder;
 			}
+
+			void LoadAudio();
+
+			std::map<std::string, AudioSource*> audioMap;
 
 		protected:
 			bool canJump;

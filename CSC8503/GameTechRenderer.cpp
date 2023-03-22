@@ -6,7 +6,7 @@
 
 //this was me
 #include <Win32Window.h>
-
+#include <psapi.h>
 
 using namespace NCL;
 using namespace Rendering;
@@ -132,20 +132,13 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 	//https://stackoverflow.com/questions/12105330/how-does-this-simple-fxaa-work
 	fxaaShader = new OGLShader("fxaa.vert", "fxaa.frag");
 
+	//Initialize ImGui
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	ImGui::StyleColorsDark();
 
-	
-
-
-	Win32Code::Win32Window* realWindow = (Win32Code::Win32Window*)&hostWindow;
-
-	
-
-	ImGui_ImplWin32_Init(realWindow->GetHandle());
-	
+	ImGui_ImplWin32_Init(((Win32Code::Win32Window&)hostWindow).GetHandle());
 	ImGui_ImplOpenGL3_Init("#version 330");
 }
 
@@ -229,16 +222,10 @@ void GameTechRenderer::RenderFrame() {
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	
-
-	
-	
-
 	ImGui();
-	if(drawCrosshair)DrawCrossHair();
 
-	
+	if(drawCrosshair) DrawCrossHair();
 }
 
 void GameTechRenderer::BuildObjectList() {
@@ -879,12 +866,8 @@ void GameTechRenderer::SetDebugLineBufferSizes(size_t newVertCount) {
 	}
 }
 
-
-//this was me
-void GameTechRenderer::ImGui() {
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
+void GameTechRenderer::DrawImGuiMainAssist()
+{
 	ImGui::Begin("NotSplatoon");
 	Vector3 camPos = gameWorld.GetMainCamera()->GetPosition();
 	std::string camPosStr = std::to_string(camPos.x) + " "
@@ -903,11 +886,11 @@ void GameTechRenderer::ImGui() {
 		ImGui::SliderFloat3("Position", imguiptrs.testSphereCenter->array, -200, 500);
 		ImGui::SliderFloat("Sphere Radius", imguiptrs.testSphereRadius, 0, 2000);
 		ImGui::Checkbox("New Method", imguiptrs.newMethod);
-		ImGui::SliderFloat("Noise Scale", &noiseScale,0,10);
-		ImGui::SliderFloat("Noise Offset Size", &noiseOffsetSize,0,0.1f);
-		ImGui::SliderFloat("Noise Normal Strength", &noiseNormalStrength,0,10);
-		ImGui::SliderFloat("Noise Normal Multiplier", &noiseNormalNoiseMult,0,10);
-		ImGui::SliderFloat("Time Scale", &timeScale,0,1);
+		ImGui::SliderFloat("Noise Scale", &noiseScale, 0, 10);
+		ImGui::SliderFloat("Noise Offset Size", &noiseOffsetSize, 0, 0.1f);
+		ImGui::SliderFloat("Noise Normal Strength", &noiseNormalStrength, 0, 10);
+		ImGui::SliderFloat("Noise Normal Multiplier", &noiseNormalNoiseMult, 0, 10);
+		ImGui::SliderFloat("Time Scale", &timeScale, 0, 1);
 		if (ImGui::Button("Move to Center")) { *(imguiptrs.testSphereCenter) = Vector3(0, 0, 0); }
 
 		ImGui::TreePop();
@@ -944,13 +927,79 @@ void GameTechRenderer::ImGui() {
 		ImGui::SliderFloat("Edge Threshold", &exposure, -10, 10);
 		ImGui::TreePop();
 	}
-	
 
 	ImGui::SliderFloat3("Light Position", lightPosition.array, -200, 200);
 
 	ImGui::End();
+}
+
+void GameTechRenderer::DrawImGuiStatistics()
+{
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
+
+	float padding = 10.0f;
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+	ImVec2 work_pos = viewport->WorkPos;
+	ImVec2 work_size = viewport->WorkSize;
+
+	ImVec2 window_pos(work_pos.x + work_size.x - padding, work_pos.y + work_size.y - padding);
+	ImVec2 window_pos_pivot(1.0f, 1.0f);
+
+	ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+	ImGui::SetNextWindowBgAlpha(0.35f);
+
+	bool alwaysTrue = true;
+
+	if (ImGui::Begin("Stats Overlay", &alwaysTrue, window_flags))
+	{
+		ImGui::Text("Game Stats");
+		ImGui::Separator();
+
+		//Display the last frame time
+		float lastFrameTime = hostWindow.GetTimer()->GetTimeDeltaSeconds();
+		int lastFrameRate = (int)(1.0f / lastFrameTime);
+
+		ImGui::Text("Frame rate: %d (%.2f ms)", lastFrameRate, 1000.0f * lastFrameTime);
+		
+		//Display the memory usage of the current process
+		{
+			PROCESS_MEMORY_COUNTERS memoryCounters = {};
+			if (!GetProcessMemoryInfo(GetCurrentProcess(), &memoryCounters, sizeof(PROCESS_MEMORY_COUNTERS))) memoryCounters = {};
+
+			SIZE_T memoryUsage = memoryCounters.WorkingSetSize;
+
+			const uint64_t kilobytes = 1024;
+			const uint64_t megabytes = 1024 * kilobytes;
+			const uint64_t gigabytes = 1024 * megabytes;
+
+			const char* prompt = "Memory usage: ";
+
+			if (memoryUsage >= gigabytes) ImGui::Text("%s%.2f GB", prompt, (double)memoryUsage / gigabytes);
+			else if (memoryUsage >= megabytes) ImGui::Text("%s%.2f MB", prompt, (double)memoryUsage / megabytes);
+			else if (memoryUsage >= kilobytes) ImGui::Text("%s%.2f KB", prompt, (double)memoryUsage / kilobytes);
+			else ImGui::Text("%s%d B", prompt, (int)memoryUsage);
+		}
+	}
+
+	ImGui::End();
+}
+
+//this was me
+void GameTechRenderer::ImGui() {
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	DrawImGuiMainAssist();
+	DrawImGuiStatistics();
+
 	ImGui::EndFrame();
+
+	//Process the frame and produce render commands
 	ImGui::Render();
+
+	//Submit ImGui draw commands to OpenGL
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 

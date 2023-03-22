@@ -7,6 +7,8 @@
 #include "PhysicsSystem.h"
 
 #include "playerTracking.h"
+
+
 #include "StateGameObject.h"
 #include <array>
 #include "ObjectPool.h"
@@ -76,8 +78,20 @@ namespace NCL {
 				return false;
 			}
 
+			float GetGameTime() {
+				return gameTime;
+			}
+
+			void AddToGameTime(float timeIncrement) {
+				gameTime += timeIncrement;
+			}
+
 			void setEnemyGoat(GameObject* assignCharcter);
 
+
+			void TogglePause() {
+				pause = !pause;
+			}
 
 			void DispatchComputeShaderForEachTriangle(GameObject* object, Vector3 spherePosition, float sphereRadius, int teamID, bool clearMask = false);
 
@@ -94,7 +108,6 @@ namespace NCL {
 			MeshGeometry* bunnyMesh = nullptr;
 
 			TextureBase* basicTex = nullptr;
-			TextureBase* wallTex = nullptr;
 			ShaderBase* basicShader = nullptr;
 
 
@@ -240,6 +253,7 @@ namespace NCL {
 
 			
 			
+			
 			//this was me
 			OGLComputeShader* computeShader;
 			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center, int teamID);
@@ -352,6 +366,7 @@ namespace NCL {
 			MeshMaterial* playerMaterial;
 			int currentFrame;
 			float frameTime;
+			float gameTime = 0.0f;
 			void UpdateAnimations(float dt);
 			std::vector<RenderObject*> animatedObjects;
 

@@ -108,6 +108,7 @@ namespace NCL {
 			MeshGeometry* bunnyMesh = nullptr;
 
 			TextureBase* basicTex = nullptr;
+			TextureBase* wallTex = nullptr;
 			ShaderBase* basicShader = nullptr;
 
 
@@ -321,7 +322,7 @@ namespace NCL {
 			//int currentTeamInt = 1;
 			
 			int highestTriCount = 0;
-
+			
 			TextureBase* ironDiffuse = nullptr;
 			TextureBase* ironBump = nullptr;
 			TextureBase* ironMetallic = nullptr;

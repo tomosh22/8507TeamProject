@@ -65,6 +65,18 @@ void Plane::setMidpoint(Vector3& vertex1, Vector3& vertex2, Vector3& vertex3) {
 	midPoint = mid;
 }
 
+Vector3 Plane::closestPointOnLine(const Vector3& pointNotLine, const Vector3& linePoint1, const Vector3& linePoint2) {
+	Vector3 closestPointOnLine = {};
+	Vector3 lineDirectionVector = linePoint2 - linePoint1;
+
+
+	double t = (Vector3::Dot((pointNotLine - linePoint1), (lineDirectionVector))) / lineDirectionVector.LengthSquared();
+
+	closestPointOnLine = linePoint1 + (lineDirectionVector * t);
+
+	return closestPointOnLine;
+}
+
 Vector3 Plane::GetIntersection(const Vector3& pos, const Vector3& vec) {
 	double dotValue = Vector3::DoubleDot(vec, normal); 
 
@@ -85,12 +97,7 @@ Plane Plane::PlaneFromVector(const Vector3& vec1, const Vector3& vec2) {
 	return plane;
 }
 
-Plane Plane::PlaneFromTri(const Vector3 &v0, const Vector3 &v1, const Vector3 &v2) {
-	Vector3 v1v0 = v1-v0;
-	Vector3 v2v0 = v2-v0;
 
-	return closestPointOnLine;
-}
 
 
 Vector3 Plane::closestPointOnTriangleEdge(const Vector3& pNotLine, const Vector3& Point1, const Vector3& Point2, const Vector3& Point3) {

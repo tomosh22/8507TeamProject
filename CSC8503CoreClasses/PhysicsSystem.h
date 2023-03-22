@@ -14,7 +14,7 @@ namespace NCL {
 
 			};
 
-			vector <collisionData> getCurrentCollisions() {
+			std::vector <collisionData> getCurrentCollisions() {
 				return currentCollisions;
 			}
 
@@ -59,7 +59,7 @@ namespace NCL {
 
 			bool	applyGravity;
 			Vector3 gravity;
-			vector <collisionData> currentCollisions;
+			std::vector <collisionData> currentCollisions;
 			float	dTOffset;
 			float	globalDamping;
 

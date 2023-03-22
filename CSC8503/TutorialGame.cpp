@@ -866,79 +866,7 @@ void TutorialGame::UpdateKeys() {
 	}
 }
 
-void TutorialGame::ControlPlayer(float dt) {
-	if (pause) { return; }
-	if (!playerObject) { return; }
 
-	Transform& transform = playerObject->GetTransform();
-
-	Vector3 fwdAxis = transform.GetDirVector().Normalised();
-	Vector3 rightAxis = Vector3::Cross(Vector3(0.0f, -1.0f, 0.0f), fwdAxis);
-
-	//orientation
-	float dirVal = Window::GetMouse()->GetRelativePosition().x;
-	while (180.0f <= dirVal) { dirVal -= 180.0f; }
-	Quaternion orientation = transform.GetOrientation();
-	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
-	transform.SetOrientation(orientation.Normalised());
-	//speed
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && playerObject->CanJump(floor)) {
-		playerObject->SpeedUp();
-	}
-	else 
-	{
-		playerObject->SpeedDown();
-	}
-	float speed = playerObject->GetSpeed();
-	Vector3 position = transform.GetPosition();
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
-		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
-		playerObject->TransferAnimation("MoveF");
-	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
-		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - fwdAxis * dt * speed);
-		playerObject->TransferAnimation("MoveB");
-	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
-		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() - rightAxis * dt * speed);
-		playerObject->TransferAnimation("MoveL");
-	}
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
-		playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + rightAxis * dt * speed);
-		playerObject->TransferAnimation("MoveR");
-	}
-	if(!Window::GetKeyboard()->KeyDown(KeyboardKeys::W)&& !Window::GetKeyboard()->KeyDown(KeyboardKeys::S)
-		&&!Window::GetKeyboard()->KeyDown(KeyboardKeys::A)&& !Window::GetKeyboard()->KeyDown(KeyboardKeys::D))
-	{
-		playerObject->TransferAnimation("Idle");
-	}
-
-
-
-	//jump
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump(floor)) {
-		playerObject->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, PLAYER_JUMP_FORCE, 0));
-	}
-	//switch weapon
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::TAB)) {
-		playerObject->SwitchWeapon();
-		playerObject->WriteActionMessage(PLAYER_ACTION_SWITCH_WEAPON);
-	}
-	//Aiming
-	if (Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT)){
-		renderer->drawCrosshair = true;
-		playerObject->UpdateAimPosition(GameWorld::GetInstance()->GetMainCamera());
-		//shoot
-		if (Window::GetMouse()->ButtonHeld(MouseButtons::LEFT) && playerObject->CanShoot()) {
-			playerObject->StartShooting(playerObject->GetAimedTarget());
-			playerObject->WriteActionMessage(PLAYER_ACTION_SHOOT);
-		}
-	}
-	else 
-	{
-		renderer->drawCrosshair = false;
-	}
-}
 
 void TutorialGame::ControlPlayer(float dt) {
 	if (pause) { return; }
@@ -1181,27 +1109,7 @@ void TutorialGame::InitOnlineGame(int teamID) {
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	playerObject->SetTeamId(teamID);
 
-	InitGameObjects();
-	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
-	InitPaintableTextureOnObject(floor);
-
-
-#ifdef TRI_DEBUG
-	AddDebugTriangleInfoToObject(floor);
-#endif
-}
-
-void TutorialGame::InitOnlineGame(int teamID) {
-	renderer->drawCrosshair = false;
-	GameWorld::GetInstance()->ClearAndErase();
-	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
-	physics->Clear();
-	//add player
-	auto q = Quaternion();
-	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
-	playerObject->SetTeamId(teamID);
-
-	InitGameObjects();
+	//InitGameObjects();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
 

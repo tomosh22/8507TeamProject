@@ -50,7 +50,7 @@ namespace NCL {
 			bool CanShoot();
 			void StartShooting(Vector3 target);
 			void Shooting(Projectile* bullet, Vector3 target);
-			bool CanJump(GameObject* floor);
+			bool CanJump();
 			void SpeedUp();
 			void SpeedDown();
 			void UpdateSpeed(float dt);
@@ -230,6 +230,8 @@ namespace NCL {
 			float speedUpTimer;
 			float weaponUpTimer;
 			float respawnTimer;
+
+			GameObject* belowObject = nullptr;
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;

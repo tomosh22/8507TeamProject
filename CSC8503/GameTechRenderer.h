@@ -80,7 +80,7 @@ namespace NCL {
 			bool useEmissionMap = true;
 			bool useAOMap = true;
 			bool useOpacityMap = true;
-			bool useGlossMap = true;
+			bool useGlossMap = false;
 
 			int emissionStrength = 100;
 

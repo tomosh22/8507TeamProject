@@ -164,7 +164,7 @@ TutorialGame::TutorialGame()	{
 
 
 	timer = 60.0f;
-	endGameTimer = 10.0f;
+	endGameTimer = 5.0f;
 	return;
 
 	
@@ -193,6 +193,8 @@ TutorialGame::~TutorialGame() {
 	//todo delete texture array
 	//todo delete compute shader
 }
+
+
 
 void TutorialGame::InitQuadTexture() {
 	int width = (renderer->GetWindowWidth());
@@ -589,6 +591,7 @@ void TutorialGame::UpdateGame(float dt) {
 	switch (gameMode) {
 	case GAME_MODE_DEFAULT:
 	{
+		
 		SelectGameWorld();
 		renderer->Update(dt);
 		renderer->Render();
@@ -667,12 +670,20 @@ void TutorialGame::UpdateGame(float dt) {
 		UpdateAnimations(dt);
 		SelectMode();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED,true);
+		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED,false);
 		glPopDebugGroup();
 		for (GameObject*& wall : walls) {
-			DispatchComputeShaderForEachTriangle(wall, testSphereCenter, testSphereRadius, TEAM_RED, true);
+			DispatchComputeShaderForEachTriangle(wall, testSphereCenter, testSphereRadius, TEAM_RED, false);
 		}
 		break;
+	}
+	case GAME_MODE_MAIN_MENU:
+	{
+		MainMenu();
+		renderer->Update(dt);
+		renderer->Render();
+		Debug::UpdateRenderables(dt);
+		return;
 	}
 	default:
 		std::cout << "Game mode error" << std::endl;
@@ -691,9 +702,8 @@ void TutorialGame::UpdateGame(float dt) {
 
 	if (timer <= 0)
 	{
-		//Game End 
 		EndGame();
-		std::cout << "Game end" << std::endl; 
+		gameEnded = true;
 	}
 	
 	int timerToInt = timer;
@@ -732,6 +742,21 @@ void TutorialGame::UpdateGame(float dt) {
 	//	UpdateRayMarchSpheres();
 	//	SendRayMarchData();
 	//}
+}
+
+void NCL::CSC8503::TutorialGame::MainMenu()
+{
+	Debug::Print("Play", Vector2(5, 80));
+	Debug::Print("Quit", Vector2(5, 90));
+	Debug::Print("NotSplatoon", Vector2(40, 10));
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM1)) {
+		//play
+		gameMode = GAME_MODE_DEFAULT; //swap this for appropriate mode
+	}
+	else if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::NUM2)) {
+		//quit
+		std::exit(0);
+	}
 }
 
 void TutorialGame::SelectGameWorld() {
@@ -919,7 +944,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
 	transform.SetOrientation(orientation.Normalised());
 	//speed
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && playerObject->CanJump(floor)) {
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SHIFT) && playerObject->CanJump()) {
 		playerObject->SpeedUp();
 	}
 	else if (!playerObject->GetSpeedUp())
@@ -958,7 +983,7 @@ void TutorialGame::ControlPlayer(float dt) {
 		playerObject->TransferAnimation("Idle");
 	}
 	//jump
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump(floor)) {
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SPACE) && playerObject->CanJump()) {
 		playerObject->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, PLAYER_JUMP_FORCE, 0));
 	}
 	//switch weapon
@@ -1027,7 +1052,8 @@ void TutorialGame::InitCamera() {
 void TutorialGame::InitWorld() {
 	GameWorld::GetInstance()->ClearAndErase();
 	physics->Clear();
-	gameMode = GAME_MODE_DEFAULT;
+	//gameMode = GAME_MODE_DEFAULT;
+	gameMode = GAME_MODE_MAIN_MENU;
 }
 
 void TutorialGame::InitGraphicTest() {
@@ -1889,7 +1915,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	float inverseMass = 0.3f;
 
 	playerTracking* character = new playerTracking();
-	AABBVolume* volume = new AABBVolume(Vector3{ 1,1,1 });
+	AABBVolume* volume = new AABBVolume(Vector3{ 1.0,1.0,1.0 });
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -2474,9 +2500,10 @@ void TutorialGame::UpdateAnimations(float dt) {
 
 void NCL::CSC8503::TutorialGame::EndGame()
 {
-	//print which team wins
+	//print which team wins here
+
 	if (endGameTimer <= 0)
 	{
-		//back to menu 
+		gameMode = GAME_MODE_MAIN_MENU;
 	}
 }

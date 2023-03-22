@@ -32,6 +32,7 @@ namespace NCL {
 			GAME_MODE_SINGLE_GAME,
 			GAME_MODE_ONLINE_GAME,
 			GAME_MODE_SELECT_TEAM,
+			GAME_MODE_MAIN_MENU,
 		};
 
 		const int TWO_PLAYERS = 2;
@@ -52,6 +53,7 @@ namespace NCL {
 			~TutorialGame();
 
 			virtual void UpdateGame(float dt);
+			void MainMenu();
 			void SelectGameWorld();
 			int SelectTeam();
 			//void InitWorld(); //moved from protected
@@ -260,7 +262,6 @@ namespace NCL {
 			OGLComputeShader* computeShader;
 			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center, int teamID);
 			OGLShader* quadShader;
-			
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object, bool rotated = false);

@@ -1,5 +1,6 @@
 #pragma once
 #include "Item.h"
+#include "RenderObject.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -16,11 +17,11 @@ namespace NCL {
 				return _instance;
 			}
 
-			void SpawnItem();
-			void SpawnHeal();
-			void SpawnSpeedUp();
-			void SpawnShield(); 
-			void SpawnWeaponUp(); 
+			void SpawnItem(Vector3 pos);
+			Item* SpawnHeal(Vector3 pos);
+			Item* SpawnSpeedUp(Vector3 pos);
+			Item* SpawnShield(Vector3 pos); 
+			Item* SpawnWeaponUp(Vector3 pos, PBRTextures* pbr);
 
 		protected:
 			static PropSystem* _instance;

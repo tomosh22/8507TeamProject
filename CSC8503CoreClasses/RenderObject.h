@@ -43,7 +43,7 @@ namespace NCL {
 				return mesh;
 			}
 
-			Transform*		GetTransform() const {
+			Transform*	GetTransform() const {
 				return transform;
 			}
 

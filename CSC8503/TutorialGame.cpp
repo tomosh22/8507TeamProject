@@ -300,7 +300,7 @@ void TutorialGame::DispatchComputeShaderForEachPixel() {
 
 void TutorialGame::InitialiseAssets() {
 	std::vector<MeshGeometry*> meshes;
-	cubeMesh = renderer->LoadMesh("cube.msh", &meshes);
+	cubeMesh = renderer->LoadMesh("newCube.msh", &meshes);
 	sphereMesh = renderer->LoadMesh("sphere.msh", &meshes);
 	charMesh = renderer->LoadMesh("goat.msh", &meshes);
 	enemyMesh = renderer->LoadMesh("Keeper.msh", &meshes);

@@ -40,15 +40,20 @@ set(Header_Files
     "playerTracking.h"
     "ObjectPool.h"
     "Projectile.h"
-	"PropSystem.h"
-	"Item.h"
+    "PropSystem.h"
+    "Item.h"
+    "RespawnPoint.h"
 
     "AreaTex.h"
     "SearchTex.h"
 
 	"GameManager.h"
 	"AudioSystem.h"
-	"AudioSource.h"
+
+    "RayMarchSphere.h"
+    "AudioSource.h"
+
+
 
 )
 source_group("Header Files" FILES ${Header_Files})
@@ -64,7 +69,13 @@ set(Source_Files
 	"Item.cpp"
 	"GameManager.cpp"
     "AudioSystem.cpp"
-    "AudioSource.cpp"
+
+
+    "RespawnPoint.cpp"
+
+    "RayMarchSphere.cpp"
+     "AudioSource.cpp"
+
 )
 
 if(USE_VULKAN)
@@ -267,6 +278,16 @@ target_link_libraries(${PROJECT_NAME} LINK_PUBLIC NCLCoreClasses)
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC CSC8503CoreClasses)
 target_link_libraries(${PROJECT_NAME} LINK_PUBLIC OpenGLRendering)
 
+if (OUTPUT_DIRECTORY STREQUAL "")
+	message(FATAL_ERROR "OUTPUT_DIRECTORY is empty")
+endif()
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy
+		"${CMAKE_SOURCE_DIR}/FMOD/core/lib/x64/fmod.dll"
+		"${CMAKE_SOURCE_DIR}/FMOD/studio/lib/x64/fmodstudio.dll"
+		"${OUTPUT_DIRECTORY}"
+)
 
 if(USE_VULKAN)
 include_directories("../VulkanRendering/")

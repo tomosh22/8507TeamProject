@@ -254,8 +254,63 @@ so that objects separate back out.
 
 */
 void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
+	if (a.GetLayerMask() == Trigger || b.GetLayerMask() == Trigger)
+		return;
+
 	PhysicsObject* physA = a.GetPhysicsObject();
 	PhysicsObject* physB = b.GetPhysicsObject();
+
+
+	Vector3 relativeA = p.localA;
+	Vector3 relativeB = p.localB;
+
+	Vector3 angVelocityA =
+		Vector3::Cross(physA->GetAngularVelocity(), relativeA);
+	Vector3 angVelocityB =
+		Vector3::Cross(physB->GetAngularVelocity(), relativeB);
+
+	Vector3 fullVelocityA = physA->GetLinearVelocity() + angVelocityA;
+	Vector3 fullVelocityB = physB->GetLinearVelocity() + angVelocityB;
+
+	Vector3 contactVelocity = fullVelocityB - fullVelocityA;
+	p.normal.Normalise();
+	//try layer id
+	
+	if ((physA->getLayerId() == physB->getLayerId()) && physA->getLayerId() == 2) {
+		return;
+	}
+	// try layer id
+	//std::cout << contactVelocity << std::endl; // To stop gravity jittering 
+	if (applyGravity && (contactVelocity.Length() < 0.3f) && (p.normal == PhysicsObject::gravityDirection || -p.normal == PhysicsObject::gravityDirection || ((Vector3::Dot(p.normal, PhysicsObject::gravityDirection)) <= 0.99999) || ((Vector3::Dot((-p.normal), PhysicsObject::gravityDirection)) <= 0.99999))) {
+		ImpulseResolveStop(a, b, p);
+		//physA->setFloorContactTrue();
+		//physB->setFloorContactTrue();
+	}
+	else
+	{
+		/*typedef std::numeric_limits< float > dbl;
+		std::cout.precision(dbl::max_digits10);
+		std::cout << p.normal << std::endl;*/
+		ImpulseResolveContinuedResponse(a, b, p);
+		/*if (physA->GetFloorContact()) {
+			physA->setFloorContactFalse();
+		}
+		if (physB->GetFloorContact()) {
+			physB->setFloorContactFalse();
+		}*/
+
+	}
+
+}
+
+
+void PhysicsSystem::ImpulseResolveStop(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
+	if (a.GetLayerMask() == Trigger || b.GetLayerMask() == Trigger)
+		return;
+
+	PhysicsObject* physA = a.GetPhysicsObject();
+	PhysicsObject* physB = b.GetPhysicsObject();
+
 
 	Transform& transformA = a.GetTransform();
 	Transform& transformB = b.GetTransform();
@@ -270,6 +325,31 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 	transformA.SetPosition(transformA.GetPosition() - (p.normal * p.penetration * (physA->GetInverseMass() / totalMass)));
 	transformB.SetPosition(transformB.GetPosition() + (p.normal * p.penetration * (physB->GetInverseMass() / totalMass)));
 
+
+}
+
+
+void PhysicsSystem::ImpulseResolveContinuedResponse(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
+	if (a.GetLayerMask() == Trigger || b.GetLayerMask() == Trigger)
+		return;
+	
+	PhysicsObject* physA = a.GetPhysicsObject();
+	PhysicsObject* physB = b.GetPhysicsObject();
+
+	Transform& transformA = a.GetTransform();
+	Transform& transformB = b.GetTransform();
+
+
+	float totalMass = physA->GetInverseMass() + physB->GetInverseMass();
+
+	if (totalMass == 0) {
+		return; //no collision to resolve 
+	}
+	//seperating the objects out using projection
+	transformA.SetPosition(transformA.GetPosition() - (p.normal * p.penetration * (physA->GetInverseMass() / totalMass)));
+
+	transformB.SetPosition(transformB.GetPosition() + (p.normal * p.penetration * (physB->GetInverseMass() / totalMass)));
+	// dead stop dead end
 	Vector3 relativeA = p.localA;
 	Vector3 relativeB = p.localB;
 

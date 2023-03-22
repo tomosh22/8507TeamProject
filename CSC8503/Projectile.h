@@ -4,6 +4,7 @@
 #include "CollisionVolume.h"
 #include"GameObject.h"
 #include"GameWorld.h"
+#include <vector>
 
 
 namespace NCL {
@@ -185,7 +186,7 @@ namespace NCL {
 			int teamID;
 			//PhysicsObject* physicsProjectile;
 			Vector3 bulletDirectionVector;
-			vector<Projectile*>* parentVector;
+			std::vector<Projectile*>* parentVector;
 
 			playerTracking* player;
 			GameWorld* world;

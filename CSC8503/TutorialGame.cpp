@@ -917,7 +917,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
 	transform.SetOrientation(orientation.Normalised());
 	//speed
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && playerObject->CanJump(floor)) {
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SHIFT) && playerObject->CanJump()) {
 		playerObject->SpeedUp();
 	}
 	else if (!playerObject->GetSpeedUp())
@@ -956,7 +956,7 @@ void TutorialGame::ControlPlayer(float dt) {
 		playerObject->TransferAnimation("Idle");
 	}
 	//jump
-	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE) && playerObject->CanJump(floor)) {
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SPACE) && playerObject->CanJump()) {
 		playerObject->GetPhysicsObject()->ApplyLinearImpulse(Vector3(0, PLAYER_JUMP_FORCE, 0));
 	}
 	//switch weapon
@@ -1867,7 +1867,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	float inverseMass = 0.3f;
 
 	playerTracking* character = new playerTracking();
-	AABBVolume* volume = new AABBVolume(Vector3{ 1,1,1 });
+	AABBVolume* volume = new AABBVolume(Vector3{ 1.0,1.0,1.0 });
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 

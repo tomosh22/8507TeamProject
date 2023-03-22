@@ -147,16 +147,28 @@ void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
 	std::cout << "Shooting, teamId: " << teamID << ", position: " << bullet->GetTransform().GetPosition() << ", target : " << target << std::endl;
 }
 
-bool NCL::CSC8503::playerTracking::CanJump(GameObject* floor){
+bool NCL::CSC8503::playerTracking::CanJump(){
 	RayCollision closetCollision;
 	Ray r = Ray(transform.GetPosition(), Vector3(0, -1, 0));
-
-	if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 1.0f) {
+	RayCollision grounded;
+	if (GameWorld::GetInstance()->Raycast(r, grounded, true)) {
+		belowObject = (playerTracking*)grounded.node;
+		std::cout << "obj name: " << belowObject->GetName() << std::endl;
+		float distanceFromPlatform = abs((this->GetTransform().GetPosition().y) - (belowObject->GetTransform().GetPosition().y));
+		if (distanceFromPlatform < 2.0f && belowObject->GetName() != "Bulllet") {
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	/*if (CollisionDetection::RayIntersection(r, *floor, closetCollision) && closetCollision.rayDistance < 1.0f) {
 		return true;
 	}
 	else {
 		return false;
-	}
+	}*/
 
 }
 

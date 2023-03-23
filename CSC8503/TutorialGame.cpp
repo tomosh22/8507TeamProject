@@ -318,6 +318,8 @@ void TutorialGame::InitialiseAssets() {
 	maxMesh = renderer->LoadMesh("Rig_Maximilian.msh", &meshes);
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
 	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
+	carMesh = renderer->LoadMesh("Mclaren 720s.msh", &meshes);
+	tyresMesh = renderer->LoadMesh("tyres.msh", &meshes);
 
 	powerUpMesh = renderer->LoadMesh("powerUpItem.msh", &meshes);
 	LoadPlayerMesh(meshes);
@@ -390,7 +392,7 @@ void TutorialGame::InitialiseAssets() {
 	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_opacity.jpg", &crystalPBR->opacity));
 	threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_glossiness.jpg", &crystalPBR->gloss));
 
-	spaceShipPBR = new PBRTextures();
+	/*spaceShipPBR = new PBRTextures();
 	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_diffuse.jpg", &spaceShipPBR->base));
 	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_normal.jpg", &spaceShipPBR->bump));
 	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_metalness.jpg", &spaceShipPBR->metallic));
@@ -399,7 +401,7 @@ void TutorialGame::InitialiseAssets() {
 	spaceShipPBR->emission = nullptr;
 	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_ao.jpg", &spaceShipPBR->ao));
 	spaceShipPBR->opacity = nullptr;
-	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_glossiness.jpg", &spaceShipPBR->gloss));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/spaceShip1k/white_space_ship_wall_28_66_glossiness.jpg", &spaceShipPBR->gloss));*/
 
 	rockPBR = new PBRTextures();
 	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_diffuse.jpg", &rockPBR->base));
@@ -412,7 +414,7 @@ void TutorialGame::InitialiseAssets() {
 	rockPBR->opacity = nullptr;
 	threads.push_back(std::thread(LoadTextureThread, "PBR/rock1k/dirt_with_large_rocks_38_46_glossiness.jpg", &rockPBR->gloss));
 
-	grassWithWaterPBR = new PBRTextures();
+	/*grassWithWaterPBR = new PBRTextures();
 	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_diffuse.jpg", &grassWithWaterPBR->base));
 	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_normal.jpg", &grassWithWaterPBR->bump));
 	threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_metallic.jpg", &grassWithWaterPBR->metallic));
@@ -443,8 +445,30 @@ void TutorialGame::InitialiseAssets() {
 	speakersPBR->emission = nullptr;
 	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_ao.jpg", &speakersPBR->ao));
 	speakersPBR->opacity = nullptr;
-	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_glossiness.jpg", &speakersPBR->gloss));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_glossiness.jpg", &speakersPBR->gloss));*/
 	
+	carPBR = new PBRTextures();
+	threads.push_back(std::thread(LoadTextureThread, "PBR/car/Exterior_720s.png", &carPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/car/Exterior_720s_N.png", &carPBR->bump));
+	carPBR->metallic = nullptr;
+	carPBR->roughness = nullptr;
+	carPBR->heightMap = nullptr;
+	carPBR->emission = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/car/Exterior_720s_A.png", &carPBR->ao));
+	carPBR->opacity = nullptr;
+	carPBR->gloss = nullptr;
+
+
+	tyresPBR = new PBRTextures();
+	threads.push_back(std::thread(LoadTextureThread, "PBR/tyres/diffuse 2k.jpeg", &tyresPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/tyres/normal 2k.jpeg", &tyresPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/tyres/metalic 2k.jpeg", &tyresPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/tyres/roughness 2k.jpeg", &tyresPBR->roughness));
+	tyresPBR->heightMap = nullptr;
+	tyresPBR->emission = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/tyres/AO 2k.jpeg", &tyresPBR->ao));
+	tyresPBR->opacity = nullptr;
+	tyresPBR->gloss = nullptr;
 	
 
 	for (std::thread& thread : threads) {
@@ -1587,6 +1611,58 @@ GameObject* NCL::CSC8503::TutorialGame::AddLadderToWorld(const Vector3& position
 	return ladder;
 }
 
+GameObject* TutorialGame::AddTyresToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+	GameObject* tyres = new GameObject();
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+	tyres->SetBoundingVolume((CollisionVolume*)volume);
+
+	tyres->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2)
+		.SetOrientation(Quaternion::AxisAngleToQuaterion({1,0,0},270));
+
+	tyres->SetRenderObject(new RenderObject(&tyres->GetTransform(), tyresMesh, nullptr, basicShader));
+	tyres->SetPhysicsObject(new PhysicsObject(&tyres->GetTransform(), tyres->GetBoundingVolume()));
+
+	tyres->GetPhysicsObject()->SetInverseMass(inverseMass);
+	tyres->GetPhysicsObject()->InitCubeInertia();
+
+	InitPaintableTextureOnObject(tyres);
+
+	tyres->GetRenderObject()->isPaintable = true;
+	tyres->isPaintable = true;
+	tyres->GetRenderObject()->pbrTextures = tyresPBR;
+
+	GameWorld::GetInstance()->AddGameObject(tyres);
+
+	return tyres;
+}
+
+GameObject* TutorialGame::AddCarToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+	GameObject* car = new GameObject();
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+	car->SetBoundingVolume((CollisionVolume*)volume);
+
+	car->GetTransform()
+		.SetPosition(position)
+		.SetScale(dimensions * 2);
+
+	car->SetRenderObject(new RenderObject(&car->GetTransform(), carMesh, nullptr, basicShader));
+	car->SetPhysicsObject(new PhysicsObject(&car->GetTransform(), car->GetBoundingVolume()));
+
+	car->GetPhysicsObject()->SetInverseMass(inverseMass);
+	car->GetPhysicsObject()->InitCubeInertia();
+
+	InitPaintableTextureOnObject(car);
+	car->GetRenderObject()->pbrTextures = carPBR;
+
+	GameWorld::GetInstance()->AddGameObject(car);
+
+	return car;
+}
+
 GameObject* TutorialGame::AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* max = new GameObject();
 
@@ -1736,6 +1812,16 @@ void TutorialGame::AddMapToWorld() {
 
 void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 {
+	
+	AddTyresToWorld({ 40,1.5,50 }, { 2,2,2 },0);
+	AddTyresToWorld({ -40,1.5,50 }, { 2,2,2 },0);
+	AddTyresToWorld({ 40,1.5,-50 }, { 2,2,2 },0);
+	AddTyresToWorld({ -40,1.5,-50 }, { 2,2,2 },0);
+
+	AddTyresToWorld({ 10,1.5,-15 }, { 2,2,2 },0);
+	AddTyresToWorld({ -10,1.5,-15 }, { 2,2,2 },0);
+	AddTyresToWorld({ 10,1.5,15 }, { 2,2,2 },0);
+	AddTyresToWorld({ -10,1.5,15 }, { 2,2,2 },0);
 	GameObject* invisWall;
 	//floor and enclosing walls 
 	floor = AddFloorToWorld({0, 0, 0}, {100, 1, 200});

@@ -191,6 +191,8 @@ namespace NCL {
 
 			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddCarToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddTyresToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddBunnyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddWallToWorld2(const Vector3& position, Vector3 dimensions); 
@@ -373,7 +375,12 @@ namespace NCL {
 			PBRTextures* grassWithWaterPBR;
 			PBRTextures* fencePBR;
 			PBRTextures* speakersPBR;
+
+			MeshGeometry* carMesh;
+			PBRTextures* carPBR;
 			
+			MeshGeometry* tyresMesh;
+			PBRTextures* tyresPBR;
 
 			GameObject* testSphere0 = nullptr;
 			GameObject* testSphere1 = nullptr;

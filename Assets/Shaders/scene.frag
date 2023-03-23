@@ -429,5 +429,6 @@ void main(void)
 	if(fragColor[0].r > 1 || fragColor[0].g > 1 || fragColor[0].b > 1){
 		fragColor[1] = clamp(fragColor[0],vec4(0),vec4(100));
 	}
+	
 }
 

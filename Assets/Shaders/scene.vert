@@ -13,7 +13,7 @@ layout(location = 4) in vec4 tangent;
 
 uniform vec4 		objectColour = vec4(1,1,1,1);
 
-uniform vec2 uvScale = vec2(10,10);
+uniform vec2 uvScale = vec2(1,1);
 
 uniform bool hasVertexColours = false;
 
@@ -44,6 +44,8 @@ void main(void)
 	OUT.binormal = cross(wTangent,wNormal) * tangent.w;
 	OUT.texCoord = texCoord * 1;
 	OUT.texCoordPBR = texCoord * uvScale;
+	OUT.texCoordPBR.y = 1 - OUT.texCoordPBR.y;
+	//OUT.texCoordPBR.x = 1 - OUT.texCoord.x;
 	OUT.colour = objectColour;
 
 	if(hasVertexColours) {

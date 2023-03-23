@@ -885,13 +885,11 @@ void TutorialGame::ControlPlayer(float dt) {
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 		if (playerObject->GetOnLadder() && Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 			playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + Vector3{0,1,0} *dt * speed);
-			std::cout << "going up " << std::endl;
 		}
 		else
 		{
 			playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
 			playerObject->TransferAnimation("MoveF");
-			std::cout << "going forward " << std::endl;
 		}
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
@@ -934,6 +932,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	{
 		renderer->drawCrosshair = false;
 	}
+
 	playerObject->PrintPlayerInfo();
 
 	Vector3 pos = playerObject->GetTransform().GetPosition();
@@ -1087,8 +1086,8 @@ void TutorialGame::InitSingleGameMode() {
 	AddTowersToWorld();
 	AddPowerUps();
 	AddRespawnPoints();
-  //InitGameObjects();
-  floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	//InitGameObjects();
+	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
 
 
@@ -1207,6 +1206,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 	floor->GetTransform()
 		.SetScale(scale * 2)
 		.SetPosition(position);
+	floor->SetTeamId(TEAM_DEFAULT);
 
 	floor->isPaintable = true;
 	

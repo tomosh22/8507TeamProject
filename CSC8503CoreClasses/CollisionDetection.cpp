@@ -244,6 +244,7 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 	//OBB vs AABB
 	if (volA->type == VolumeType::OBB && volB->type == VolumeType::AABB || volA->type == VolumeType::AABB && volB->type == VolumeType::OBB)
 	{
+
 		auto obbVolA = (OBBVolume&)*volA;
 		auto obbVolB = (OBBVolume&)*volB;
 		if (obbVolA.GetHalfDimensions().Length() > obbVolB.GetHalfDimensions().Length()) {
@@ -252,7 +253,7 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 		else {
 			collisionInfo.a = b;
 			collisionInfo.b = a;
-			return OBBIntersection(obbVolB, transformB, obbVolA, transformA, collisionInfo);
+			return OBBIntersection(obbVolB,transformB, obbVolA, transformA, collisionInfo);
 		}
 	}
 

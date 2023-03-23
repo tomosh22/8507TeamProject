@@ -84,7 +84,7 @@ namespace NCL {
 			int currentFrame = 0;
 			std::vector<TextureBase*> matTextures;
 
-
+			std::string name = "idk";
 		protected:
 			MeshGeometry*	mesh;
 			TextureBase*	texture;

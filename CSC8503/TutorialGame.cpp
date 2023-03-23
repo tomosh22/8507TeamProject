@@ -320,7 +320,6 @@ void TutorialGame::InitialiseAssets() {
 	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
 
 	powerUpMesh = renderer->LoadMesh("powerUpItem.msh", &meshes);
-
 	LoadPlayerMesh(meshes);
 
 	for (MeshGeometry*& mesh : meshes) {
@@ -360,7 +359,6 @@ void TutorialGame::InitialiseAssets() {
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
 
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc", "scene.tese");
-
 	std::vector<std::thread> threads;
 
 
@@ -377,6 +375,7 @@ void TutorialGame::InitialiseAssets() {
 	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
 
 	powerUpTex = renderer->LoadTexture("Item.png");
+	std::cout << "tutgame" << powerUpTex << '\n';
 
 	crystalPBR = new PBRTextures();
 	TextureBase** test = &(crystalPBR->base);
@@ -498,12 +497,13 @@ void TutorialGame::CameraLockOnPlayer() {
 	//set camera position
 	Vector3 offSet = Vector3(viewOffset.x * cos((yrot + 270.0f) * M_PI / 180), viewOffset.y, viewOffset.z * sin((yrot - 270.0f) * M_PI / 180));
 
-	Vector3 camPos = objPos + offSet + Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), offSet).Normalised() * 2.0f;
+	Vector3 camPos = objPos + offSet + Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), offSet).Normalised() * 4.0f;
 	//targeting in front of the object
 	Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos - offSet * Vector3(10.0f, 0.0f, 10.0f), Vector3(0, 1, 0));
 	Matrix4 modelMat = temp.Inverse();
 	Quaternion q(modelMat);
 	Vector3 angles = q.ToEuler(); //nearly there now!
+
 
 	world->GetMainCamera()->SetPosition(camPos);
 	world->GetMainCamera()->SetYaw(angles.y);
@@ -1500,7 +1500,7 @@ GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dime
 GameObject* TutorialGame::AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* wall = new GameObject();
 
-	AABBVolume* volume = new AABBVolume(dimensions);
+	OBBVolume* volume = new OBBVolume(dimensions);
 	wall->SetBoundingVolume((CollisionVolume*)volume);
 
 	wall->GetTransform()
@@ -1524,7 +1524,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position,
 {
 	GameObject* myWall = new GameObject();
 
-	AABBVolume* volume = new AABBVolume(dimensions);
+	OBBVolume* volume = new OBBVolume(dimensions);
 	myWall->SetBoundingVolume((CollisionVolume*)volume);
 
 	myWall->GetTransform()
@@ -1926,7 +1926,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	float inverseMass = 0.3f;
 
 	playerTracking* character = new playerTracking();
-	AABBVolume* volume = new AABBVolume(Vector3{ 1.0,1.0,1.0 });
+	OBBVolume* volume = new OBBVolume(Vector3{ 1.0,1.0,1.0 });
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 

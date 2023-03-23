@@ -123,15 +123,9 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 //Call this function to init a new Bullet
 void playerTracking::ResetBullet(Projectile* bullet)
 {
-	CapsuleVolume* volume = new CapsuleVolume(weaponInUse.ProjectileSize * 2.0f, weaponInUse.ProjectileSize);
-	bullet->SetBoundingVolume((CollisionVolume*)volume);
-
-	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize*2.0, weaponInUse.ProjectileSize)).SetPosition(transform.GetPosition() + Vector3(0.0f, 2.0f, 0.0f));
-
-	bullet->SetPhysicsObject(new PhysicsObject(&bullet->GetTransform(), bullet->GetBoundingVolume()));
-
-	bullet->GetPhysicsObject()->SetInverseMass(weaponInUse.weight);
-	bullet->GetPhysicsObject()->InitSphereInertia();
+	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize, weaponInUse.ProjectileSize))
+		.SetPosition(transform.GetPosition() + transform.GetDirVector().Normalised()*3.0f + Vector3(0.0f, 2.0f, 0.0f));
+	bullet->GetPhysicsObject()->SetInverseMass(weaponInUse.weight);;
 	bullet->SetTeamID(teamID);
 	bullet->SetPlayer(this);
 	bullet->setExplosionRadius(weaponInUse.radius);

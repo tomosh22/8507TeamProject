@@ -235,19 +235,19 @@ void PhysicsSystem::BasicCollisionDetection(float timeIncrement) {
 				ImpulseResolveCollision(*info.a, *info.b, info.point);
 				info.framesLeft = numCollisionFrames;
 				allCollisions.insert(info);
-//<<<<<<< HEAD
-				//if ((info.a)->GetName()=="Bullet") {  //means it is a bullet type
-				//	AddToCurrentCollision({ (info.a)->collisionInfo(), (info.a)->GetTransform().GetPosition(), (info.b) });
-				//}
-				//if ((info.b)->GetName() == "Bullet") {  //means it is a bullet type
-				//	AddToCurrentCollision({ (info.b)->collisionInfo(), (info.b)->GetTransform().GetPosition(), (info.a) });
-				//}
+				//<<<<<<< HEAD
+								//if ((info.a)->GetName()=="Bullet") {  //means it is a bullet type
+								//	AddToCurrentCollision({ (info.a)->collisionInfo(), (info.a)->GetTransform().GetPosition(), (info.b) });
+								//}
+								//if ((info.b)->GetName() == "Bullet") {  //means it is a bullet type
+								//	AddToCurrentCollision({ (info.b)->collisionInfo(), (info.b)->GetTransform().GetPosition(), (info.a) });
+								//}
 			}
 			else if ((*i)->GetName() == "Bullet") {
 				RayCollision firstCollision;
 				Vector3 bulletVelocity = (*i)->GetPhysicsObject()->GetLinearVelocity();
 				Vector3 currentPosition = (*i)->GetTransform().GetPosition();
-				Vector3 PreviousePosition = (currentPosition) - (bulletVelocity*timeIncrement);
+				Vector3 PreviousePosition = (currentPosition)-(bulletVelocity * timeIncrement);
 				Vector3 directionVector = ((currentPosition)-PreviousePosition).Normalised();
 				Ray tr = Ray(PreviousePosition, directionVector);
 
@@ -270,11 +270,11 @@ void PhysicsSystem::BasicCollisionDetection(float timeIncrement) {
 							(*i)->ResetMrakedAndRefrencePoint();
 							std::cout << "this was hit " << std::endl;
 						}
-				    if ((currentPosition - ((*i)->GetStartRefrence())).Length() > ( ((*i)->GetMarkedPoint()) - ((*i)->GetStartRefrence())).Length()) {
+						if ((currentPosition - ((*i)->GetStartRefrence())).Length() > (((*i)->GetMarkedPoint()) - ((*i)->GetStartRefrence())).Length()) {
 							(*i)->OnCollisionBegin(hitObject);
 							(*i)->ResetMrakedAndRefrencePoint();
 						}
-						
+
 					}
 				}
 			}
@@ -283,7 +283,7 @@ void PhysicsSystem::BasicCollisionDetection(float timeIncrement) {
 				Vector3 bulletVelocity = (*j)->GetPhysicsObject()->GetLinearVelocity();
 				Vector3 currentPosition = (*j)->GetTransform().GetPosition();
 				Vector3 PreviousePosition = (currentPosition)-(bulletVelocity * timeIncrement);
-				Vector3 directionVector = ((currentPosition) - PreviousePosition).Normalised();
+				Vector3 directionVector = ((currentPosition)-PreviousePosition).Normalised();
 				Ray tr = Ray(PreviousePosition, directionVector);
 				RayCollision struck;
 				//Debug::DrawLine(PreviousePosition, currentPosition, Vector4(1, 1, 0, 1), 10.0f);
@@ -309,18 +309,19 @@ void PhysicsSystem::BasicCollisionDetection(float timeIncrement) {
 							std::cout << "this was hit " << hitObject->GetName() << std::endl;
 						}
 					}
-					if ((currentPosition - ((*j)->GetStartRefrence())).Length() > (((*j)->GetMarkedPoint()) - (*j)->GetStartRefrence()).Length() && (*j)->GetMarkedPoint() != Vector3{0,0,0}) {
+					if ((currentPosition - ((*j)->GetStartRefrence())).Length() > (((*j)->GetMarkedPoint()) - (*j)->GetStartRefrence()).Length() && (*j)->GetMarkedPoint() != Vector3{ 0,0,0 }) {
 						(*j)->OnCollisionBegin(hitObject);
 						(*j)->ResetMrakedAndRefrencePoint();
 					}
-					
-//=======
-				if ((info.a)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
-					AddToCurrentCollision({ (info.a)->collisionInfo(),(info.a)->GetTransform().GetPosition() });
-				}
-				if ((info.b)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
-					AddToCurrentCollision({ (info.b)->collisionInfo(),(info.b)->GetTransform().GetPosition() });
-//>>>>>>> 4ec7c63ba4a104ca07b664533fc89867814a7f49
+
+					//=======
+					if ((info.a)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
+						AddToCurrentCollision({ (info.a)->collisionInfo(),(info.a)->GetTransform().GetPosition() });
+					}
+					if ((info.b)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
+						AddToCurrentCollision({ (info.b)->collisionInfo(),(info.b)->GetTransform().GetPosition() });
+						//>>>>>>> 4ec7c63ba4a104ca07b664533fc89867814a7f49
+					}
 				}
 			}
 		}

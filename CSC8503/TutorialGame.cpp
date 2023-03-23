@@ -668,10 +668,10 @@ void TutorialGame::UpdateGame(float dt) {
 		UpdateAnimations(dt);
 		SelectMode();
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
-		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED,true);
+		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED,false);
 		glPopDebugGroup();
 		for (GameObject*& wall : walls) {
-			DispatchComputeShaderForEachTriangle(wall, testSphereCenter, testSphereRadius, TEAM_RED, true);
+			DispatchComputeShaderForEachTriangle(wall, testSphereCenter, testSphereRadius, TEAM_RED, false);
 		}
 		break;
 	}
@@ -931,6 +931,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	if (!playerObject) { return; }
 
 	Transform& transform = playerObject->GetTransform();
+	//std::cout << "player Position = " << transform.GetPosition() << std::endl;
 
 	Vector3 fwdAxis = transform.GetDirVector().Normalised();
 	Vector3 rightAxis = Vector3::Cross(Vector3(0.0f, -1.0f, 0.0f), fwdAxis);
@@ -1530,6 +1531,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position,
 	InitPaintableTextureOnObject(myWall);
 	myWall->isPaintable = true;
 	GameWorld::GetInstance()->AddGameObject(myWall);
+	myWall->SetName("wall");
 
 	return myWall;
 }
@@ -1725,7 +1727,7 @@ void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 	walls.push_back(AddWallToWorld2({ 0, 5, -200 }, { 100, 5, 1 }));
 
 	//invisible walls
-	invisWall = AddWallToWorld2({ 100, 5, 0 }, { 1, 50, 200 });
+	/*invisWall = AddWallToWorld2({ 100, 5, 0 }, { 1, 50, 200 });
 	invisWall->SetRenderObject(nullptr);
 	invisWall->SetName("invisible");
 
@@ -1739,7 +1741,7 @@ void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 
 	invisWall = AddWallToWorld2({ 0, 5, -200 }, { 100, 50, 1 });
 	invisWall->SetRenderObject(nullptr);
-	invisWall->SetName("invisible");
+	invisWall->SetName("invisible");*/
 
 	//dividing walls
 	/*walls.push_back(AddWallToWorld2({ -50, 7, 0 }, { 1, 7, 100 }));

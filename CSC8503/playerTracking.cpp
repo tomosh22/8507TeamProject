@@ -114,7 +114,7 @@ void playerTracking::UpdateCoolDownTime(float dt) {
 void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 {
 	Projectile* newBullet = bulletPool->GetObject2();
-	newBullet->SetName("Bulllet");
+	newBullet->SetName("Bullet");
 	ResetBullet(newBullet);
 	coolDownTimer = weaponInUse.rateOfFire;
 	Shooting(newBullet, target);
@@ -123,10 +123,9 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 //Call this function to init a new Bullet
 void playerTracking::ResetBullet(Projectile* bullet)
 {
-	CapsuleVolume* volume = new CapsuleVolume(weaponInUse.ProjectileSize * 2.0f, weaponInUse.ProjectileSize);
-	bullet->SetBoundingVolume((CollisionVolume*)volume);
+	
 
-	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize*2.0, weaponInUse.ProjectileSize)).SetPosition(transform.GetPosition() + Vector3(0.0f, 2.0f, 0.0f));
+	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize, weaponInUse.ProjectileSize)).SetPosition(transform.GetPosition() + Vector3(0.0f, 2.0f, 0.0f));
 
 	bullet->SetPhysicsObject(new PhysicsObject(&bullet->GetTransform(), bullet->GetBoundingVolume()));
 
@@ -144,7 +143,7 @@ void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
 	Vector3 fireDir = (target - bullet->GetTransform().GetPosition());
 	fireDir.Normalise();
 	bullet->GetPhysicsObject()->AddForce(fireDir * weaponInUse.projectileForce);
-	std::cout << "Shooting, teamId: " << teamID << ", position: " << bullet->GetTransform().GetPosition() << ", target : " << target << std::endl;
+	//std::cout << "Shooting, teamId: " << teamID << ", position: " << bullet->GetTransform().GetPosition() << ", target : " << target << std::endl;
 }
 
 bool NCL::CSC8503::playerTracking::CanJump(){
@@ -155,7 +154,7 @@ bool NCL::CSC8503::playerTracking::CanJump(){
 		belowObject = (playerTracking*)grounded.node;
 		std::cout << "obj name: " << belowObject->GetName() << std::endl;
 		float distanceFromPlatform = abs((this->GetTransform().GetPosition().y) - (belowObject->GetTransform().GetPosition().y));
-		if (distanceFromPlatform < 2.0f && belowObject->GetName() != "Bulllet") {
+		if (distanceFromPlatform < 2.0f && belowObject->GetName() != "Bullet") {
 			return true;
 		}
 		else

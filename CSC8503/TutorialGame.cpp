@@ -319,6 +319,8 @@ void TutorialGame::InitialiseAssets() {
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
 	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
 
+	powerUpMesh = renderer->LoadMesh("powerUpItem.msh", &meshes);
+
 	LoadPlayerMesh(meshes);
 
 	for (MeshGeometry*& mesh : meshes) {
@@ -374,7 +376,7 @@ void TutorialGame::InitialiseAssets() {
 	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
 	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
 
-	
+	powerUpTex = renderer->LoadTexture("Item.png");
 
 	crystalPBR = new PBRTextures();
 	TextureBase** test = &(crystalPBR->base);
@@ -2163,6 +2165,7 @@ void TutorialGame::InitGameExamples() {
 	auto q = Quaternion();
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	lockedObject = playerObject; 
+	PropSystem::GetInstance()->SpawnItem(Vector3(0,0,0));
 	//TestCode of Item
 	/*Item* p;
 	PropSystem::GetInstance()->SpawnItem(Vector3(6, 3, 6));

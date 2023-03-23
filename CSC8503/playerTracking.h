@@ -211,7 +211,6 @@ namespace NCL {
 				return onLadder;
 			}
 
-			void AddScore(int score);
 			int GetScore()
 			{
 				return IndividualplayerScore;
@@ -231,7 +230,6 @@ namespace NCL {
 			int hp;
 			int shield;
 			int playerID;
-			int IndividualplayerScore;
 			Projectile* playerProjectile;
 			Gun weaponInUse;
 			std::vector<Gun> weaponPool;

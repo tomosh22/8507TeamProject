@@ -715,7 +715,13 @@ void TutorialGame::UpdateGame(float dt) {
 	if (timer <= 0)
 	{
 		EndGame();
-		gameEnded = true;
+		if (!gameEnded) {
+			gameEnded = true;
+			pause = true;
+		}
+	}
+	else {
+		timer -= dt;
 	}
 	
 	int timerToInt = timer;
@@ -1186,6 +1192,7 @@ void TutorialGame::InitOnlineGame(int teamID) {
 	//InitGameObjects();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
+	gameEnded = false;
 
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);
@@ -2537,5 +2544,6 @@ void NCL::CSC8503::TutorialGame::EndGame()
 	if (endGameTimer <= 0)
 	{
 		gameMode = GAME_MODE_MAIN_MENU;
+		gameEnded = false;
 	}
 }

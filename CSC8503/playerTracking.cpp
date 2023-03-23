@@ -342,8 +342,3 @@ void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
 	}
 	currentAniamtion = animationMap[animationName];
 }
-
-void NCL::CSC8503::playerTracking::AddScore(int score)
-{
-	IndividualplayerScore += score; 
-}

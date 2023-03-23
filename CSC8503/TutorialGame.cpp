@@ -1860,7 +1860,8 @@ void NCL::CSC8503::TutorialGame::AddPlatformsToWorld()
 void NCL::CSC8503::TutorialGame::AddPowerUps()
 {
 
-	PropSystem::GetInstance()->SpawnWeaponUp({ 0, 16, 0 }, grassWithWaterPBR);
+	//PropSystem::GetInstance()->SpawnWeaponUp({ 0, 16, 0 });
+	PropSystem::GetInstance()->SpawnDamageUp({0, 16, 0});
 
 	PropSystem::GetInstance()->SpawnHeal({ 0, 5, 150 });
 	PropSystem::GetInstance()->SpawnHeal({ 0, 5, -150 });
@@ -1874,6 +1875,9 @@ void NCL::CSC8503::TutorialGame::AddPowerUps()
 
 	PropSystem::GetInstance()->SpawnShield({ 0, 5, 50 });
 	PropSystem::GetInstance()->SpawnShield({ 0, 5, -50 });
+
+	PropSystem::GetInstance()->SpawnWeaponUp({ 70, 27.5, 150 });
+	PropSystem::GetInstance()->SpawnWeaponUp({ -70, 27.5, -150 });
 }
 
 void NCL::CSC8503::TutorialGame::AddRespawnPoints()

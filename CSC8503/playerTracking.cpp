@@ -139,7 +139,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
 	Vector3 fireDir = (target - bullet->GetTransform().GetPosition());
 	fireDir.Normalise();
-	bullet->GetPhysicsObject()->AddForce(fireDir * weaponInUse.projectileForce*2);
+	bullet->GetPhysicsObject()->AddForce(fireDir * weaponInUse.projectileForce);
 	std::cout << "Shooting, teamId: " << teamID << ", position: " << bullet->GetTransform().GetPosition() << ", target : " << target << std::endl;
 }
 
@@ -150,8 +150,8 @@ bool NCL::CSC8503::playerTracking::CanJump(){
 	if (GameWorld::GetInstance()->Raycast(r, grounded, true)) {
 		belowObject = (playerTracking*)grounded.node;
 		std::cout << "obj name: " << belowObject->GetName() << std::endl;
-		float distanceFromPlatform = abs((this->GetTransform().GetPosition().y) - (belowObject->GetTransform().GetPosition().y));
-		if (distanceFromPlatform < 2.0f && belowObject->GetName() != "Bulllet") {
+		float distanceFromPlatform = abs((this->GetTransform().GetPosition().y+2) - (belowObject->GetTransform().GetPosition().y));
+		if (distanceFromPlatform < 2 && belowObject->GetName() != "Bulllet" && belowObject->GetName() != "character") {
 			return true;
 		}
 		else

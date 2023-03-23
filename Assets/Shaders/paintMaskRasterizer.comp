@@ -1,0 +1,95 @@
+#version 430 core
+
+layout(local_size_x = 1024, local_size_y = 1, local_size_z = 1) in;
+
+layout(binding=0, std430) buffer UniformVars {
+	mat4 modelMatrix;
+	vec4 sphere; /* [0:3] center, [4] radius */
+
+	uint teamID;
+};
+
+layout(binding=1, r8ui) uniform uimage2D maskTexture;
+
+layout(binding=2, std430) buffer Positions {
+    float positions[];
+};
+
+layout(binding=3, std430) buffer TexCoords {
+    vec2 texCoords[];
+};
+
+layout(binding=4, std430) buffer Indices {
+    uint indices[];
+};
+
+layout(binding=5, std430) buffer CollidedTriangleIDs {
+    uint inTriangleIndices[];
+};
+
+vec3 position(uint index) {
+	return vec3(positions[3 * index + 0], positions[3 * index + 1], positions[3 * index + 2]);
+}
+
+vec3 worldPosition(uint index) {
+	return (modelMatrix * vec4(position(index), 1)).xyz;
+}
+
+void main() {
+	int groudId = int(gl_WorkGroupID.x);
+	int localId = int(gl_LocalInvocationID.x);
+	int kernelWidth = int(gl_WorkGroupSize.x);
+	
+	uint triangleId = inTriangleIndices[groudId];
+
+	uint index0 = indices[3 * triangleId + 0];
+	uint index1 = indices[3 * triangleId + 1];
+	uint index2 = indices[3 * triangleId + 2];
+
+	vec3 worldPos0 = worldPosition(index0);
+	vec3 worldPos1 = worldPosition(index1);
+	vec3 worldPos2 = worldPosition(index2);
+	
+	vec2 texCoord0 = texCoords[index0];
+	vec2 texCoord1 = texCoords[index1];
+	vec2 texCoord2 = texCoords[index2];
+	
+	ivec2 maskSize = imageSize(maskTexture);
+	ivec2 texelCoord0 = ivec2(maskSize * texCoord0);
+	ivec2 texelCoord1 = ivec2(maskSize * texCoord1);
+	ivec2 texelCoord2 = ivec2(maskSize * texCoord2);
+	
+	ivec2 triangleMin = min(min(texelCoord0, texelCoord1), texelCoord2);
+	ivec2 triangleMax = max(max(texelCoord0, texelCoord1), texelCoord2);
+	ivec2 triangleSize = triangleMax - triangleMin + ivec2(1);
+	int texelCount = triangleSize.x * triangleSize.y;
+	
+	mat2 uvToBary = inverse(mat2(texCoord1 - texCoord0, texCoord2 - texCoord0));
+	vec2 invTexSize = 1.0 / imageSize(maskTexture);
+
+	for (int texelIndex = localId; texelIndex < texelCount; texelIndex += kernelWidth) {
+		int y = texelIndex / triangleSize.x;
+		int x = texelIndex % triangleSize.x;
+		
+		ivec2 texelPos = triangleMin + ivec2(x, y);
+		texelPos = clamp(texelPos, ivec2(0), maskSize - ivec2(1));
+
+		vec2 subsamples[4] = vec2[](vec2(0, 0), vec2(0, 1), vec2(1, 0), vec2(1, 1));
+
+		for (int i = 0; i < 4; i++) {
+			//Check if the texel is inside the triangle
+			vec2 texelBary = uvToBary * ((texelPos + subsamples[i]) * invTexSize - texCoord0);
+			
+			if (texelBary.x < 0 || texelBary.y < 0 || texelBary.x + texelBary.y > 1) continue;
+
+			//Check if the texel is inside the sphere
+			vec3 worlPos = texelBary.x * worldPos1 + texelBary.y * worldPos2 + (1.0 - texelBary.x - texelBary.y) * worldPos0;
+			vec3 toSphere = sphere.xyz - worlPos;
+			
+			if (dot(toSphere, toSphere) > sphere.w * sphere.w) continue;
+				
+			imageStore(maskTexture, texelPos, uvec4(1, 0, 0, 0));
+			break;
+		}
+	}
+}

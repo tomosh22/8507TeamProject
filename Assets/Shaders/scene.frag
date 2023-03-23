@@ -65,36 +65,6 @@ in Vertex
 
 out vec4 fragColor;
 
-bool isAdjacentToInk(){
-	float ut = (IN.texCoord.x * width) - floor(IN.texCoord.x * width);
-	float vt = (IN.texCoord.y * height) - floor(IN.texCoord.y * height);
-	int u = int(floor(IN.texCoord.x * width));
-	int v = int(floor(IN.texCoord.y * height));
-	int dataIndex;
-	if(ut < 0.5f && vt < 0.5f){
-		u = max(u-1,0);
-		v = max(v-1,0);
-		dataIndex = v * width + u;
-	}
-	if(ut > 0.5f && vt < 0.5f){
-		u = min(u+1,width-1);
-		v = max(v-1,0);
-		dataIndex = v * width + u;
-	}
-	if(ut < 0.5f && vt > 0.5f){
-		u = max(u-1,0);
-		v = min(v+1,height-1);
-		dataIndex = v * width + u;
-	}
-	if(ut > 0.5f && vt > 0.5f){
-		u = min(u+1,width-1);
-		v = min(v+1,height-1);
-		dataIndex = v * width + u;
-	}
-	
-	return paintData[dataIndex] == 1;
-}
-
 
 // 2D Random
 float random(in vec2 st) {
@@ -156,15 +126,6 @@ vec3 teamColor(uint v) {
 
 	float c = fract(float(v) * 0.1415);
 	return hsv2rgb(vec3(c, 0.8, 1.0));
-}
-
-vec2 starNoise(in vec2 st) {
-	vec2 uv= 2.0 * st - 1.0;
-    
-    float r = length(uv);
-    float a = atan(uv.y, uv.x);
-    
-    return vec2(step(r + 0.1 * sin(8.0 * a), 0.7)) * vec2(r, r);
 }
 
 void point(inout vec4 finalColor, vec4 diffuse, vec3 bumpNormal, float metal, float rough, float reflectivity) {
@@ -305,25 +266,27 @@ vec2 bloodnoise(float scale) {
 	return offset;
 }
 
+vec3 fetchTeamColor(ivec2 coord, ivec2 size) {
+	coord = clamp(coord, ivec2(0), size);
+
+	return teamColor(imageLoad(maskTex, coord).r);
+}
+
 vec3 sampleTeamColor(vec2 uv) {
-	vec2 realCoords = imageSize(maskTex) * uv;
+	ivec2 maskSize = imageSize(maskTex);
+	vec2 realCoords = maskSize * uv;
 	vec2 iCoords = floor(realCoords);
 	vec2 fCoords = fract(realCoords);
 	
-	uint value00 = imageLoad(maskTex, ivec2(iCoords) + ivec2(0, 0)).r;
-	uint value10 = imageLoad(maskTex, ivec2(iCoords) + ivec2(1, 0)).r;
-	uint value01 = imageLoad(maskTex, ivec2(iCoords) + ivec2(0, 1)).r;
-	uint value11 = imageLoad(maskTex, ivec2(iCoords) + ivec2(1, 1)).r;
-
 	///////////////////////////////////////////////////////////////////////////////////////////////////////
 	//fragColor = vec4(vec3(value00),1);
 	//return;
 	///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	vec3 a = teamColor(value00);
-    vec3 b = teamColor(value10);
-    vec3 c = teamColor(value01);
-    vec3 d = teamColor(value11);
+	vec3 a = fetchTeamColor(ivec2(iCoords) + ivec2(0, 0), maskSize);
+    vec3 b = fetchTeamColor(ivec2(iCoords) + ivec2(1, 0), maskSize);
+    vec3 c = fetchTeamColor(ivec2(iCoords) + ivec2(0, 1), maskSize);
+    vec3 d = fetchTeamColor(ivec2(iCoords) + ivec2(1, 1), maskSize);
 
     vec2 u = fCoords;// * fCoords * (3.0 - 2.0 * fCoords);
 

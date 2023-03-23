@@ -11,6 +11,8 @@
 using namespace NCL;
 using namespace CSC8503;
 
+GameObject* g_DebugSphere = nullptr;
+
 struct TextureThing {
 	char* texData = nullptr;
 	int width = 0;
@@ -46,8 +48,8 @@ namespace NCL::CSC8503 {
 	GraphicsGame::GraphicsGame(GameManager* manager, GameWorld* world, GameTechRenderer* renderer) :
 		GameBase(manager, world, renderer)
 	{
-		testSphereCenter = Vector3(320, 190, 230);
-		testSphereRadius = 10;
+		testSphereCenter = Vector3(0, 0, 0);
+		testSphereRadius = 100;
 
 		//Start the game with the camera enabled
 		Window::GetWindow()->ShowOSPointer(false);
@@ -65,12 +67,10 @@ namespace NCL::CSC8503 {
 		ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
 		ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
 
-
 		std::vector<std::thread> threads;
 
+#if 0
 		crystalPBR = new PBRTextures();
-		TextureBase** test = &(crystalPBR->base);
-		//crystalPBR->base = renderer->LoadTexture("PBR/crystal2k/violet_crystal_43_04_diffuse.jpg");
 		threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_diffuse.jpg", &(crystalPBR->base)));
 		threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_normal.jpg", &crystalPBR->bump));
 		threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_metallic.jpg", &crystalPBR->metallic));
@@ -113,7 +113,7 @@ namespace NCL::CSC8503 {
 		threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_ao.jpg", &grassWithWaterPBR->ao));
 		grassWithWaterPBR->opacity = nullptr;
 		threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_glossiness.jpg", &grassWithWaterPBR->gloss));
-
+#endif
 		fencePBR = new PBRTextures();
 		threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_diffuse.jpg", &fencePBR->base));
 		threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_normal.jpg", &fencePBR->bump));
@@ -215,7 +215,15 @@ namespace NCL::CSC8503 {
 			renderer->SubmitRayMarchedSphere(position, color, radius);
 		}
 
-		renderer->ApplyPaintTo(wall, Vector3(0, 0, 0), 300.0f, 0);
+		testSphere->GetTransform().SetPosition(testSphereCenter);
+		testSphere->GetTransform().SetScale(Vector3(testSphereRadius, testSphereRadius, testSphereRadius));
+
+		//renderer->ApplyPaintTo(wall, testSphereCenter, testSphereRadius, 0);
+		world->OperateOnContents([&](GameObject* object)
+		{
+			if (!object->GetRenderObject() || !object->GetRenderObject()->isPaintable) return;
+			renderer->ApplyPaintTo(object, testSphereCenter, testSphereRadius, 0);
+		});
 	}
 
 	void GraphicsGame::DrawImGuiSettings()
@@ -300,30 +308,35 @@ namespace NCL::CSC8503 {
 			AddRayMarchSphereToWorld({ 0,0,0 }, 10);
 		}
 
+		testSphere = AddSphereToWorld({ 50,50,50 }, 10, true, 0, false);
+		g_DebugSphere = AddSphereToWorld({ 0,0,-50 }, 1, true, 0, false);
+#if 1
+
 		GameObject* testSphere0 = AddSphereToWorld({50,50,50}, 10, true, false);
 		InitPaintableTextureOnObject(testSphere0);
 		testSphere0->GetRenderObject()->pbrTextures = crystalPBR;
-		testSphere0->GetRenderObject()->useHeightMap = true;
+		testSphere0->GetRenderObject()->useHeightMap = false;
 
 		GameObject* testSphere1 = AddSphereToWorld({ 50,50,100 }, 10, true, false);
 		InitPaintableTextureOnObject(testSphere1);
 		testSphere1->GetRenderObject()->pbrTextures = spaceShipPBR;
-		testSphere1->GetRenderObject()->useHeightMap = true;
+		testSphere1->GetRenderObject()->useHeightMap = false;
 
 		GameObject* testSphere2 = AddSphereToWorld({ 50,50,150 }, 10, true, false);
 		InitPaintableTextureOnObject(testSphere2);
 		testSphere2->GetRenderObject()->pbrTextures = rockPBR;
-		testSphere2->GetRenderObject()->useHeightMap = true;
+		testSphere2->GetRenderObject()->useHeightMap = false;
 
 		GameObject* testSphere3 = AddSphereToWorld({ 100,50,50 }, 10, true, false);
 		InitPaintableTextureOnObject(testSphere3);
 		testSphere3->GetRenderObject()->pbrTextures = grassWithWaterPBR;
-		testSphere3->GetRenderObject()->useHeightMap = true;
+		testSphere3->GetRenderObject()->useHeightMap = false;
 
 		GameObject* testSphere4 = AddSphereToWorld({ 100,50,100 }, 10, true, false);
 		InitPaintableTextureOnObject(testSphere4);
 		testSphere4->GetRenderObject()->pbrTextures = fencePBR;
-		testSphere4->GetRenderObject()->useHeightMap = true;
+		testSphere4->GetRenderObject()->useHeightMap = false;
+#endif
 
 		AddFloorToWorld(Vector3(0, -20, 0), { 100,1,100 },false);
 		wall = AddFloorToWorld({ 0,25,-50 }, { 100,1,25 }, true);
@@ -384,14 +397,14 @@ namespace NCL::CSC8503 {
 			.SetScale(scale * 2)
 			.SetPosition(position);
 
-		floor->isPaintable = true;
-
 		srand((int)time(0));
 
 		floor->SetRenderObject(new RenderObject(&floor->GetTransform(), floorMesh, nullptr, basicShader));
+		floor->GetRenderObject()->pbrTextures = fencePBR;
 
 		InitPaintableTextureOnObject(floor, rotated);
 		floor->GetRenderObject()->useHeightMap = true;
+		floor->GetRenderObject()->isPaintable = true;
 
 		floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 

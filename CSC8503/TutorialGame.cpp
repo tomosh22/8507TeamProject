@@ -778,8 +778,6 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 		.SetScale(scale * 2)
 		.SetPosition(position);
 
-	floor->isPaintable = true;
-	
 	srand((int)time(0));
 
 #ifdef OLD_PAINT
@@ -806,6 +804,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 	
 	InitPaintableTextureOnObject(floor,rotated);
 	floor->GetRenderObject()->useHeightMap = true;
+	floor->GetRenderObject()->isPaintable = true;
 
 	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 

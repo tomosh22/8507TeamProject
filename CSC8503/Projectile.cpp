@@ -85,12 +85,7 @@ void Projectile::setGunType(Gun wepType) {
 
 void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 {
-	if (otherObject->isPaintable)
-	{
-		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(),explosionRadius, teamID);
-		
-	}
-	else if (otherObject->id() == "character")
+	if (otherObject->id() == "character")
 	{
 		playerTracking* enemy = static_cast<playerTracking*>(otherObject);   // safe conversion
 		enemy->TakeDamage(5); //Up To bullet

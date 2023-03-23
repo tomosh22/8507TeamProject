@@ -7,7 +7,10 @@ layout(binding=0, std430) buffer UniformVars {
 
 	vec4 sphere; /* [0:3] center, [4] radius */
 	uint totalTriangleCount;
+	
 	uint writtenTriangleCount;
+	uint pad0;
+	uint pad1;
 };
 
 layout(binding=1, std430) buffer CollidedTriangleIDs {
@@ -26,6 +29,16 @@ vec3 position(uint index) {
 	return vec3(positions[3 * index + 0], positions[3 * index + 1], positions[3 * index + 2]);
 }
 
+float distanceFromSegment(vec3 l0, vec3 l1, vec3 point) {
+	vec3 line = l1 - l0;
+	
+	float segLength = dot(line, line);
+	if (segLength == 0) return distance(l0, point);
+	
+	float t = clamp(dot(point - l0, line) / segLength	, 0, 1);
+	return distance(l0 + t * line, point);
+}
+
 void main() {
 	uint id = gl_GlobalInvocationID.x;
 	if (id >= totalTriangleCount) return;
@@ -40,7 +53,7 @@ void main() {
 	
 	vec3 edge0 = pos1 - pos0;
 	vec3 edge1 = pos2 - pos0;
-	vec3 normal = cross(edge0, edge1);
+	vec3 normal = normalize(cross(edge0, edge1));
 	
 	mat4 baryToWorld = mat4(
 		vec4(edge0, 0.0),
@@ -51,22 +64,27 @@ void main() {
 	
 	mat4 worldToBary = inverse(baryToWorld);
 	
-	//
+	//Check if the projected point is inside the triangle
+	bool collides = false;
 	vec2 uv = vec4(worldToBary * vec4(sphere.xyz, 1)).xz;
 	
-	const float invSqrtTwo = 1.0 / sqrt(2.0);
-	float projLength = (uv.x + uv.y) * invSqrtTwo;
-	float clampedLength = min(projLength, sqrt(0.5));
-	float correction = (projLength - clampedLength) * invSqrtTwo;
+	if (uv.x < 0 || uv.y < 0 || uv.x + uv.y > 1) {
+		float d1 = distanceFromSegment(pos0, pos1, sphere.xyz);
+		float d2 = distanceFromSegment(pos1, pos2, sphere.xyz);
+		float d3 = distanceFromSegment(pos2, pos0, sphere.xyz);
+		float minD = min(min(d1, d2), d3);
+		
+		collides = minD <= sphere.w;
+	} else {
+		//The point is inside the triangle, so project it into the triangle's plane
+		//and convert it to world space
+		vec3 pointOnTriangle = vec3(baryToWorld * vec4(uv.x, 0.0, uv.y, 1.0)).xyz;
+		vec3 distanceToSphere = sphere.xyz - pointOnTriangle;
+		
+		collides = dot(distanceToSphere, distanceToSphere) <= sphere.w * sphere.w;
+	}
 	
-	uv.x = min(max(0, uv.x - correction), 1);
-	uv.y = min(max(0, uv.y - correction), 1);
-	
-	//
-	vec3 pointOnTriangle = vec3(baryToWorld * vec4(uv.x, 0.0, uv.y, 1.0)).xyz;
-	vec3 distanceToSphere = sphere.xyz - pointOnTriangle;
-	
-	if (dot(distanceToSphere, distanceToSphere) <= sphere.w * sphere.w) {
+	if (collides) {
 		outTriangleIndices[atomicAdd(writtenTriangleCount, 1)] = id;
 	}
 }

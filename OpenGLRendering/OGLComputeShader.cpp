@@ -26,6 +26,19 @@ OGLComputeShader::OGLComputeShader(const std::string& s)	{
 	int			stringLength	= (int)fileContents.length();
 	glShaderSource(shaderID, 1, &stringData, &stringLength);
 	glCompileShader(shaderID);
+
+	glGetShaderiv(shaderID, GL_COMPILE_STATUS, &programValid);
+	if (programValid != GL_TRUE) {
+		std::cout << "Compute shader has failed!" << std::endl;
+		threadsInGroup[0] = 0;
+		threadsInGroup[1] = 0;
+		threadsInGroup[2] = 0;
+
+		OGLShader::PrintCompileLog(shaderID);
+		__debugbreak();
+		return;
+	}
+
 	glAttachShader(programID, shaderID);
 
 	glLinkProgram(programID);
@@ -38,7 +51,7 @@ OGLComputeShader::OGLComputeShader(const std::string& s)	{
 		threadsInGroup[1] = 0;
 		threadsInGroup[2] = 0;
 
-		OGLShader::PrintCompileLog(shaderID);
+		OGLShader::PrintLinkLog(programID);
 		__debugbreak();
 	}
 	else {

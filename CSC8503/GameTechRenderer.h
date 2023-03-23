@@ -40,12 +40,13 @@ namespace NCL::CSC8503 {
 
 		//Paint stuff
 		OGLComputeShader* paintCollisionShader;
-		OGLComputeShader* maskRasterShader;
+		OGLComputeShader* maskRasterizerShader;
 		OGLShader* drawPaintCollisionsShader;
 		GLuint paintCollisionDrawVAO;
 
 		GLuint paintCollideUniforms;
 		GLuint paintCollideTriangleIds;
+		GLuint maskRasterUniforms;
 
 		std::vector<PaintSpot> paintedSpots;
 

@@ -564,6 +564,8 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(glGetUniformLocation(shader->GetProgramID(), "toneMap"), toneMap);
 		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "exposure"), exposure);
 		glUniform1i(glGetUniformLocation(shader->GetProgramID(), "emissionStrength"), emissionStrength);
+		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "normalPow"), normalPow);
+		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "worldPosMul"), worldPosMul);
 
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
@@ -1077,6 +1079,12 @@ void GameTechRenderer::ImGui() {
 		ImGui::SliderFloat("Filter radius", &upsampleFilterRadius, 0, 0.01f, "%.10f");
 		ImGui::TreePop();
 	}
+	if (ImGui::TreeNode("Triplanar Mapping")) {
+		ImGui::SliderFloat("Normal Power", &normalPow, 0,10);
+		ImGui::SliderFloat("World Pos Multiplier", &worldPosMul, 0, 10, "%.10f");
+		ImGui::TreePop();
+	}
+
 	
 
 	ImGui::SliderFloat3("Light Position", lightPosition.array, -200, 200);

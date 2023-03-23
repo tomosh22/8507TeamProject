@@ -47,7 +47,8 @@ uniform float noiseNormalNoiseMult;
 
 uniform int emissionStrength;
 
-
+uniform float normalPow;
+uniform float worldPosMul;
 
 
 layout(std430, binding = 4) buffer PaintSSBO{
@@ -337,12 +338,12 @@ vec3 sampleTeamColor(vec2 uv) {
 }
 
 vec3 triplanarSample(sampler2D sampler){
-	vec3 xy = texture(sampler, IN.worldPos.xy * .1).rgb;//todo uniform
-	vec3 xz = texture(sampler, IN.worldPos.xz * .1).rgb;
-	vec3 yz = texture(sampler, IN.worldPos.yz * .1).rgb;
+	vec3 xy = texture(sampler, IN.worldPos.xy * worldPosMul).rgb;//todo uniform
+	vec3 xz = texture(sampler, IN.worldPos.xz * worldPosMul).rgb;
+	vec3 yz = texture(sampler, IN.worldPos.yz * worldPosMul).rgb;
 
 	vec3 myNormal = abs(IN.normal);
-	myNormal = pow(myNormal, vec3(1));//todo uniform
+	myNormal = pow(myNormal, vec3(normalPow));//todo uniform
 	myNormal /= myNormal.x + myNormal.y + myNormal.z;
 	vec3 result = xz*myNormal.y + xy*myNormal.z + yz*myNormal.x;
 	return result;

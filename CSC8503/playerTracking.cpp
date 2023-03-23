@@ -29,8 +29,8 @@ playerTracking::playerTracking()
 		bulletsUsed = {};
 		bulletsUsedAndMoved = {};
 		//weapon
-		weaponInUse = pistol;
-		weaponPool.push_back(pistol);
+		weaponInUse = machineGun;
+		weaponPool.push_back(machineGun);
 		weaponPool.push_back(rocket);
 
 		animationMap["Idle"] = new  NCL::MeshAnimation("Idle.anm");
@@ -47,6 +47,8 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 	UpdateSpeed(dt);
 	UpdateCoolDownTime(dt);
 	Respawning(dt);
+	Weapon(dt);
+	DamageUp(dt);
 	//test damage
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::L))
 	{
@@ -167,6 +169,18 @@ bool NCL::CSC8503::playerTracking::CanJump(){
 }
 
 
+void NCL::CSC8503::playerTracking::DamageUp(float dt)
+{
+	if (damageUp)
+	{
+		damageUpTimer = damageUpTimer - 10 * dt;
+		if (damageUpTimer <= 0)
+		{
+			damageUp = false;
+		}
+	}
+}
+
 void NCL::CSC8503::playerTracking::Weapon(float dt)
 {
 	if (weaponUp)
@@ -175,7 +189,7 @@ void NCL::CSC8503::playerTracking::Weapon(float dt)
 		if (weaponUpTimer <= 0)
 		{
 			weaponUp = false;
-			setWeponType(pistol);
+			setWeponType(machineGun);
 		}
 	}
 }
@@ -214,7 +228,7 @@ void NCL::CSC8503::playerTracking::PlayerDie()
 	weaponUp = false;
 
 	GetTransform().SetPosition(Vector3(2000, 2000, 2000));
-	setWeponType(pistol);
+	setWeponType(machineGun);
 }
 
 void NCL::CSC8503::playerTracking::PlayerRespawn()
@@ -245,12 +259,6 @@ void playerTracking::ReTurnBullet(Projectile* bullet)
 	bullet->GetPhysicsObject()->ClearForces();
 	bulletPool->ReturnObject(bullet);
 }
-
-void playerTracking::WeaponUp(Gun newGun)
-{
-	weaponInUse = newGun;
-}
-
 
 
 void playerTracking::HealthUp(Gun newGun)
@@ -296,10 +304,13 @@ void playerTracking::PrintPlayerInfo() {
 
 		string text;
 		if (weaponInUse.type == GUN_TYPE_PISTOL) {
-			text = "WEAPON: PISTOL";
+			text = "WEAPON: MACHINE";
 		}
 		else if (weaponInUse.type == GUN_TYPE_ROCKET) {
 			text = "WEAPON: ROCKET";
+		}
+		else if (weaponInUse.type == GUN_TYPE_SNIPER) {
+			text = "WEAPON: SNIPER";
 		}
 		Debug::Print(text, Vector2(70, 95), Debug::WHITE);
 	}

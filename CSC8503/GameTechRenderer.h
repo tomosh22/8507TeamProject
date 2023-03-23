@@ -84,6 +84,9 @@ namespace NCL {
 
 			int emissionStrength = 100;
 
+			float normalPow = 1;
+			float worldPosMul = .1;
+
 			float timePassed = 0;
 			float timeScale = 0.419;
 

@@ -49,7 +49,7 @@ NCL::CSC8503::PowerUpItem::PowerUpItem()
 {
 }
 
-NCL::CSC8503::WeaponUpItem::WeaponUpItem(const Vector3 pos,PBRTextures* pbr)
+NCL::CSC8503::WeaponUpItem::WeaponUpItem(const Vector3 pos)
 {
 	SphereVolume* volume = new SphereVolume(1.0f);
 	SetBoundingVolume((CollisionVolume*)volume);
@@ -67,7 +67,6 @@ NCL::CSC8503::WeaponUpItem::WeaponUpItem(const Vector3 pos,PBRTextures* pbr)
 	SetName("WeaponUp");
 	originalPos = pos;
 	SetActive(true);
-	GetRenderObject()->pbrTextures = pbr;
 	GameWorld::GetInstance()->AddGameObject(this);
 }
 
@@ -130,6 +129,27 @@ NCL::CSC8503::HealItem::HealItem(const Vector3 pos)
 	
 	GetPhysicsObject()->InitSphereInertia();
 	SetName("Heal");
+	originalPos = pos;
+	SetActive(true);
+	GameWorld::GetInstance()->AddGameObject(this);
+}
+
+NCL::CSC8503::DamageUpItem::DamageUpItem(const Vector3 pos)
+{
+	SphereVolume* volume = new SphereVolume(1.0f);
+	SetBoundingVolume((CollisionVolume*)volume);
+	GetTransform()
+		.SetScale(Vector3(1.0, 1.0, 1.0))
+		.SetPosition(pos);
+
+	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->sphereMesh, nullptr, NetworkedGame::GetInstance()->basicShader));
+	GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
+	SetPhysicsObject(new PhysicsObject(&GetTransform(), GetBoundingVolume()));
+
+	GetPhysicsObject()->SetInverseMass(0.0f);
+
+	GetPhysicsObject()->InitSphereInertia();
+	SetName("DamageUp");
 	originalPos = pos;
 	SetActive(true);
 	GameWorld::GetInstance()->AddGameObject(this);

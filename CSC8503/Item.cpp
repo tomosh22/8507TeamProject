@@ -25,9 +25,6 @@ void NCL::CSC8503::Item::OnCollisionBegin(GameObject* otherObject)
 	}
 }
 
-
-
-
 NCL::CSC8503::PowerUpItem::PowerUpItem(const Vector3 pos)
 {
 	SphereVolume* volume = new SphereVolume(0.5f);
@@ -36,7 +33,7 @@ NCL::CSC8503::PowerUpItem::PowerUpItem(const Vector3 pos)
 		.SetScale(Vector3(0.5, 0.5, 0.5))
 		.SetPosition(pos);
 
-	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->sphereMesh, nullptr, NetworkedGame::GetInstance()->basicShader));
+	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->powerUpMesh, NetworkedGame::GetInstance()->powerUpTex, NetworkedGame::GetInstance()->basicShader));
 	SetPhysicsObject(new PhysicsObject(&GetTransform(), GetBoundingVolume()));
 
 	GetPhysicsObject()->SetInverseMass(0.0f);
@@ -60,7 +57,7 @@ NCL::CSC8503::WeaponUpItem::WeaponUpItem(const Vector3 pos,PBRTextures* pbr)
 		.SetScale(Vector3(1.0, 1.0, 1.0))
 		.SetPosition(pos);
 
-	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->sphereMesh, nullptr, NetworkedGame::GetInstance()->basicShader));
+	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->powerUpMesh, NetworkedGame::GetInstance()->powerUpTex, NetworkedGame::GetInstance()->basicShader));
 	GetRenderObject()->SetColour(Vector4(1, 0, 0, 1)); 
 	SetPhysicsObject(new PhysicsObject(&GetTransform(), GetBoundingVolume()));
 
@@ -82,7 +79,7 @@ NCL::CSC8503::SpeedUpItem::SpeedUpItem(const Vector3 pos)
 		.SetScale(Vector3(1.0, 1.0, 1.0))
 		.SetPosition(pos);
 
-	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->sphereMesh, nullptr, NetworkedGame::GetInstance()->basicShader));
+	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->powerUpMesh, NetworkedGame::GetInstance()->powerUpTex, NetworkedGame::GetInstance()->basicShader));
 	GetRenderObject()->SetColour(Vector4(1, 0, 1, 1));
 	SetPhysicsObject(new PhysicsObject(&GetTransform(), GetBoundingVolume()));
 
@@ -103,7 +100,7 @@ NCL::CSC8503::ShieldItem::ShieldItem(const Vector3 pos)
 		.SetScale(Vector3(1.0, 1.0, 1.0))
 		.SetPosition(pos);
 
-	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->sphereMesh, nullptr, NetworkedGame::GetInstance()->basicShader));
+	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->powerUpMesh, NetworkedGame::GetInstance()->powerUpTex, NetworkedGame::GetInstance()->basicShader));
 	GetRenderObject()->SetColour(Vector4(0, 0, 1, 1));
 	SetPhysicsObject(new PhysicsObject(&GetTransform(), GetBoundingVolume()));
 
@@ -124,7 +121,7 @@ NCL::CSC8503::HealItem::HealItem(const Vector3 pos)
 		.SetScale(Vector3(1.0, 1.0, 1.0))
 		.SetPosition(pos);
 
-	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->sphereMesh, nullptr, NetworkedGame::GetInstance()->basicShader));
+	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->powerUpMesh, NetworkedGame::GetInstance()->powerUpTex, NetworkedGame::GetInstance()->basicShader));
 	GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
 	SetPhysicsObject(new PhysicsObject(&GetTransform(), GetBoundingVolume()));
 

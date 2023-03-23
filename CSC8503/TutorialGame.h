@@ -119,6 +119,10 @@ namespace NCL {
 			MeshGeometry* enemyMesh = nullptr;
 			MeshGeometry* bonusMesh = nullptr;
 
+			//mesh and texture for item
+			MeshGeometry* powerUpMesh = nullptr;
+			TextureBase* powerUpTex = nullptr;
+
 			MeshGeometry* playerMesh = nullptr;
 			std::vector<MeshGeometry*> playerMeshes;
 		protected:

@@ -37,6 +37,10 @@ namespace NCL::CSC8503 {
 			sendMessagePool = std::vector<GamePacket*>();
 		}
 
+		void AddScore(int score) { IndividualplayerScore += score; }
+
+		int GetScore() { return IndividualplayerScore; }
+
 		void Online() { online = true; }
 
 		bool IsOnline() { return online; }
@@ -62,6 +66,8 @@ namespace NCL::CSC8503 {
 		std::vector<GamePacket*> sendMessagePool;
 
 		std::vector<NetworkState> stateHistory;
+
+		int IndividualplayerScore;
 
 		int deltaErrors;
 		int fullErrors;

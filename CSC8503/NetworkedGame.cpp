@@ -76,12 +76,18 @@ void NetworkedGame::UpdateGame(float dt) {
 		else if (CONNECTED == netState) {
 			//Waiting for host players to choose
 			//Waiting for players to connect
+			//print player score
+			if (!pause) {
+				PrintPlayerScore();
+			}
 			if (playerNum > GetNetworkPlayerNum() || playerNum == 0) {
 				Debug::Print("Waiting players... player num: " + std::to_string(GetNetworkPlayerNum()), Vector2(25, 25), Debug::GREEN);
 				if (!pause) { pause = true; }
 			}
 			else {
-				if (pause) { pause = false; }
+				if (pause) {
+					pause = false;
+				}
 			}
 		}
 	}
@@ -249,4 +255,27 @@ void NetworkedGame::HandlePlayerAction(int pid, GamePacket* payload) {
 	if (it == serverPlayers.end()) { return; }
 	ActionPacket* packet = (ActionPacket*)payload;
 	it->second->UpdateAction(*packet);
+}
+
+void NetworkedGame::PrintPlayerScore() {
+	if (!localPlayer) { return; }
+	std::string buff = "Score: ";
+	vector<Vector3> colour = { Debug::RED, Debug::BLUE, Debug::GREEN, Debug::YELLOW };
+	int maxIndex = localPlayer->GetTeamId();
+	int maxScore = localPlayer->GetScore();
+	for (int i = 0; i < 4; i++) {
+		auto it = serverPlayers.find(i);
+		if (serverPlayers.end() == it) {
+			continue;
+		}
+		int score = it->second->GetScore();
+		if (score > maxScore) {
+			maxScore = score;
+			maxIndex = i;
+		}
+		Debug::Print("Player [" + std::to_string(i) + "] Score: " + std::to_string(score), Vector2(60.0f, 15.0f + i * 5.0f), colour[i]);
+	}
+	if (gameEnded) {
+		Debug::Print("Game Over, Winner: " + std::to_string(maxIndex) + ", Score: " + std::to_string(maxScore), Vector2(30, 40));
+	}
 }

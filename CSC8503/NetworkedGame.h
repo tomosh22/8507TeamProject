@@ -40,6 +40,8 @@ namespace NCL {
 				}
 				return _instance;
 			}
+
+			void PrintPlayerScore();
 		protected:
 
 			static NetworkedGame* _instance;

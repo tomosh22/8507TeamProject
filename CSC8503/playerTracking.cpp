@@ -116,7 +116,7 @@ void playerTracking::UpdateCoolDownTime(float dt) {
 void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 {
 	Projectile* newBullet = bulletPool->GetObject2();
-	newBullet->SetName("Bulllet");
+	newBullet->SetName("Bullet");
 	ResetBullet(newBullet);
 	coolDownTimer = weaponInUse.rateOfFire;
 	Shooting(newBullet, target);
@@ -140,7 +140,7 @@ void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
 	Vector3 fireDir = (target - bullet->GetTransform().GetPosition());
 	fireDir.Normalise();
 	bullet->GetPhysicsObject()->AddForce(fireDir * weaponInUse.projectileForce);
-	std::cout << "Shooting, teamId: " << teamID << ", position: " << bullet->GetTransform().GetPosition() << ", target : " << target << std::endl;
+	//std::cout << "Shooting, teamId: " << teamID << ", position: " << bullet->GetTransform().GetPosition() << ", target : " << target << std::endl;
 }
 
 bool NCL::CSC8503::playerTracking::CanJump(){

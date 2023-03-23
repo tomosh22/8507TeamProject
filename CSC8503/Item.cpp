@@ -98,9 +98,10 @@ NCL::CSC8503::ShieldItem::ShieldItem(const Vector3 pos)
 	GetTransform()
 		.SetScale(Vector3(1.0, 1.0, 1.0))
 		.SetPosition(pos);
-
+	std::cout << "shield" << NetworkedGame::GetInstance()->powerUpTex << '\n';
 	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->powerUpMesh, NetworkedGame::GetInstance()->powerUpTex, NetworkedGame::GetInstance()->basicShader));
 	GetRenderObject()->SetColour(Vector4(0, 0, 1, 1));
+	GetRenderObject()->name = "item";
 	SetPhysicsObject(new PhysicsObject(&GetTransform(), GetBoundingVolume()));
 
 	GetPhysicsObject()->SetInverseMass(0.0f);

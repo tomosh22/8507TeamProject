@@ -572,6 +572,10 @@ void GameTechRenderer::RenderCamera() {
 
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
+		if (i->name == std::string("item")) {
+			glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "item");
+		}
+
 		if (i->isPaintable) {
 
 			glUniform1f(heightMapStrengthLocation, heightMapStrength);
@@ -610,7 +614,9 @@ void GameTechRenderer::RenderCamera() {
 		}
 		else {
 			if ((OGLTexture*)i->GetDefaultTexture()) {
-				glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID());
+				glUniform1i(glGetUniformLocation(shader->GetProgramID(), "baseTex"), 1);
 			}
 		}
 		if (i->isAnimated) {
@@ -628,8 +634,12 @@ void GameTechRenderer::RenderCamera() {
 			}
 			DrawBoundMesh(x);
 		}
+		if (i->name == std::string("item")) {
+			glPopDebugGroup();
+		}
 	}
 	glEnable(GL_BLEND);
+
 	glPopDebugGroup();
 
 	

@@ -210,6 +210,7 @@ namespace NCL {
 			void AddTowersToWorld();
 			void AddPlatformsToWorld();
 			void AddPowerUps(); 
+		
 			void AddRespawnPoints();
 			void LoadPlayerMesh(std::vector<MeshGeometry*> meshes);
 			MeshGeometry* GetPlayerMesh();
@@ -227,7 +228,7 @@ namespace NCL {
 
 			float		forceMagnitude;
 
-			Vector3 viewOffset = Vector3(10.0f, 3.0f, 10.0f);
+			Vector3 viewOffset = Vector3(10.0f, 5.0f, 10.0f);
 
 			GameObject* selectionObject = nullptr;
 			GameObject* phantomCubeOutput = nullptr;

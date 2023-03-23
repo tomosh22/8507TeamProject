@@ -182,6 +182,27 @@ namespace NCL::CSC8503 {
 		int GetTopT(int centerT, int centerS, int radius);
 		int GetBottomT(int centerT, int centerS, int radius);*/
 
+		void SetMarkedPoint(Vector3 newMarkedPoint) {
+			MarkedPoint = newMarkedPoint;
+		}
+
+		Vector3 GetMarkedPoint() {
+			return MarkedPoint;
+		}
+
+		void SetStartRefrence(Vector3 newStartRefrence) {
+			startRefrence = newStartRefrence;
+		}
+
+		Vector3 GetStartRefrence() {
+			return startRefrence;
+		}
+
+		void ResetMrakedAndRefrencePoint() {
+			MarkedPoint = Vector3{0,0,0};
+			startRefrence = Vector3{ 0,0,0 };
+		}
+
 	protected:
 		Transform			transform;
 
@@ -200,6 +221,8 @@ namespace NCL::CSC8503 {
 		std::string	name;
 
 		Vector3 broadphaseAABB;
+		Vector3 MarkedPoint{0,0,0};
+		Vector3 startRefrence{0,0,0};
 	};
 }
 

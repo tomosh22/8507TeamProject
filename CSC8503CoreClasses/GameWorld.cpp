@@ -94,7 +94,7 @@ bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObje
 		if (!i->GetBoundingVolume()) { //objects might not be collideable etc...
 			continue;
 		}
-		if (i == ignoreThis) {
+		if (i == ignoreThis||i->GetName()=="Bullet") {
 			continue;
 		}
 		RayCollision thisCollision;

@@ -1,5 +1,6 @@
 #pragma once
 #include "GameWorld.h"
+#include "GameObject.h"
 namespace NCL {
 	namespace CSC8503 {
 		class PhysicsSystem {
@@ -42,7 +43,7 @@ namespace NCL {
 			void SetGravity(const Vector3& g);
 
 		protected:
-			void BasicCollisionDetection();
+			void BasicCollisionDetection(float timeIncrement);
 			void BroadPhase();
 			void NarrowPhase();
 
@@ -62,6 +63,7 @@ namespace NCL {
 			std::vector <collisionData> currentCollisions;
 			float	dTOffset;
 			float	globalDamping;
+			GameObject* hitObject;
 
 			std::set<CollisionDetection::CollisionInfo> allCollisions;
 			std::set<CollisionDetection::CollisionInfo> broadphaseCollisions;

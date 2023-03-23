@@ -103,7 +103,7 @@ void PhysicsSystem::Update(float dt) {
 			NarrowPhase();
 		}
 		else {
-			BasicCollisionDetection();
+			BasicCollisionDetection(dt);
 			/*std::cout << BasicCollisionDetection().contactPosition << std::endl;
 			std::cout << BasicCollisionDetection().paintRadius << std::endl;*/
 		}
@@ -217,7 +217,7 @@ to the collision set for later processing. The set will guarantee that
 a particular pair will only be added once, so objects colliding for
 multiple frames won't flood the set with duplicates.
 */
-void PhysicsSystem::BasicCollisionDetection() {
+void PhysicsSystem::BasicCollisionDetection(float timeIncrement) {
 	std::vector<GameObject*>::const_iterator first;
 	std::vector<GameObject*>::const_iterator last;
 	gameWorld.GetObjectIterators(first, last);
@@ -235,16 +235,99 @@ void PhysicsSystem::BasicCollisionDetection() {
 				ImpulseResolveCollision(*info.a, *info.b, info.point);
 				info.framesLeft = numCollisionFrames;
 				allCollisions.insert(info);
+//<<<<<<< HEAD
+				//if ((info.a)->GetName()=="Bullet") {  //means it is a bullet type
+				//	AddToCurrentCollision({ (info.a)->collisionInfo(), (info.a)->GetTransform().GetPosition(), (info.b) });
+				//}
+				//if ((info.b)->GetName() == "Bullet") {  //means it is a bullet type
+				//	AddToCurrentCollision({ (info.b)->collisionInfo(), (info.b)->GetTransform().GetPosition(), (info.a) });
+				//}
+			}
+			else if ((*i)->GetName() == "Bullet") {
+				RayCollision firstCollision;
+				Vector3 bulletVelocity = (*i)->GetPhysicsObject()->GetLinearVelocity();
+				Vector3 currentPosition = (*i)->GetTransform().GetPosition();
+				Vector3 PreviousePosition = (currentPosition) - (bulletVelocity*timeIncrement);
+				Vector3 directionVector = ((currentPosition)-PreviousePosition).Normalised();
+				Ray tr = Ray(PreviousePosition, directionVector);
+
+				RayCollision struck;
+				if (GameWorld::GetInstance()->Raycast(tr, struck, true)) {
+					hitObject = (playerTracking*)struck.node;
+					Vector3 struckPosition = struck.collidedAt;
+					if ((*i)->GetMarkedPoint() == Vector3{ 0,0,0 }) {
+						(*i)->SetMarkedPoint(struckPosition);
+						if ((*i)->GetStartRefrence() == Vector3(0, 0, 0)) {
+							(*i)->SetStartRefrence(PreviousePosition);
+						}
+					}
+					if ((PreviousePosition - struckPosition).Length() < (PreviousePosition - currentPosition).Length()) {
+						if (hitObject->isPaintable) {
+							/*(*i)->GetPhysicsObject()->SetLinearVelocity({ 0, 0, 0 }) ;
+							(*i)->GetPhysicsObject()->ClearForces();
+							(*i)->GetTransform().SetPosition(struckPosition);*/
+							(*i)->OnCollisionBegin(hitObject);
+							(*i)->ResetMrakedAndRefrencePoint();
+							std::cout << "this was hit " << std::endl;
+						}
+				    if ((currentPosition - ((*i)->GetStartRefrence())).Length() > ( ((*i)->GetMarkedPoint()) - ((*i)->GetStartRefrence())).Length()) {
+							(*i)->OnCollisionBegin(hitObject);
+							(*i)->ResetMrakedAndRefrencePoint();
+						}
+						
+					}
+				}
+			}
+			else if ((*j)->GetName() == "Bullet") {
+				RayCollision firstCollision;
+				Vector3 bulletVelocity = (*j)->GetPhysicsObject()->GetLinearVelocity();
+				Vector3 currentPosition = (*j)->GetTransform().GetPosition();
+				Vector3 PreviousePosition = (currentPosition)-(bulletVelocity * timeIncrement);
+				Vector3 directionVector = ((currentPosition) - PreviousePosition).Normalised();
+				Ray tr = Ray(PreviousePosition, directionVector);
+				RayCollision struck;
+				//Debug::DrawLine(PreviousePosition, currentPosition, Vector4(1, 1, 0, 1), 10.0f);
+				if (GameWorld::GetInstance()->Raycast(tr, struck, true)) {
+					hitObject = (GameObject*)struck.node;
+					//std::cout << "this was hit " << hitObject->GetName() << std::endl;
+					Vector3 struckPosition = struck.collidedAt;
+					//std::cout << "ray struck at " << struckPosition << std::endl;
+					if ((*j)->GetMarkedPoint() == Vector3{ 0,0,0 }) {
+						(*j)->SetMarkedPoint(struckPosition);
+						if ((*j)->GetStartRefrence() == Vector3(0, 0, 0)) {
+							(*j)->SetStartRefrence(PreviousePosition);
+						}
+					}
+					if ((PreviousePosition - struckPosition).Length() < (PreviousePosition - currentPosition).Length()) {
+						if (hitObject->isPaintable) {
+							/*(*j)->GetPhysicsObject()->SetLinearVelocity({ 0, 0, 0 });
+							(*j)->GetPhysicsObject()->ClearForces();
+							(*j)->GetPhysicsObject()->AddForce({0.5,0.5,0.5});
+							(*j)->GetTransform().SetPosition(struckPosition);*/
+							(*j)->OnCollisionBegin(hitObject);
+							(*j)->ResetMrakedAndRefrencePoint();
+							std::cout << "this was hit " << hitObject->GetName() << std::endl;
+						}
+					}
+					if ((currentPosition - ((*j)->GetStartRefrence())).Length() > (((*j)->GetMarkedPoint()) - (*j)->GetStartRefrence()).Length() && (*j)->GetMarkedPoint() != Vector3{0,0,0}) {
+						(*j)->OnCollisionBegin(hitObject);
+						(*j)->ResetMrakedAndRefrencePoint();
+					}
+					
+//=======
 				if ((info.a)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
 					AddToCurrentCollision({ (info.a)->collisionInfo(),(info.a)->GetTransform().GetPosition() });
 				}
 				if ((info.b)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
 					AddToCurrentCollision({ (info.b)->collisionInfo(),(info.b)->GetTransform().GetPosition() });
+//>>>>>>> 4ec7c63ba4a104ca07b664533fc89867814a7f49
 				}
 			}
 		}
 	}
 }
+
+
 
 /*
 

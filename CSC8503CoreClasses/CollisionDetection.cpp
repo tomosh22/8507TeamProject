@@ -112,7 +112,7 @@ bool CollisionDetection::RaySphereIntersection(const Ray& r, const Transform& wo
 	//Get the direction between the ray origin and the sphere origin
 	Vector3 dir = (spherePos - r.GetPosition());
 
-	//Then project the sphere ’s origin onto our ray direction vector
+	//Then project the sphere ï¿½s origin onto our ray direction vector
 	float sphereProj = Vector3::Dot(dir, r.GetDirection());
 
 	if (sphereProj < 0.0f) {
@@ -213,7 +213,19 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 	}
 	//Two OBBs
 	if (pairType == VolumeType::OBB) {
-		return OBBIntersection((OBBVolume&)*volA, transformA, (OBBVolume&)*volB, transformB, collisionInfo);
+		Transform transA = a->GetTransform();
+		Transform transB = b->GetTransform();
+
+		if (a->GetName() == "character")
+		{
+			transA.SetPosition(a->GetTransform().GetPosition() + Vector3(0, 2, 0));
+		}
+		if (b->GetName() == "character")
+		{
+			transB.SetPosition(b->GetTransform().GetPosition() + Vector3(0, 2, 0));
+		}
+
+		return OBBIntersection((OBBVolume&)*volA, transA, (OBBVolume&)*volB, transB, collisionInfo);
 	}
 	//Two Capsules
 	if (pairType == VolumeType::Capsule) {
@@ -244,15 +256,27 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 	//OBB vs AABB
 	if (volA->type == VolumeType::OBB && volB->type == VolumeType::AABB || volA->type == VolumeType::AABB && volB->type == VolumeType::OBB)
 	{
+		Transform transA = a->GetTransform();
+		Transform transB = b->GetTransform();
+		
+		if (a->GetName() == "character")
+		{
+			transA.SetPosition(a->GetTransform().GetPosition() + Vector3(0,2, 0));
+		}
+		if (b->GetName() == "character")
+		{
+			transB.SetPosition(b->GetTransform().GetPosition() + Vector3(0, 2, 0));
+		}
+
 		auto obbVolA = (OBBVolume&)*volA;
 		auto obbVolB = (OBBVolume&)*volB;
 		if (obbVolA.GetHalfDimensions().Length() > obbVolB.GetHalfDimensions().Length()) {
-			return OBBIntersection(obbVolA, transformA, obbVolB, transformB, collisionInfo);
+			return OBBIntersection(obbVolA, transA, obbVolB, transB, collisionInfo);
 		}
 		else {
 			collisionInfo.a = b;
 			collisionInfo.b = a;
-			return OBBIntersection(obbVolB, transformB, obbVolA, transformA, collisionInfo);
+			return OBBIntersection(obbVolB, transB, obbVolA, transA, collisionInfo);
 		}
 	}
 
@@ -337,12 +361,12 @@ bool CollisionDetection::AABBIntersection(const AABBVolume& volumeA, const Trans
 		Vector3 minB = boxBPos - boxBSize;
 
 		float distances[6] = {
-			(maxB.x - minA.x) ,// distance of box ’b?to ’left ?of ’a ?
-			(maxA.x - minB.x) ,// distance of box ’b?to ’right ?of ’a ?
-			(maxB.y - minA.y) ,// distance of box ’b?to ’bottom ?of ’a ?
-			(maxA.y - minB.y) ,// distance of box ’b?to ’top ?of ’a ?
-			(maxB.z - minA.z) ,// distance of box ’b?to ’far ?of ’a ?
-			(maxA.z - minB.z) // distance of box ’b?to ’near ?of ’a ?
+			(maxB.x - minA.x) ,// distance of box ï¿½b?to ï¿½left ?of ï¿½a ?
+			(maxA.x - minB.x) ,// distance of box ï¿½b?to ï¿½right ?of ï¿½a ?
+			(maxB.y - minA.y) ,// distance of box ï¿½b?to ï¿½bottom ?of ï¿½a ?
+			(maxA.y - minB.y) ,// distance of box ï¿½b?to ï¿½top ?of ï¿½a ?
+			(maxB.z - minA.z) ,// distance of box ï¿½b?to ï¿½far ?of ï¿½a ?
+			(maxA.z - minB.z) // distance of box ï¿½b?to ï¿½near ?of ï¿½a ?
 		};
 		float penetration = FLT_MAX;
 		Vector3 bestAxis;

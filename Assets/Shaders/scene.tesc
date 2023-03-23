@@ -4,6 +4,7 @@ layout(vertices =3) out; //num vertices in output patch
 in Vertex {
 	vec4 colour;
 	vec2 texCoord;
+	vec2 texCoordPBR;
 	vec4 shadowProj;
 	vec3 normal;
 	vec3 worldPos;
@@ -14,6 +15,7 @@ in Vertex {
 out Vertex {
 	vec4 colour;
 	vec2 texCoord;
+	vec2 texCoordPBR;
 	vec4 shadowProj;
 	vec3 normal;
 	vec3 worldPos;
@@ -29,6 +31,7 @@ void main() {
 	gl_TessLevelOuter [3] = 8;
 
 	OUT[gl_InvocationID].texCoord = IN[gl_InvocationID].texCoord;
+	OUT[gl_InvocationID].texCoordPBR = IN[gl_InvocationID].texCoordPBR;
 	OUT[gl_InvocationID].shadowProj = IN[gl_InvocationID].shadowProj;
 	OUT[gl_InvocationID].normal = IN[gl_InvocationID].normal;
 	OUT[gl_InvocationID].worldPos = IN[gl_InvocationID].worldPos;

@@ -29,8 +29,8 @@ playerTracking::playerTracking()
 		bulletsUsed = {};
 		bulletsUsedAndMoved = {};
 		//weapon
-		weaponInUse = pistol;
-		weaponPool.push_back(pistol);
+		weaponInUse = machineGun;
+		weaponPool.push_back(machineGun);
 		weaponPool.push_back(rocket);
 
 		animationMap["Idle"] = new  NCL::MeshAnimation("Idle.anm");
@@ -47,6 +47,8 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 	UpdateSpeed(dt);
 	UpdateCoolDownTime(dt);
 	Respawning(dt);
+	Weapon(dt);
+	DamageUp(dt);
 	//test damage
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::L))
 	{
@@ -81,7 +83,7 @@ void playerTracking::UpdateSpeed(float dt) {
 	//sprint
 	if (speedUp)
 	{
-		moveSpeed = PLYAER_ITEM_SPEED_UP;
+		moveSpeed = PLAYER_ITEM_SPEED_UP;
 		speedUpTimer = speedUpTimer - 10 * dt;
 		if (speedUpTimer <= 0)
 			speedUp = false;
@@ -123,15 +125,10 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 //Call this function to init a new Bullet
 void playerTracking::ResetBullet(Projectile* bullet)
 {
-	
-
-	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize, weaponInUse.ProjectileSize)).SetPosition(transform.GetPosition() + Vector3(0.0f, 2.0f, 0.0f));
-
-	bullet->SetPhysicsObject(new PhysicsObject(&bullet->GetTransform(), bullet->GetBoundingVolume()));
-
-	bullet->GetPhysicsObject()->SetInverseMass(weaponInUse.weight);
-	bullet->GetPhysicsObject()->InitSphereInertia();
-	bullet->SetTeamID(teamID);
+	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize, weaponInUse.ProjectileSize))
+		.SetPosition(transform.GetPosition() + transform.GetDirVector().Normalised()*3.0f + Vector3(0.0f, 2.0f, 0.0f));
+	bullet->GetPhysicsObject()->SetInverseMass(weaponInUse.weight);;
+	bullet->SetTeamId(teamID);
 	bullet->SetPlayer(this);
 	bullet->setExplosionRadius(weaponInUse.radius);
 	bullet->SetActive(true);
@@ -148,13 +145,13 @@ void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
 
 bool NCL::CSC8503::playerTracking::CanJump(){
 	RayCollision closetCollision;
-	Ray r = Ray(transform.GetPosition(), Vector3(0, -1, 0));
+	Ray r = Ray(transform.GetPosition()+Vector3(0,2,0), Vector3(0, -1, 0));
 	RayCollision grounded;
 	if (GameWorld::GetInstance()->Raycast(r, grounded, true)) {
 		belowObject = (playerTracking*)grounded.node;
 		std::cout << "obj name: " << belowObject->GetName() << std::endl;
-		float distanceFromPlatform = abs((this->GetTransform().GetPosition().y) - (belowObject->GetTransform().GetPosition().y));
-		if (distanceFromPlatform < 2.0f && belowObject->GetName() != "Bullet") {
+		float distanceFromPlatform = abs((this->GetTransform().GetPosition().y+2) - (belowObject->GetTransform().GetPosition().y));
+		if (distanceFromPlatform < 2 && belowObject->GetName() != "Bulllet" && belowObject->GetName() != "character") {
 			return true;
 		}
 		else
@@ -172,6 +169,18 @@ bool NCL::CSC8503::playerTracking::CanJump(){
 }
 
 
+void NCL::CSC8503::playerTracking::DamageUp(float dt)
+{
+	if (damageUp)
+	{
+		damageUpTimer = damageUpTimer - 10 * dt;
+		if (damageUpTimer <= 0)
+		{
+			damageUp = false;
+		}
+	}
+}
+
 void NCL::CSC8503::playerTracking::Weapon(float dt)
 {
 	if (weaponUp)
@@ -180,7 +189,7 @@ void NCL::CSC8503::playerTracking::Weapon(float dt)
 		if (weaponUpTimer <= 0)
 		{
 			weaponUp = false;
-			setWeponType(pistol);
+			setWeponType(machineGun);
 		}
 	}
 }
@@ -219,7 +228,7 @@ void NCL::CSC8503::playerTracking::PlayerDie()
 	weaponUp = false;
 
 	GetTransform().SetPosition(Vector3(2000, 2000, 2000));
-	setWeponType(pistol);
+	setWeponType(machineGun);
 }
 
 void NCL::CSC8503::playerTracking::PlayerRespawn()
@@ -250,12 +259,6 @@ void playerTracking::ReTurnBullet(Projectile* bullet)
 	bullet->GetPhysicsObject()->ClearForces();
 	bulletPool->ReturnObject(bullet);
 }
-
-void playerTracking::WeaponUp(Gun newGun)
-{
-	weaponInUse = newGun;
-}
-
 
 
 void playerTracking::HealthUp(Gun newGun)
@@ -301,10 +304,13 @@ void playerTracking::PrintPlayerInfo() {
 
 		string text;
 		if (weaponInUse.type == GUN_TYPE_PISTOL) {
-			text = "WEAPON: PISTOL";
+			text = "WEAPON: MACHINE";
 		}
 		else if (weaponInUse.type == GUN_TYPE_ROCKET) {
 			text = "WEAPON: ROCKET";
+		}
+		else if (weaponInUse.type == GUN_TYPE_SNIPER) {
+			text = "WEAPON: SNIPER";
 		}
 		Debug::Print(text, Vector2(70, 95), Debug::WHITE);
 	}

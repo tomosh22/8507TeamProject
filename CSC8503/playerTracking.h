@@ -15,7 +15,7 @@
 namespace NCL {
 	namespace CSC8503 {
 		const float PLAYER_MOVE_SPEED = 10.0f;
-		const float PLYAER_ITEM_SPEED_UP = 35.0f;
+		const float PLAYER_ITEM_SPEED_UP = 35.0f;
 		const float PLAYER_SPEED_UP = 20.0f;
 		const float PLAYER_JUMP_FORCE = 100.0f;
 		const float PLAYER_RESPAWN_TIME = 50.0f;
@@ -92,9 +92,10 @@ namespace NCL {
 			Projectile* reuseBullet();
 
 
-			Gun getWeponType() {
+			Gun getWeaponType() {
 				return weaponInUse;
 			}
+
 
 			float GetSpeed()
 			{
@@ -131,14 +132,27 @@ namespace NCL {
 				speedUpTimer = 300.0f;
 			}
 
+			void TakeDamageUpItem()
+			{
+				damageUp = true;
+				damageUpTimer = 200.0f; 
+			}
+
+			void DamageUp(float dt);
+
+			bool GetDamageUp()
+			{
+				return damageUp;
+			}
+
 			bool GetSpeedUp()
 			{
 				return speedUp;
 			}
 
-			void WeaponUp()
+			void TakeWeaponUpItem()
 			{
-				weaponInUse = rocket;
+				weaponInUse = sniper;
 				weaponUp = true;
 				weaponUpTimer = 300.0f;
 			}
@@ -165,8 +179,6 @@ namespace NCL {
 			void FireBullet();
 			void ResetBullet(Projectile* bullet);
 			void ReTurnBullet(Projectile* bullet);
-
-			void WeaponUp(Gun newGun);
 
 
 			void HealthUp(Gun newGun);
@@ -209,6 +221,7 @@ namespace NCL {
 			bool canJump;
 			bool speedUp;
 			bool weaponUp;
+			bool damageUp;
 			bool onLadder;
 			bool playerDead;
 
@@ -230,6 +243,7 @@ namespace NCL {
 			float speedUpTimer;
 			float weaponUpTimer;
 			float respawnTimer;
+			float damageUpTimer; 
 
 			GameObject* belowObject = nullptr;
 

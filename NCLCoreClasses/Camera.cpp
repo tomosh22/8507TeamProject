@@ -16,8 +16,8 @@ void Camera::UpdateCamera(float dt) {
 	yaw		-= (Window::GetMouse()->GetRelativePosition().x);
 
 	//Bounds check the pitch, to be between straight up and straight down ;)
-	pitch = std::min(pitch, 90.0f);
-	pitch = std::max(pitch, -90.0f);
+	pitch = std::min(pitch, 60.0f);
+	pitch = std::max(pitch, 0.0f);
 
 	if (yaw <0) {
 		yaw += 360.0f;
@@ -76,8 +76,8 @@ void Camera::UpdateCamera(float dt) {
 void Camera::UpdateObjectViewPitch() {
 	pitch -= (Window::GetMouse()->GetRelativePosition().y) * 0.2f;
 		//Bounds check the pitch, to be between straight up and straight down ;)
-	pitch = std::min(pitch, 45.0f);
-	pitch = std::max(pitch, -45.0f);
+	pitch = std::min(pitch, 15.0f);
+	pitch = std::max(pitch, -10.0f);
 }
 
 /*

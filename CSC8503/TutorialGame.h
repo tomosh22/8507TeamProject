@@ -119,8 +119,12 @@ namespace NCL {
 			MeshGeometry* enemyMesh = nullptr;
 			MeshGeometry* bonusMesh = nullptr;
 
-			MeshGeometry* playerMesh = nullptr;
+			//mesh and texture for item
+			MeshGeometry* powerUpMesh = nullptr;
+			TextureBase* powerUpTex = nullptr;
 
+			MeshGeometry* playerMesh = nullptr;
+			std::vector<MeshGeometry*> playerMeshes;
 		protected:
 			void InitialiseAssets();
 
@@ -181,7 +185,7 @@ namespace NCL {
 
 			
 			Projectile* FireBullet(playerTracking* selectedPlayerCharacter);
-			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 1.0f);
+			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 1.0f, int rotation = 0);
 			GameObject* AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inversMass = 1.0f);
 			
 
@@ -206,8 +210,10 @@ namespace NCL {
 			void AddTowersToWorld();
 			void AddPlatformsToWorld();
 			void AddPowerUps(); 
+		
 			void AddRespawnPoints();
-
+			void LoadPlayerMesh(std::vector<MeshGeometry*> meshes);
+			MeshGeometry* GetPlayerMesh();
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
 #else
@@ -222,7 +228,7 @@ namespace NCL {
 
 			float		forceMagnitude;
 
-			Vector3 viewOffset = Vector3(10.0f, 3.0f, 10.0f);
+			Vector3 viewOffset = Vector3(10.0f, 5.0f, 10.0f);
 
 			GameObject* selectionObject = nullptr;
 			GameObject* phantomCubeOutput = nullptr;
@@ -351,11 +357,22 @@ namespace NCL {
 			TextureBase* spaceShipOpacityMap = nullptr;
 			TextureBase* spaceShipGlossMap = nullptr;
 
+			TextureBase* speakersDiffuse = nullptr;
+			TextureBase* speakersBump = nullptr;
+			TextureBase* speakersMetallic = nullptr;
+			TextureBase* speakersRoughness = nullptr;
+			TextureBase* speakersHeightMap = nullptr;
+			TextureBase* speakersEmissionMap = nullptr;
+			TextureBase* speakersAOMap = nullptr;
+			TextureBase* speakersOpacityMap = nullptr;
+			TextureBase* speakersGlossMap = nullptr;
+
 			PBRTextures* crystalPBR;
 			PBRTextures* spaceShipPBR;
 			PBRTextures* rockPBR;
 			PBRTextures* grassWithWaterPBR;
 			PBRTextures* fencePBR;
+			PBRTextures* speakersPBR;
 			
 
 			GameObject* testSphere0 = nullptr;
@@ -368,6 +385,7 @@ namespace NCL {
 			//Player Animation 
 			OGLShader* characterShader;
 			MeshMaterial* playerMaterial;
+
 			int currentFrame;
 			float frameTime;
 			float gameTime = 0.0f;

@@ -30,8 +30,14 @@ Item* NCL::CSC8503::PropSystem::SpawnShield(Vector3 pos)
 	return newItem;
 }
 
-Item* NCL::CSC8503::PropSystem::SpawnWeaponUp(Vector3 pos, PBRTextures* pbr)
+Item* NCL::CSC8503::PropSystem::SpawnDamageUp(Vector3 pos)
 {
-	PowerUpItem* newItem = new WeaponUpItem(pos,pbr);
+	PowerUpItem* newItem = new DamageUpItem(pos);
+	return newItem;
+}
+
+Item* NCL::CSC8503::PropSystem::SpawnWeaponUp(Vector3 pos)
+{
+	PowerUpItem* newItem = new WeaponUpItem(pos);
 	return newItem;
 }

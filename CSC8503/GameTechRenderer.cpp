@@ -564,9 +564,18 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(glGetUniformLocation(shader->GetProgramID(), "toneMap"), toneMap);
 		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "exposure"), exposure);
 		glUniform1i(glGetUniformLocation(shader->GetProgramID(), "emissionStrength"), emissionStrength);
+		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "normalPow"), normalPow);
+		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "worldPosMul"), worldPosMul);
+
+		if(i->uvScale != Vector2(-1,-1));
+		glUniform2fv(glGetUniformLocation(shader->GetProgramID(), "uvScale"), 1, i->uvScale.array);
 
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
+		if (i->name == std::string("item")) {
+			glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 4, "item");
+		}
+
 		if (i->isPaintable) {
 
 			glUniform1f(heightMapStrengthLocation, heightMapStrength);
@@ -605,7 +614,9 @@ void GameTechRenderer::RenderCamera() {
 		}
 		else {
 			if ((OGLTexture*)i->GetDefaultTexture()) {
-				glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID());
+				glUniform1i(glGetUniformLocation(shader->GetProgramID(), "baseTex"), 1);
 			}
 		}
 		if (i->isAnimated) {
@@ -623,8 +634,12 @@ void GameTechRenderer::RenderCamera() {
 			}
 			DrawBoundMesh(x);
 		}
+		if (i->name == std::string("item")) {
+			glPopDebugGroup();
+		}
 	}
 	glEnable(GL_BLEND);
+
 	glPopDebugGroup();
 
 	
@@ -1067,6 +1082,12 @@ void GameTechRenderer::ImGui() {
 		ImGui::SliderFloat("Filter radius", &upsampleFilterRadius, 0, 0.01f, "%.10f");
 		ImGui::TreePop();
 	}
+	if (ImGui::TreeNode("Triplanar Mapping")) {
+		ImGui::SliderFloat("Normal Power", &normalPow, 0,10);
+		ImGui::SliderFloat("World Pos Multiplier", &worldPosMul, 0, 10, "%.10f");
+		ImGui::TreePop();
+	}
+
 	
 
 	ImGui::SliderFloat3("Light Position", lightPosition.array, -200, 200);

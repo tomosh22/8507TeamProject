@@ -21,7 +21,8 @@ namespace NCL {
 			Item* SpawnHeal(Vector3 pos);
 			Item* SpawnSpeedUp(Vector3 pos);
 			Item* SpawnShield(Vector3 pos); 
-			Item* SpawnWeaponUp(Vector3 pos, PBRTextures* pbr);
+			Item* SpawnDamageUp(Vector3 pos);
+			Item* SpawnWeaponUp(Vector3 pos);
 
 		protected:
 			static PropSystem* _instance;

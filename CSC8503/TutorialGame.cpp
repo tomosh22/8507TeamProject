@@ -186,6 +186,10 @@ TutorialGame::~TutorialGame() {
 
 	delete objectpool;
 
+
+	delete playerMesh;
+	delete playerMaterial;
+	playerMeshes.clear();
 	//todo delete texture array
 	//todo delete compute shader
 }
@@ -315,9 +319,8 @@ void TutorialGame::InitialiseAssets() {
 	basicWallMesh = renderer->LoadMesh("corridor_Wall_Straight_Mid_end_L.msh", &meshes);
 	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
 
-	playerMesh = renderer->LoadMesh("Character/Character.msh", &meshes);
-
-	playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
+	powerUpMesh = renderer->LoadMesh("powerUpItem.msh", &meshes);
+	LoadPlayerMesh(meshes);
 
 	for (MeshGeometry*& mesh : meshes) {
 		if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
@@ -356,7 +359,6 @@ void TutorialGame::InitialiseAssets() {
 	glPatchParameteri(GL_PATCH_VERTICES, 3);
 
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc", "scene.tese");
-
 	std::vector<std::thread> threads;
 
 
@@ -372,7 +374,8 @@ void TutorialGame::InitialiseAssets() {
 	ironMetallic = renderer->LoadTexture("PBR/rustediron2_metallic.png");
 	ironRoughness = renderer->LoadTexture("PBR/rustediron2_roughness.png");
 
-	
+	powerUpTex = renderer->LoadTexture("Item.png");
+	std::cout << "tutgame" << powerUpTex << '\n';
 
 	crystalPBR = new PBRTextures();
 	TextureBase** test = &(crystalPBR->base);
@@ -431,7 +434,16 @@ void TutorialGame::InitialiseAssets() {
 	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg", &fencePBR->opacity));
 	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg", &fencePBR->gloss));
 
-	
+	speakersPBR = new PBRTextures();
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_diffuse.jpg", &speakersPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_normal.jpg", &speakersPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_metallic.jpg", &speakersPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_roughness.jpg", &speakersPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_height.jpg", &speakersPBR->heightMap));
+	speakersPBR->emission = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_ao.jpg", &speakersPBR->ao));
+	speakersPBR->opacity = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_glossiness.jpg", &speakersPBR->gloss));
 	
 	
 
@@ -485,12 +497,13 @@ void TutorialGame::CameraLockOnPlayer() {
 	//set camera position
 	Vector3 offSet = Vector3(viewOffset.x * cos((yrot + 270.0f) * M_PI / 180), viewOffset.y, viewOffset.z * sin((yrot - 270.0f) * M_PI / 180));
 
-	Vector3 camPos = objPos + offSet + Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), offSet).Normalised() * 2.0f;
+	Vector3 camPos = objPos + offSet + Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), offSet).Normalised() * 4.0f;
 	//targeting in front of the object
 	Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos - offSet * Vector3(10.0f, 0.0f, 10.0f), Vector3(0, 1, 0));
 	Matrix4 modelMat = temp.Inverse();
 	Quaternion q(modelMat);
 	Vector3 angles = q.ToEuler(); //nearly there now!
+
 
 	world->GetMainCamera()->SetPosition(camPos);
 	world->GetMainCamera()->SetYaw(angles.y);
@@ -667,12 +680,12 @@ void TutorialGame::UpdateGame(float dt) {
 		frameTime -= dt;
 		UpdateAnimations(dt);
 		SelectMode();
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
+		/*glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
 		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED,false);
 		glPopDebugGroup();
 		for (GameObject*& wall : walls) {
 			DispatchComputeShaderForEachTriangle(wall, testSphereCenter, testSphereRadius, TEAM_RED, false);
-		}
+		}*/
 		break;
 	}
 	case GAME_MODE_MAIN_MENU:
@@ -720,7 +733,7 @@ void TutorialGame::UpdateGame(float dt) {
 		renderer->Render();
 		Debug::UpdateRenderables(dt);
 
-		timer -= dt;
+		//timer -= dt;
 	}
 
 	if (gameEnded)
@@ -943,7 +956,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
 	transform.SetOrientation(orientation.Normalised());
 	//speed
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SHIFT) && playerObject->CanJump()) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W) && Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && playerObject->CanJump()) {
 		playerObject->SpeedUp();
 	}
 	else if (!playerObject->GetSpeedUp())
@@ -1307,7 +1320,11 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
-	floor->GetRenderObject()->pbrTextures = grassWithWaterPBR;
+	floor->GetRenderObject()->pbrTextures = crystalPBR;
+
+	float dims[3] = { scale.x ,scale.y,scale.z };
+	std::sort(dims, dims + sizeof(dims) / sizeof(float));
+	floor->GetRenderObject()->uvScale = { dims[1] / 10,dims[2] / 10 };
 
 	GameWorld::GetInstance()->AddGameObject(floor);
 
@@ -1414,7 +1431,7 @@ GameObject* TutorialGame::AddRayMarchSphereToWorld(const Vector3& position, floa
 
 
 
-GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, int rotation) {
 	GameObject* cube = new GameObject();
 
 	OBBVolume* volume = new OBBVolume(dimensions);
@@ -1427,6 +1444,12 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 
 	cube->GetPhysicsObject()->SetInverseMass(inverseMass);
 	cube->GetPhysicsObject()->InitCubeInertia();
+
+	float dims[3] = { dimensions.x ,dimensions.y,dimensions.z };
+	std::sort(dims, dims + sizeof(dims) / sizeof(float));
+	if(rotation == 0)cube->GetRenderObject()->uvScale = { dims[2] / 1,dims[1] / 1 };
+	else if(rotation == 1) cube->GetRenderObject()->uvScale = { dims[1] / 1,dims[2] / 1 };
+	else if(rotation == 2) cube->GetRenderObject()->uvScale = { dims[1]  *1,dims[2] *5 };
 
 	InitPaintableTextureOnObject(cube);
 	cube->isPaintable = true;
@@ -1488,7 +1511,7 @@ GameObject* TutorialGame::AddMonkeyToWorld(const Vector3& position, Vector3 dime
 GameObject* TutorialGame::AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* wall = new GameObject();
 
-	AABBVolume* volume = new AABBVolume(dimensions);
+	OBBVolume* volume = new OBBVolume(dimensions);
 	wall->SetBoundingVolume((CollisionVolume*)volume);
 
 	wall->GetTransform()
@@ -1512,7 +1535,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position,
 {
 	GameObject* myWall = new GameObject();
 
-	AABBVolume* volume = new AABBVolume(dimensions);
+	OBBVolume* volume = new OBBVolume(dimensions);
 	myWall->SetBoundingVolume((CollisionVolume*)volume);
 
 	myWall->GetTransform()
@@ -1526,6 +1549,9 @@ GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position,
 	myWall->GetPhysicsObject()->SetInverseMass(0);
 	myWall->GetPhysicsObject()->InitCubeInertia();
 
+	float dims[3] = { dimensions.x ,dimensions.y,dimensions.z };
+	std::sort(dims, dims + sizeof(dims)/sizeof(float));
+	myWall->GetRenderObject()->uvScale = { dims[1]/1,dims[2]/1 };
 	
 	myWall->GetRenderObject()->pbrTextures = rockPBR;
 	InitPaintableTextureOnObject(myWall);
@@ -1549,7 +1575,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddLadderToWorld(const Vector3& position
 
 	ladder->GetTransform()
 		.SetPosition(position)
-		.SetScale(dimensions * 2);
+		.SetScale(dimensions);
 
 	ladder->SetRenderObject(new RenderObject(&ladder->GetTransform(), cubeMesh, nullptr, basicShader));
 	ladder->SetPhysicsObject(new PhysicsObject(&ladder->GetTransform(), ladder->GetBoundingVolume()));
@@ -1789,48 +1815,48 @@ void NCL::CSC8503::TutorialGame::AddStructureToWorld()
 {
 	//middle structure
 	//pillars
-	AddCubeToWorld({12, 7, 8}, {1, 7, 1}, 0.0f);
-	AddCubeToWorld({ -12, 7, 8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ 12, 7, -8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ -12, 7, -8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({12, 7, 8}, {1, 7, 1}, 0.0f,0);
+	AddCubeToWorld({ -12, 7, 8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ 12, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ -12, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
 
 	//platform 
-	AddCubeToWorld({ 0, 13, 0 }, { 13, 1, 9 }, 0.0f);
+	AddCubeToWorld({ 0, 13, 0 }, { 13, 1, 9 }, 0.0f,1);
 
 	//side structures
 	//pillars
-	AddCubeToWorld({ 87, 7, 8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ 63, 7, 8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ 87, 7, -8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ 63, 7, -8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ 87, 7, 8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ 63, 7, 8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ 87, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ 63, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
 
 	//platform 
-	AddCubeToWorld({ 75, 13, 0 }, { 13, 1, 9 }, 0.0f);
+	AddCubeToWorld({ 75, 13, 0 }, { 13, 1, 9 }, 0.0f,1);
 	AddLadderToWorld({88.5, 7, 0}, 7.0f, false);
 
 	//pillars
-	AddCubeToWorld({ -87, 7, 8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ -63, 7, 8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ -87, 7, -8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ -63, 7, -8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ -87, 7, 8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ -63, 7, 8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ -87, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ -63, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
 
 	//platform 
-	AddCubeToWorld({ -75, 13, 0 }, { 13, 1, 9 }, 0.0f);
+	AddCubeToWorld({ -75, 13, 0 }, { 13, 1, 9 }, 0.0f,1);
 	AddLadderToWorld({ -88.5, 7, 0 }, 7.0f, false);
 
 	//paths betweeen platforms
-	AddCubeToWorld({38, 13, 0}, {25, 1, 6}, 0.0f);
-	AddCubeToWorld({ -38, 13, 0 }, { 25, 1, 6 }, 0.0f);
+	AddCubeToWorld({38, 13, 0}, {25, 1, 6}, 0.0f,2);
+	AddCubeToWorld({ -38, 13, 0 }, { 25, 1, 6 }, 0.0f,2);
 
 	//walls on platforms
-	AddCubeToWorld({ 0, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
-	AddCubeToWorld({ 0, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+	AddCubeToWorld({ 0, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f,1);
+	AddCubeToWorld({ 0, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f,1);
 
-	AddCubeToWorld({ -75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
-	AddCubeToWorld({ -75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+	AddCubeToWorld({ -75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f,1);
+	AddCubeToWorld({ -75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f,1);
 
-	AddCubeToWorld({ 75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
-	AddCubeToWorld({ 75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+	AddCubeToWorld({ 75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f,1);
+	AddCubeToWorld({ 75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f,1);
 }
 
 void NCL::CSC8503::TutorialGame::AddTowersToWorld()
@@ -1849,7 +1875,8 @@ void NCL::CSC8503::TutorialGame::AddPlatformsToWorld()
 void NCL::CSC8503::TutorialGame::AddPowerUps()
 {
 
-	PropSystem::GetInstance()->SpawnWeaponUp({ 0, 16, 0 }, grassWithWaterPBR);
+	//PropSystem::GetInstance()->SpawnWeaponUp({ 0, 16, 0 });
+	PropSystem::GetInstance()->SpawnDamageUp({0, 16, 0});
 
 	PropSystem::GetInstance()->SpawnHeal({ 0, 5, 150 });
 	PropSystem::GetInstance()->SpawnHeal({ 0, 5, -150 });
@@ -1863,6 +1890,9 @@ void NCL::CSC8503::TutorialGame::AddPowerUps()
 
 	PropSystem::GetInstance()->SpawnShield({ 0, 5, 50 });
 	PropSystem::GetInstance()->SpawnShield({ 0, 5, -50 });
+
+	PropSystem::GetInstance()->SpawnWeaponUp({ 70, 27.5, 150 });
+	PropSystem::GetInstance()->SpawnWeaponUp({ -70, 27.5, -150 });
 }
 
 void NCL::CSC8503::TutorialGame::AddRespawnPoints()
@@ -1890,12 +1920,32 @@ void NCL::CSC8503::TutorialGame::AddRespawnPoints()
 	respawnPoint->AddRespawnPoint(rp);
 }
 
+void NCL::CSC8503::TutorialGame::LoadPlayerMesh(std::vector<MeshGeometry*> meshes)
+{
+	playerMeshes.push_back(renderer->LoadMesh("Character/Character.msh", &meshes));
+	playerMeshes.push_back(renderer->LoadMesh("Character/Character3.msh", &meshes));
+	playerMeshes.push_back(renderer->LoadMesh("Character/Character4.msh", &meshes));
+	playerMeshes.push_back(renderer->LoadMesh("Character/Character5.msh", &meshes));
+	playerMeshes.push_back(renderer->LoadMesh("Character/Character6.msh", &meshes));
+
+	for (int i = 0; i < playerMeshes.size(); i++)
+	{
+		playerMeshes[i]->SetPrimitiveType(GeometryPrimitive::Triangles);
+	}
+}
+
+MeshGeometry* NCL::CSC8503::TutorialGame::GetPlayerMesh()
+{
+	MeshGeometry* msh = playerMeshes[rand() % playerMeshes.size()];
+	return msh;
+}
+
 playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaternion & orientation, int team , RespawnPoint* rp) {
 	float meshSize = 2.0f;
 	float inverseMass = 0.3f;
 
 	playerTracking* character = new playerTracking();
-	AABBVolume* volume = new AABBVolume(Vector3{ 1.0,1.0,1.0 });
+	OBBVolume* volume = new OBBVolume(Vector3{ 1.0,1.0,1.0 });
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -1903,10 +1953,11 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMesh, nullptr, characterShader ));
+	MeshGeometry* playerMsh = GetPlayerMesh();
+	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMsh, nullptr, characterShader ));
 	character->GetRenderObject()->isAnimated = true;
 
-	for (int i = 0; i < playerMesh->GetSubMeshCount(); ++i) {
+	for (int i = 0; i < playerMsh->GetSubMeshCount(); ++i) {
 		const MeshMaterialEntry* matEntry = playerMaterial->GetMaterialForLayer(i);
 		const std::string* filename = nullptr;
 		matEntry->GetEntry("Diffuse", &filename);
@@ -2129,6 +2180,7 @@ void TutorialGame::InitGameExamples() {
 	auto q = Quaternion();
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	lockedObject = playerObject; 
+	PropSystem::GetInstance()->SpawnItem(Vector3(0,0,0));
 	//TestCode of Item
 	/*Item* p;
 	PropSystem::GetInstance()->SpawnItem(Vector3(6, 3, 6));

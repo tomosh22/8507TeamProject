@@ -12,7 +12,8 @@ namespace NCL {
 		const enum GunType {
 			GUN_TYPE_PISTOL,
 			GUN_TYPE_ROCKET,
-			GUN_TYPE_MAX
+			GUN_TYPE_MAX,
+			GUN_TYPE_SNIPER
 		};
 
 		struct Gun {
@@ -23,26 +24,46 @@ namespace NCL {
 			float projectileForce; // Fire force
 			float weight;// keep a >0 weight on instances. Otherwise applied forces will have no effect //Do not exceed 1.0, otherwise additional forces will be generated
 			float rateOfFire; // time in seconds between consecuative bullets shot
+			int damage; // damage caused to player by gun's projectile
+			int addedScore; // how much score the player gets when a paintable surface is hit
 		};
 
-		static Gun pistol{
+		static Gun machineGun{
 			true,
 			GUN_TYPE_PISTOL,
-			10.0f,
+			2.0f,
 			0.2f,
 			8000.0f,
 			1.0f,
-			0.7f,
+			0.2f,
+			20,
+			20
 		};
 
 		static Gun rocket{
 			true,
 			GUN_TYPE_ROCKET,
 			6.0f,
-			0.5f,
-			3000.0f,
+			0.3f,
+			6000.0f,
 			0.7f,
-			0.5f,
+			0.9f,
+			50,
+			100
+
+		};
+
+		static Gun sniper{
+			false,
+			GUN_TYPE_SNIPER,
+			2.0f,
+			0.2f,
+			15000.0f,
+			0.8f,
+			1.2f,
+			100,
+			100
+
 		};
 
 
@@ -167,12 +188,6 @@ namespace NCL {
 				this->player = player;
 			}
 
-			void SetTeamID(int id)
-			{
-				this->teamID = id;
-			}
-
-					
 		protected:
 			float explosionRadius;
 			float ProjectileRadius;
@@ -185,7 +200,6 @@ namespace NCL {
 			//static int personalID;
 			bool canFire;
 			bool AffectedGravity;
-			int teamID;
 			//PhysicsObject* physicsProjectile;
 			Vector3 bulletDirectionVector;
 			std::vector<Projectile*>* parentVector;

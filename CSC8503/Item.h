@@ -40,14 +40,14 @@ namespace NCL {
 
 		class WeaponUpItem :public PowerUpItem {
 		public:
-			WeaponUpItem(const Vector3 pos, PBRTextures* pbr);
+			WeaponUpItem(const Vector3 pos);
 			~WeaponUpItem() {
 				//physicsProjectile;
 			}
 			void Trigger(GameObject* character) override {
 				std::cout << "Weapon Up" << std::endl;
 				playerTracking* c = static_cast<playerTracking*>(character);
-				c->WeaponUp();
+				c->TakeWeaponUpItem();
 				this->GetTransform().SetPosition(Vector3(1000, 1000, 1000));
 				notSpawned = true;
 				respawnTimer = time;
@@ -104,6 +104,20 @@ namespace NCL {
 				respawnTimer = time;
 			}
 		protected:
+		};
+
+		class DamageUpItem : public PowerUpItem {
+		public:
+			DamageUpItem(const Vector3 pos);
+			~DamageUpItem() {}
+			void Trigger(GameObject* character) override {
+				std::cout << "Damage Up" << std::endl;
+				playerTracking* c = static_cast<playerTracking*>(character);
+				c->TakeDamageUpItem();
+				this->GetTransform().SetPosition(Vector3(1000, 1000, 1000));
+				notSpawned = true;
+				respawnTimer = time;
+			}
 		};
 	}
 }

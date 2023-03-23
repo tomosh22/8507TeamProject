@@ -90,15 +90,18 @@ void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 	if (otherObject->isPaintable && otherObject != player && otherObject->GetName() != "invisible")
 	{
 		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(),explosionRadius, teamID);
-		player->AddScore(10);
+		player->AddScore(player->getWeaponType().addedScore);
 	}
-	else if (otherObject->id() == "character" && otherObject != player)
+	else if (otherObject->id() == "character")
 	{
+		int damage = player->getWeaponType().damage;
+		if (player->GetDamageUp())
+			damage *= 2;
 		playerTracking* enemy = static_cast<playerTracking*>(otherObject);   // safe conversion
-		enemy->TakeDamage(20); //Up To bullet
+		enemy->TakeDamage(damage); //Up To bullet
 		if (enemy->GetHealth() == 0)
 		{
-			player->AddScore(50);
+			player->AddScore(500);
 			std::cout << player->GetScore() << std::endl;
 		}
 	}

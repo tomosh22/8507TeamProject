@@ -124,8 +124,8 @@ vec3 hsv2rgb(vec3 c) {
 vec3 teamColor(uint v) {
 	if (v == 0) return vec3(0, 0, 0);
 
-	float c = fract(float(v) * 0.1415);
-	return hsv2rgb(vec3(c, 0.8, 1.0));
+	float c = fract(float(v + 8) * 3.14159265359);
+	return hsv2rgb(vec3(c, 0.9, 1.0));
 }
 
 void point(inout vec4 finalColor, vec4 diffuse, vec3 bumpNormal, float metal, float rough, float reflectivity) {
@@ -267,7 +267,7 @@ vec2 bloodnoise(float scale) {
 }
 
 vec3 fetchTeamColor(ivec2 coord, ivec2 size) {
-	coord = clamp(coord, ivec2(0), size);
+	coord = clamp(coord, ivec2(0), size - ivec2(1));
 
 	return teamColor(imageLoad(maskTex, coord).r);
 }

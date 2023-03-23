@@ -213,11 +213,11 @@ namespace NCL::CSC8503 {
 			renderer->SubmitRayMarchedSphere(position, color, radius);
 		}
 
-		//renderer->ApplyPaintTo(wall, testSphereCenter, testSphereRadius, 0);
+		//renderer->ApplyPaintTo(wall, testSphereCenter, testSphereRadius, 7);
 		world->OperateOnContents([&](GameObject* object)
 		{
 			if (!object->GetRenderObject() || !object->GetRenderObject()->isPaintable) return;
-			renderer->ApplyPaintTo(object, testSphereCenter, testSphereRadius, 0);
+			renderer->ApplyPaintTo(object, testSphereCenter, testSphereRadius, 7);
 		});
 	}
 

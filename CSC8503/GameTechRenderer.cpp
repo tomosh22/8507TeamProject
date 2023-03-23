@@ -168,6 +168,8 @@ void GameTechRenderer::RenderFrame()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glDisable(GL_CULL_FACE);
 
+	RenderShadowMap();
+
 	glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	glViewport(0, 0, renderWidth, renderHeight);

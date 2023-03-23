@@ -47,7 +47,7 @@ namespace NCL::CSC8503 {
 		GameBase(manager, world, renderer)
 	{
 		testSphereCenter = Vector3(0, 0, 0);
-		testSphereRadius = 100;
+		testSphereRadius = 10;
 
 		//Start the game with the camera enabled
 		Window::GetWindow()->ShowOSPointer(false);

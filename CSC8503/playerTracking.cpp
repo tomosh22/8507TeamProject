@@ -134,7 +134,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 
 	bullet->GetPhysicsObject()->SetInverseMass(weaponInUse.weight);
 	bullet->GetPhysicsObject()->InitSphereInertia();
-	bullet->SetTeamID(teamID);
+	bullet->SetTeamId(teamID);
 	bullet->SetPlayer(this);
 	bullet->setExplosionRadius(weaponInUse.radius);
 	bullet->SetActive(true);

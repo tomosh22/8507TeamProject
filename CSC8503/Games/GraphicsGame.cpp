@@ -11,8 +11,6 @@
 using namespace NCL;
 using namespace CSC8503;
 
-GameObject* g_DebugSphere = nullptr;
-
 struct TextureThing {
 	char* texData = nullptr;
 	int width = 0;
@@ -215,9 +213,6 @@ namespace NCL::CSC8503 {
 			renderer->SubmitRayMarchedSphere(position, color, radius);
 		}
 
-		testSphere->GetTransform().SetPosition(testSphereCenter);
-		testSphere->GetTransform().SetScale(Vector3(testSphereRadius, testSphereRadius, testSphereRadius));
-
 		//renderer->ApplyPaintTo(wall, testSphereCenter, testSphereRadius, 0);
 		world->OperateOnContents([&](GameObject* object)
 		{
@@ -308,8 +303,6 @@ namespace NCL::CSC8503 {
 			AddRayMarchSphereToWorld({ 0,0,0 }, 10);
 		}
 
-		testSphere = AddSphereToWorld({ 50,50,50 }, 10, true, 0, false);
-		g_DebugSphere = AddSphereToWorld({ 0,0,-50 }, 1, true, 0, false);
 #if 1
 
 		GameObject* testSphere0 = AddSphereToWorld({50,50,50}, 10, true, false);

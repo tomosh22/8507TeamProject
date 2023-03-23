@@ -24,7 +24,6 @@ namespace NCL::CSC8503 {
 		Vector3 testSphereCenter;
 		float testSphereRadius;
 
-		GameObject* testSphere;
 		GameObject* wall;
 
 		MeshGeometry* sphereMesh = nullptr;

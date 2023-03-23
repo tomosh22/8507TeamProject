@@ -706,8 +706,6 @@ void GameTechRenderer::ExecuteRayMarching()
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-extern GameObject* g_DebugSphere;
-
 void GameTechRenderer::FindTrianglesToPaint()
 {
 	struct

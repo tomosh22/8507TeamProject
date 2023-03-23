@@ -274,7 +274,7 @@ vec3 fetchTeamColor(ivec2 coord, ivec2 size) {
 
 vec3 sampleTeamColor(vec2 uv) {
 	ivec2 maskSize = imageSize(maskTex);
-	vec2 realCoords = maskSize * uv;
+	vec2 realCoords = maskSize * uv - vec2(0.5);
 	vec2 iCoords = floor(realCoords);
 	vec2 fCoords = fract(realCoords);
 	

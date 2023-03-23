@@ -433,7 +433,16 @@ void TutorialGame::InitialiseAssets() {
 	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg", &fencePBR->opacity));
 	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg", &fencePBR->gloss));
 
-	
+	speakersPBR = new PBRTextures();
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_diffuse.jpg", &speakersPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_normal.jpg", &speakersPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_metallic.jpg", &speakersPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_roughness.jpg", &speakersPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_height.jpg", &speakersPBR->heightMap));
+	speakersPBR->emission = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_ao.jpg", &speakersPBR->ao));
+	speakersPBR->opacity = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_glossiness.jpg", &speakersPBR->gloss));
 	
 	
 
@@ -722,7 +731,7 @@ void TutorialGame::UpdateGame(float dt) {
 		renderer->Render();
 		Debug::UpdateRenderables(dt);
 
-		timer -= dt;
+		//timer -= dt;
 	}
 
 	if (gameEnded)
@@ -1308,7 +1317,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
-	floor->GetRenderObject()->pbrTextures = grassWithWaterPBR;
+	floor->GetRenderObject()->pbrTextures = speakersPBR;
 
 	GameWorld::GetInstance()->AddGameObject(floor);
 

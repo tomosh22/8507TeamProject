@@ -379,11 +379,11 @@ void main(void)
 	
 	//PBR stuff
 	vec3 metallic = useMetallicMap ? triplanarSample(metallicTex) : vec3(0);
-	vec3 roughness = useRoughnessMap ? vec3(1) - triplanarSample(roughnessTex) : vec3(0);
+	vec3 roughness = useRoughnessMap ? vec3(1) - triplanarSample(roughnessTex) : vec3(1);
 	vec3 emission = useEmissionMap ? triplanarSample(emissionTex) : vec3(0);
 	float AO = useAOMap ? triplanarSample(AOTex).r : 1;
 	float opacity = useOpacityMap ? triplanarSample(opacityTex).r : 1;
-	float reflectivity = useGlossMap ? triplanarSample(glossTex).r : 0.8;
+	float reflectivity = useGlossMap ? 1 - triplanarSample(glossTex).r : 0.8;
 
 	emission = pow(emission, vec3(2.2));
 

@@ -352,11 +352,22 @@ namespace NCL {
 			TextureBase* spaceShipOpacityMap = nullptr;
 			TextureBase* spaceShipGlossMap = nullptr;
 
+			TextureBase* speakersDiffuse = nullptr;
+			TextureBase* speakersBump = nullptr;
+			TextureBase* speakersMetallic = nullptr;
+			TextureBase* speakersRoughness = nullptr;
+			TextureBase* speakersHeightMap = nullptr;
+			TextureBase* speakersEmissionMap = nullptr;
+			TextureBase* speakersAOMap = nullptr;
+			TextureBase* speakersOpacityMap = nullptr;
+			TextureBase* speakersGlossMap = nullptr;
+
 			PBRTextures* crystalPBR;
 			PBRTextures* spaceShipPBR;
 			PBRTextures* rockPBR;
 			PBRTextures* grassWithWaterPBR;
 			PBRTextures* fencePBR;
+			PBRTextures* speakersPBR;
 			
 
 			GameObject* testSphere0 = nullptr;

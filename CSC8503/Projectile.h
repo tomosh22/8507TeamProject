@@ -188,12 +188,6 @@ namespace NCL {
 				this->player = player;
 			}
 
-			void SetTeamID(int id)
-			{
-				this->teamID = id;
-			}
-
-			
 		protected:
 			float explosionRadius;
 			float ProjectileRadius;
@@ -206,7 +200,6 @@ namespace NCL {
 			//static int personalID;
 			bool canFire;
 			bool AffectedGravity;
-			int teamID;
 			//PhysicsObject* physicsProjectile;
 			Vector3 bulletDirectionVector;
 			std::vector<Projectile*>* parentVector;

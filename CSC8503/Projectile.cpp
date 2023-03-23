@@ -92,7 +92,7 @@ void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(),explosionRadius, teamID);
 		player->AddScore(player->getWeaponType().addedScore);
 	}
-	else if (otherObject->id() == "character" && otherObject != player)
+	else if (otherObject->id() == "character")
 	{
 		int damage = player->getWeaponType().damage;
 		if (player->GetDamageUp())

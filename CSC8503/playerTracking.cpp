@@ -128,7 +128,7 @@ void playerTracking::ResetBullet(Projectile* bullet)
 	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize, weaponInUse.ProjectileSize))
 		.SetPosition(transform.GetPosition() + transform.GetDirVector().Normalised()*3.0f + Vector3(0.0f, 2.0f, 0.0f));
 	bullet->GetPhysicsObject()->SetInverseMass(weaponInUse.weight);;
-	bullet->SetTeamID(teamID);
+	bullet->SetTeamId(teamID);
 	bullet->SetPlayer(this);
 	bullet->setExplosionRadius(weaponInUse.radius);
 	bullet->SetActive(true);

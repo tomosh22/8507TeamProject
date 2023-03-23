@@ -81,7 +81,7 @@ void playerTracking::UpdateSpeed(float dt) {
 	//sprint
 	if (speedUp)
 	{
-		moveSpeed = PLYAER_ITEM_SPEED_UP;
+		moveSpeed = PLAYER_ITEM_SPEED_UP;
 		speedUpTimer = speedUpTimer - 10 * dt;
 		if (speedUpTimer <= 0)
 			speedUp = false;

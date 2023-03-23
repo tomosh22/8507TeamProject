@@ -953,7 +953,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
 	transform.SetOrientation(orientation.Normalised());
 	//speed
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SHIFT) && playerObject->CanJump()) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W) && Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && playerObject->CanJump()) {
 		playerObject->SpeedUp();
 	}
 	else if (!playerObject->GetSpeedUp())
@@ -1558,7 +1558,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddLadderToWorld(const Vector3& position
 
 	ladder->GetTransform()
 		.SetPosition(position)
-		.SetScale(dimensions * 2);
+		.SetScale(dimensions);
 
 	ladder->SetRenderObject(new RenderObject(&ladder->GetTransform(), cubeMesh, nullptr, basicShader));
 	ladder->SetPhysicsObject(new PhysicsObject(&ladder->GetTransform(), ladder->GetBoundingVolume()));

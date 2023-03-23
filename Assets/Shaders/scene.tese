@@ -11,16 +11,11 @@ uniform mat4 projMatrix;
 uniform vec3 scale;
 
 uniform bool useHeightMap;
-uniform bool useHeightMapLocal;
-
-uniform float heightMapStrength;
-
-uniform float normalPow;
-uniform float worldPosMul;
 
 in Vertex { //Sent from the TCS
 	vec4 colour;
 	vec2 texCoord;
+	vec2 texCoordPBR;
 	vec4 shadowProj;
 	vec3 normal;
 	vec3 worldPos;
@@ -31,6 +26,7 @@ in Vertex { //Sent from the TCS
 out Vertex { //Each TES works on a single vertex!
 	vec4 colour;
 	vec2 texCoord;
+	vec2 texCoordPBR;
 	vec4 shadowProj;
 	vec3 normal;
 	vec3 worldPos;
@@ -91,22 +87,12 @@ vec2 TriMixVec2(vec2 a, vec2 b, vec2 c) {
 	return val;
 }
 
-vec3 triplanarSample(sampler2D sampler, vec3 worldPos, vec3 normal){
-	vec3 xy = texture(sampler, worldPos.xy * worldPosMul).rgb;//todo uniform
-	vec3 xz = texture(sampler, worldPos.xz * worldPosMul).rgb;
-	vec3 yz = texture(sampler, worldPos.yz * worldPosMul).rgb;
-
-	vec3 myNormal = abs(normal);
-	myNormal = pow(myNormal, vec3(normalPow));//todo uniform
-	myNormal /= myNormal.x + myNormal.y + myNormal.z;
-	vec3 result = xz*myNormal.y + xy*myNormal.z + yz*myNormal.x;
-	return result;
-}
 
 void main() {
 	vec3 combinedPos = TriMixVec3(gl_in[0].gl_Position.xyz, gl_in[1].gl_Position.xyz, gl_in[2].gl_Position.xyz);
 	
 	OUT.texCoord = TriMixVec2(IN[0].texCoord, IN[1].texCoord, IN[2].texCoord);
+	OUT.texCoordPBR = TriMixVec2(IN[0].texCoordPBR, IN[1].texCoordPBR, IN[2].texCoordPBR);
 	OUT.shadowProj = TriMixVec4(IN[0].shadowProj, IN[1].shadowProj, IN[2].shadowProj);
 	OUT.normal = TriMixVec3(IN[0].normal, IN[1].normal, IN[2].normal);
 	OUT.worldPos = TriMixVec3(IN[0].worldPos, IN[1].worldPos, IN[2].worldPos);
@@ -115,9 +101,9 @@ void main() {
 	
 	vec4 worldPos = modelMatrix * vec4(combinedPos , 1);
 	
-	if(useHeightMap && useHeightMapLocal){
-		float height = triplanarSample(heightMap,OUT.worldPos,OUT.normal).x;
-		worldPos.xyz += TriMixVec3(IN[0].normal, IN[1].normal, IN[2].normal) * height * heightMapStrength;
+	if(false){
+		float height = texture(heightMap , OUT.texCoord ).x;
+		worldPos.xyz += TriMixVec3(IN[0].normal, IN[1].normal, IN[2].normal) * height * 1;
 	}
 	
 	gl_Position = projMatrix * viewMatrix * worldPos;

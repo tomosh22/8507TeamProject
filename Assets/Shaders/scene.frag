@@ -59,6 +59,7 @@ in Vertex
 {
 	vec4 colour;
 	vec2 texCoord;
+	vec2 texCoordPBR;
 	vec4 shadowProj;
 	vec3 normal;
 	vec3 worldPos;
@@ -364,7 +365,7 @@ vec4 triplanarSampleVec4(sampler2D sampler){
 void main(void)
 {
 
-	vec4 diffuse = triplanarSampleVec4(baseTex);
+	vec4 diffuse = texture(baseTex,IN.texCoordPBR);
 	diffuse.rgb = pow(diffuse.rgb, vec3(2.2));
 
 	float shadow = 1.0; // New !
@@ -376,15 +377,15 @@ void main(void)
 
 	mat3 TBN = mat3(normalize(IN.tangent),normalize(IN.binormal),normalize(IN.normal));
 
-	vec3 bumpNormal = useBumpMap ? (2.0 * triplanarSample(bumpTex) - 1.0) : IN.normal;
+	vec3 bumpNormal = useBumpMap ? (2.0 * texture(bumpTex,IN.texCoordPBR).rgb - 1.0) : IN.normal;
 	
 	//PBR stuff
-	vec3 metallic = useMetallicMap ? triplanarSample(metallicTex) : vec3(0);
-	vec3 roughness = useRoughnessMap ? vec3(1) - triplanarSample(roughnessTex) : vec3(1);
-	vec3 emission = useEmissionMap ? triplanarSample(emissionTex) : vec3(0);
-	float AO = useAOMap ? triplanarSample(AOTex).r : 1;
-	float opacity = useOpacityMap ? triplanarSample(opacityTex).r : 1;
-	float reflectivity = useGlossMap ? 1 - triplanarSample(glossTex).r : 0.8;
+	vec4 metallic = useMetallicMap ? texture(metallicTex,IN.texCoordPBR) : vec4(0);
+	vec4 roughness = useRoughnessMap ? texture(roughnessTex,IN.texCoordPBR) : vec4(0);
+	vec3 emission = useEmissionMap ? texture(emissionTex, IN.texCoordPBR).xyz : vec3(0);
+	float AO = useAOMap ? texture(AOTex,IN.texCoordPBR).r : 1;
+	float opacity = useOpacityMap ? texture(opacityTex,IN.texCoordPBR).r : 1;
+	float reflectivity = useGlossMap ? 1 - texture(glossTex,IN.texCoordPBR).r : 0.8;
 
 	emission = pow(emission, vec3(2.2));
 

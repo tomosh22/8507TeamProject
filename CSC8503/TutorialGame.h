@@ -185,7 +185,7 @@ namespace NCL {
 
 			
 			Projectile* FireBullet(playerTracking* selectedPlayerCharacter);
-			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 1.0f);
+			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 1.0f, int rotation = 0);
 			GameObject* AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inversMass = 1.0f);
 			
 

@@ -680,12 +680,12 @@ void TutorialGame::UpdateGame(float dt) {
 		frameTime -= dt;
 		UpdateAnimations(dt);
 		SelectMode();
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
+		/*glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 5, "floor");
 		DispatchComputeShaderForEachTriangle(floor, testSphereCenter, testSphereRadius, TEAM_RED,false);
 		glPopDebugGroup();
 		for (GameObject*& wall : walls) {
 			DispatchComputeShaderForEachTriangle(wall, testSphereCenter, testSphereRadius, TEAM_RED, false);
-		}
+		}*/
 		break;
 	}
 	case GAME_MODE_MAIN_MENU:
@@ -1319,7 +1319,11 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
-	floor->GetRenderObject()->pbrTextures = speakersPBR;
+	floor->GetRenderObject()->pbrTextures = crystalPBR;
+
+	float dims[3] = { scale.x ,scale.y,scale.z };
+	std::sort(dims, dims + sizeof(dims) / sizeof(float));
+	floor->GetRenderObject()->uvScale = { dims[1] / 10,dims[2] / 10 };
 
 	GameWorld::GetInstance()->AddGameObject(floor);
 
@@ -1426,7 +1430,7 @@ GameObject* TutorialGame::AddRayMarchSphereToWorld(const Vector3& position, floa
 
 
 
-GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, int rotation) {
 	GameObject* cube = new GameObject();
 
 	OBBVolume* volume = new OBBVolume(dimensions);
@@ -1439,6 +1443,12 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 
 	cube->GetPhysicsObject()->SetInverseMass(inverseMass);
 	cube->GetPhysicsObject()->InitCubeInertia();
+
+	float dims[3] = { dimensions.x ,dimensions.y,dimensions.z };
+	std::sort(dims, dims + sizeof(dims) / sizeof(float));
+	if(rotation == 0)cube->GetRenderObject()->uvScale = { dims[2] / 1,dims[1] / 1 };
+	else if(rotation == 1) cube->GetRenderObject()->uvScale = { dims[1] / 1,dims[2] / 1 };
+	else if(rotation == 2) cube->GetRenderObject()->uvScale = { dims[1]  *1,dims[2] *5 };
 
 	InitPaintableTextureOnObject(cube);
 	cube->isPaintable = true;
@@ -1538,6 +1548,9 @@ GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position,
 	myWall->GetPhysicsObject()->SetInverseMass(0);
 	myWall->GetPhysicsObject()->InitCubeInertia();
 
+	float dims[3] = { dimensions.x ,dimensions.y,dimensions.z };
+	std::sort(dims, dims + sizeof(dims)/sizeof(float));
+	myWall->GetRenderObject()->uvScale = { dims[1]/1,dims[2]/1 };
 	
 	myWall->GetRenderObject()->pbrTextures = rockPBR;
 	InitPaintableTextureOnObject(myWall);
@@ -1800,48 +1813,48 @@ void NCL::CSC8503::TutorialGame::AddStructureToWorld()
 {
 	//middle structure
 	//pillars
-	AddCubeToWorld({12, 7, 8}, {1, 7, 1}, 0.0f);
-	AddCubeToWorld({ -12, 7, 8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ 12, 7, -8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ -12, 7, -8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({12, 7, 8}, {1, 7, 1}, 0.0f,0);
+	AddCubeToWorld({ -12, 7, 8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ 12, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ -12, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
 
 	//platform 
-	AddCubeToWorld({ 0, 13, 0 }, { 13, 1, 9 }, 0.0f);
+	AddCubeToWorld({ 0, 13, 0 }, { 13, 1, 9 }, 0.0f,1);
 
 	//side structures
 	//pillars
-	AddCubeToWorld({ 87, 7, 8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ 63, 7, 8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ 87, 7, -8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ 63, 7, -8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ 87, 7, 8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ 63, 7, 8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ 87, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ 63, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
 
 	//platform 
-	AddCubeToWorld({ 75, 13, 0 }, { 13, 1, 9 }, 0.0f);
+	AddCubeToWorld({ 75, 13, 0 }, { 13, 1, 9 }, 0.0f,1);
 	AddLadderToWorld({88.5, 7, 0}, 7.0f, false);
 
 	//pillars
-	AddCubeToWorld({ -87, 7, 8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ -63, 7, 8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ -87, 7, -8 }, { 1, 7, 1 }, 0.0f);
-	AddCubeToWorld({ -63, 7, -8 }, { 1, 7, 1 }, 0.0f);
+	AddCubeToWorld({ -87, 7, 8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ -63, 7, 8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ -87, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
+	AddCubeToWorld({ -63, 7, -8 }, { 1, 7, 1 }, 0.0f,0);
 
 	//platform 
-	AddCubeToWorld({ -75, 13, 0 }, { 13, 1, 9 }, 0.0f);
+	AddCubeToWorld({ -75, 13, 0 }, { 13, 1, 9 }, 0.0f,1);
 	AddLadderToWorld({ -88.5, 7, 0 }, 7.0f, false);
 
 	//paths betweeen platforms
-	AddCubeToWorld({38, 13, 0}, {25, 1, 6}, 0.0f);
-	AddCubeToWorld({ -38, 13, 0 }, { 25, 1, 6 }, 0.0f);
+	AddCubeToWorld({38, 13, 0}, {25, 1, 6}, 0.0f,2);
+	AddCubeToWorld({ -38, 13, 0 }, { 25, 1, 6 }, 0.0f,2);
 
 	//walls on platforms
-	AddCubeToWorld({ 0, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
-	AddCubeToWorld({ 0, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+	AddCubeToWorld({ 0, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f,1);
+	AddCubeToWorld({ 0, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f,1);
 
-	AddCubeToWorld({ -75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
-	AddCubeToWorld({ -75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+	AddCubeToWorld({ -75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f,1);
+	AddCubeToWorld({ -75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f,1);
 
-	AddCubeToWorld({ 75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
-	AddCubeToWorld({ 75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+	AddCubeToWorld({ 75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f,1);
+	AddCubeToWorld({ 75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f,1);
 }
 
 void NCL::CSC8503::TutorialGame::AddTowersToWorld()

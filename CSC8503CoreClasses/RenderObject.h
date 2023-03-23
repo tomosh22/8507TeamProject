@@ -84,7 +84,7 @@ namespace NCL {
 			int currentFrame = 0;
 			std::vector<TextureBase*> matTextures;
 
-
+			Vector2 uvScale = {-1,-1};
 		protected:
 			MeshGeometry*	mesh;
 			TextureBase*	texture;

@@ -567,6 +567,9 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "normalPow"), normalPow);
 		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "worldPosMul"), worldPosMul);
 
+		if(i->uvScale != Vector2(-1,-1));
+		glUniform2fv(glGetUniformLocation(shader->GetProgramID(), "uvScale"), 1, i->uvScale.array);
+
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
 		if (i->isPaintable) {

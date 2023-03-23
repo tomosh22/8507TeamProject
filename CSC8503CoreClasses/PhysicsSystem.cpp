@@ -235,6 +235,7 @@ void PhysicsSystem::BasicCollisionDetection(float timeIncrement) {
 				ImpulseResolveCollision(*info.a, *info.b, info.point);
 				info.framesLeft = numCollisionFrames;
 				allCollisions.insert(info);
+//<<<<<<< HEAD
 				//if ((info.a)->GetName()=="Bullet") {  //means it is a bullet type
 				//	AddToCurrentCollision({ (info.a)->collisionInfo(), (info.a)->GetTransform().GetPosition(), (info.b) });
 				//}
@@ -313,6 +314,13 @@ void PhysicsSystem::BasicCollisionDetection(float timeIncrement) {
 						(*j)->ResetMrakedAndRefrencePoint();
 					}
 					
+//=======
+				if ((info.a)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
+					AddToCurrentCollision({ (info.a)->collisionInfo(),(info.a)->GetTransform().GetPosition() });
+				}
+				if ((info.b)->GetBoundingVolume()->type == VolumeType::Sphere) {  //means it is a bullet type
+					AddToCurrentCollision({ (info.b)->collisionInfo(),(info.b)->GetTransform().GetPosition() });
+//>>>>>>> 4ec7c63ba4a104ca07b664533fc89867814a7f49
 				}
 			}
 		}

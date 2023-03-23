@@ -320,6 +320,7 @@ void TutorialGame::InitialiseAssets() {
 	bunnyMesh = renderer->LoadMesh("bunny.msh", &meshes);
 
 	powerUpMesh = renderer->LoadMesh("powerUpItem.msh", &meshes);
+	healMesh = renderer->LoadMesh("HealItem.msh", &meshes);
 	LoadPlayerMesh(meshes);
 
 	for (MeshGeometry*& mesh : meshes) {

@@ -121,6 +121,7 @@ namespace NCL {
 
 			//mesh and texture for item
 			MeshGeometry* powerUpMesh = nullptr;
+			MeshGeometry* healMesh = nullptr;
 			TextureBase* powerUpTex = nullptr;
 
 			MeshGeometry* playerMesh = nullptr;

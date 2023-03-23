@@ -59,10 +59,10 @@ Vector3 NCL::CSC8503::RespawnPoint::FindSafeRespawn(int team)
 
 void NCL::CSC8503::RespawnPoint::OnCollisionBegin(GameObject* otherObject)
 {
-	if (otherObject->GetName() == "character")
+	if (otherObject->GetTeamId() == 1)
 		team2Safe = false;
 
-	if (otherObject->GetName() == "character2")
+	if (otherObject->GetTeamId() == 2)
 		team1Safe = false;
 
 	if (otherObject->GetName() == "character")
@@ -71,9 +71,9 @@ void NCL::CSC8503::RespawnPoint::OnCollisionBegin(GameObject* otherObject)
 
 void NCL::CSC8503::RespawnPoint::OnCollisionEnd(GameObject* otherObject)
 {
-	if (otherObject->GetName() == "character")
+	if (otherObject->GetTeamId() == 1)
 		team2Safe = true;
 
-	if (otherObject->GetName() == "character2")
+	if (otherObject->GetTeamId() == 2)
 		team1Safe = true;
 }

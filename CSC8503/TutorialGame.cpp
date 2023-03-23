@@ -435,7 +435,16 @@ void TutorialGame::InitialiseAssets() {
 	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg", &fencePBR->opacity));
 	threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg", &fencePBR->gloss));
 
-	
+	speakersPBR = new PBRTextures();
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_diffuse.jpg", &speakersPBR->base));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_normal.jpg", &speakersPBR->bump));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_metallic.jpg", &speakersPBR->metallic));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_roughness.jpg", &speakersPBR->roughness));
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_height.jpg", &speakersPBR->heightMap));
+	speakersPBR->emission = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_ao.jpg", &speakersPBR->ao));
+	speakersPBR->opacity = nullptr;
+	threads.push_back(std::thread(LoadTextureThread, "PBR/speakers2k/speakers_41_74_glossiness.jpg", &speakersPBR->gloss));
 	
 	
 
@@ -724,7 +733,7 @@ void TutorialGame::UpdateGame(float dt) {
 		renderer->Render();
 		Debug::UpdateRenderables(dt);
 
-		timer -= dt;
+		//timer -= dt;
 	}
 
 	if (gameEnded)
@@ -946,7 +955,7 @@ void TutorialGame::ControlPlayer(float dt) {
 	orientation = orientation + (Quaternion(Vector3(0, -dirVal *0.002f, 0), 0.0f) * orientation);
 	transform.SetOrientation(orientation.Normalised());
 	//speed
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SHIFT) && playerObject->CanJump()) {
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W) && Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT) && playerObject->CanJump()) {
 		playerObject->SpeedUp();
 	}
 	else if (!playerObject->GetSpeedUp())
@@ -1310,7 +1319,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
-	floor->GetRenderObject()->pbrTextures = grassWithWaterPBR;
+	floor->GetRenderObject()->pbrTextures = speakersPBR;
 
 	GameWorld::GetInstance()->AddGameObject(floor);
 
@@ -1551,7 +1560,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddLadderToWorld(const Vector3& position
 
 	ladder->GetTransform()
 		.SetPosition(position)
-		.SetScale(dimensions * 2);
+		.SetScale(dimensions);
 
 	ladder->SetRenderObject(new RenderObject(&ladder->GetTransform(), cubeMesh, nullptr, basicShader));
 	ladder->SetPhysicsObject(new PhysicsObject(&ladder->GetTransform(), ladder->GetBoundingVolume()));

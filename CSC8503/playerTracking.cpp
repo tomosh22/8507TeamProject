@@ -139,13 +139,13 @@ void playerTracking::ResetBullet(Projectile* bullet)
 void playerTracking::Shooting(Projectile* bullet, Vector3 target) {
 	Vector3 fireDir = (target - bullet->GetTransform().GetPosition());
 	fireDir.Normalise();
-	bullet->GetPhysicsObject()->AddForce(fireDir * weaponInUse.projectileForce);
+	bullet->GetPhysicsObject()->AddForce(fireDir * weaponInUse.projectileForce*2);
 	std::cout << "Shooting, teamId: " << teamID << ", position: " << bullet->GetTransform().GetPosition() << ", target : " << target << std::endl;
 }
 
 bool NCL::CSC8503::playerTracking::CanJump(){
 	RayCollision closetCollision;
-	Ray r = Ray(transform.GetPosition(), Vector3(0, -1, 0));
+	Ray r = Ray(transform.GetPosition()+Vector3(0,2,0), Vector3(0, -1, 0));
 	RayCollision grounded;
 	if (GameWorld::GetInstance()->Raycast(r, grounded, true)) {
 		belowObject = (playerTracking*)grounded.node;

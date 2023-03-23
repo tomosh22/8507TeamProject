@@ -15,6 +15,9 @@ uniform bool useHeightMapLocal;
 
 uniform float heightMapStrength;
 
+uniform float normalPow;
+uniform float worldPosMul;
+
 in Vertex { //Sent from the TCS
 	vec4 colour;
 	vec2 texCoord;
@@ -88,6 +91,17 @@ vec2 TriMixVec2(vec2 a, vec2 b, vec2 c) {
 	return val;
 }
 
+vec3 triplanarSample(sampler2D sampler, vec3 worldPos, vec3 normal){
+	vec3 xy = texture(sampler, worldPos.xy * worldPosMul).rgb;//todo uniform
+	vec3 xz = texture(sampler, worldPos.xz * worldPosMul).rgb;
+	vec3 yz = texture(sampler, worldPos.yz * worldPosMul).rgb;
+
+	vec3 myNormal = abs(normal);
+	myNormal = pow(myNormal, vec3(normalPow));//todo uniform
+	myNormal /= myNormal.x + myNormal.y + myNormal.z;
+	vec3 result = xz*myNormal.y + xy*myNormal.z + yz*myNormal.x;
+	return result;
+}
 
 void main() {
 	vec3 combinedPos = TriMixVec3(gl_in[0].gl_Position.xyz, gl_in[1].gl_Position.xyz, gl_in[2].gl_Position.xyz);
@@ -102,7 +116,7 @@ void main() {
 	vec4 worldPos = modelMatrix * vec4(combinedPos , 1);
 	
 	if(useHeightMap && useHeightMapLocal){
-		float height = texture(heightMap , OUT.texCoord ).x;
+		float height = triplanarSample(heightMap,OUT.worldPos,OUT.normal).x;
 		worldPos.xyz += TriMixVec3(IN[0].normal, IN[1].normal, IN[2].normal) * height * heightMapStrength;
 	}
 	

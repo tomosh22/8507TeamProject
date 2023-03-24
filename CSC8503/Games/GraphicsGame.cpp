@@ -67,7 +67,6 @@ namespace NCL::CSC8503 {
 
 		std::vector<std::thread> threads;
 
-#if 0
 		crystalPBR = new PBRTextures();
 		threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_diffuse.jpg", &(crystalPBR->base)));
 		threads.push_back(std::thread(LoadTextureThread, "PBR/crystal2k/violet_crystal_43_04_normal.jpg", &crystalPBR->bump));
@@ -111,7 +110,7 @@ namespace NCL::CSC8503 {
 		threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_ao.jpg", &grassWithWaterPBR->ao));
 		grassWithWaterPBR->opacity = nullptr;
 		threads.push_back(std::thread(LoadTextureThread, "PBR/grassWithWater1k/grass_with_water_39_67_glossiness.jpg", &grassWithWaterPBR->gloss));
-#endif
+
 		fencePBR = new PBRTextures();
 		threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_diffuse.jpg", &fencePBR->base));
 		threads.push_back(std::thread(LoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_normal.jpg", &fencePBR->bump));
@@ -303,8 +302,6 @@ namespace NCL::CSC8503 {
 			AddRayMarchSphereToWorld({ 0,0,0 }, 10);
 		}
 
-#if 1
-
 		GameObject* testSphere0 = AddSphereToWorld({50,50,50}, 10, true, false);
 		InitPaintableTextureOnObject(testSphere0);
 		testSphere0->GetRenderObject()->pbrTextures = crystalPBR;
@@ -329,7 +326,6 @@ namespace NCL::CSC8503 {
 		InitPaintableTextureOnObject(testSphere4);
 		testSphere4->GetRenderObject()->pbrTextures = fencePBR;
 		testSphere4->GetRenderObject()->useHeightMap = false;
-#endif
 
 		AddFloorToWorld(Vector3(0, -20, 0), { 100,1,100 },false);
 		wall = AddFloorToWorld({ 0,25,-50 }, { 100,1,25 }, true);

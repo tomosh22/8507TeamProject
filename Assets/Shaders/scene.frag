@@ -25,8 +25,6 @@ uniform bool useGlossMap;
 uniform float timePassed;
 uniform float timeScale;
 
-
-
 uniform vec3	lightPos;
 uniform float	lightRadius;
 uniform vec4	lightColour;

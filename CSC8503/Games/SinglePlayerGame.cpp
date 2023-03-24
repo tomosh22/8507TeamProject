@@ -210,6 +210,7 @@ namespace NCL::CSC8503 {
 
 	void SinglePlayerGame::Render()
 	{
+
 		for (size_t i = 0; i < rayMarchSpheres.size(); i++)
 		{
 			Vector3 position = rayMarchSpheres[i]->GetTransform().GetPosition();
@@ -329,14 +330,7 @@ namespace NCL::CSC8503 {
 		w = (int)(object->GetTransform().GetScale().x * TEXTURE_DENSITY);
 		h = (int)(object->GetTransform().GetScale().z * TEXTURE_DENSITY);
 		
-		object->GetRenderObject()->isPaintable = true;
-		object->GetRenderObject()->maskTex = new OGLTexture();
-		glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID());
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
+		GameTechRenderer::AttachPaintMask(object, w, h);
 	}
 
 	GameObject* SinglePlayerGame::AddTyresToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
@@ -379,6 +373,7 @@ namespace NCL::CSC8503 {
 		floor->SetRenderObject(new RenderObject(&floor->GetTransform(), floorMesh, nullptr, basicShader));
 
 		InitPaintableTextureOnObject(floor);
+		glObjectLabel(GL_TEXTURE, static_cast<OGLTexture*>(floor->GetRenderObject()->maskTex)->GetObjectID(), 10, "Floor Mask");
 
 		floor->GetRenderObject()->useHeightMap = true;
 		floor->GetRenderObject()->isPaintable = true;
@@ -529,7 +524,7 @@ namespace NCL::CSC8503 {
 
 	void SinglePlayerGame::AddMapToWorld() {
 		//floor and enclosing walls 
-		AddFloorToWorld({ 0, 0, 0 }, { 100, 1, 200 });
+		theFloor = AddFloorToWorld({ 0, 0, 0 }, { 100, 1, 200 });
 
 		//visible walls
 		walls.push_back(AddWallToWorld({ 100, 5, 0 }, { 1, 5, 200 }));

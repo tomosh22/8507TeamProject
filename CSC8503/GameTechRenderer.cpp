@@ -235,6 +235,24 @@ void GameTechRenderer::EndFrame()
 	paintedSpots.clear();
 }
 
+void GameTechRenderer::AttachPaintMask(GameObject* object, int width, int height)
+{
+	object->GetRenderObject()->isPaintable = true;
+	object->GetRenderObject()->maskTex = new OGLTexture();
+	object->GetRenderObject()->maskDimensions = { (float)width, (float)height };
+
+	GLuint maskId = ((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID();
+
+	glBindTexture(GL_TEXTURE_2D, maskId);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	const uint32_t FILL = 0;
+	glClearTexImage(maskId, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &FILL);
+}
+
 void GameTechRenderer::CreateViewDependent()
 {
 	//Create the ray march texture
@@ -1016,9 +1034,8 @@ void GameTechRenderer::RenderCamera() {
 			glUniform1i(useGlossMapLocation, pbrSettings.useGlossMap);
 
 			glUniform1i(useHeightMapLocalLocation, i->useHeightMap);
-			glActiveTexture(GL_TEXTURE0);
+
 			glBindImageTexture(0, ((OGLTexture*)i->maskTex)->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
-			glUniform1i(glGetUniformLocation(shader->GetProgramID(), "maskTex"),0);
 
 			if (i->pbrTextures != nullptr) {
 				BindTextureToShader((OGLTexture*)(*i).pbrTextures->base, "baseTex", 1);
@@ -1044,6 +1061,7 @@ void GameTechRenderer::RenderCamera() {
 				glBindImageTexture(0, ((OGLTexture*)i->GetDefaultTexture())->GetObjectID(), 0, GL_FALSE, NULL, GL_READ_ONLY, GL_R8UI);
 			}
 		}
+
 		if (i->isAnimated) {
 			int j = glGetUniformLocation(shader->GetProgramID(), "joints");
 			glUniformMatrix4fv(j, (GLsizei)i->frameMatrices.size(), false, (float*)i->frameMatrices.data());

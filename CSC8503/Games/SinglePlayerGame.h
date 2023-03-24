@@ -44,12 +44,7 @@ namespace NCL::CSC8503 {
 		MeshGeometry* cubeMesh = nullptr;
 		MeshGeometry* tyresMesh = nullptr;
 
-		
-		static void LoadTextureThread(const std::string& name, TextureBase** ptr);
 		TextureBase* basicTex = nullptr;
-
-		
-
 		PBRTextures* crystalPBR;
 		PBRTextures* spaceShipPBR;
 		PBRTextures* rockPBR;
@@ -60,6 +55,7 @@ namespace NCL::CSC8503 {
 		ShaderBase* basicShader = nullptr;
 
 		GameObject* lockedObject = nullptr;
+		GameObject* theFloor = nullptr;
 
 		void DrawImGuiSettings();
 

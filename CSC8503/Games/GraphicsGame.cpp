@@ -318,15 +318,7 @@ namespace NCL::CSC8503 {
 		int w = (int)(object->GetTransform().GetScale().x * TEXTURE_DENSITY);
 		int h = (int)(object->GetTransform().GetScale().z * TEXTURE_DENSITY);
 
-		object->GetRenderObject()->isPaintable = true;
-		object->GetRenderObject()->maskTex = new OGLTexture();
-		object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
-
-		glBindTexture(GL_TEXTURE_2D, ((OGLTexture*)object->GetRenderObject()->maskTex)->GetObjectID());
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		GameTechRenderer::AttachPaintMask(object, w, h);
 	}
 
 	GameObject* GraphicsGame::AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass, bool physics) {

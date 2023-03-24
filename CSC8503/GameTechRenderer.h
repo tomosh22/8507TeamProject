@@ -193,6 +193,8 @@ namespace NCL::CSC8503 {
 		void RenderFrame() override;
 		void EndFrame() override;
 
+		static void AttachPaintMask(GameObject* object, int width, int height);
+
 		//TODO: Create paintable object
 		inline void ApplyPaintTo(GameObject* object, Vector3 paintPos, float radius, uint8_t teamID)
 		{

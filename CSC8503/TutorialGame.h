@@ -47,7 +47,7 @@ namespace NCL {
 		};
 
 		class Projectile;
-		class TutorialGame		{
+		class TutorialGame {
 		public:
 			TutorialGame();
 			~TutorialGame();
@@ -126,6 +126,11 @@ namespace NCL {
 
 			MeshGeometry* playerMesh = nullptr;
 			std::vector<MeshGeometry*> playerMeshes;
+
+			void LoadAudio();
+			std::map<std::string, AudioSource*> audioMap;
+
+
 		protected:
 			void InitialiseAssets();
 
@@ -139,7 +144,7 @@ namespace NCL {
 			/*
 			These are some of the world/object creation functions I created when testing the functionality
 			in the module. Feel free to mess around with them to see different objects being created in different
-			test scenarios (constraints, collision types, and so on). 
+			test scenarios (constraints, collision types, and so on).
 			*/
 			//void InitGameObjects();
 
@@ -147,8 +152,8 @@ namespace NCL {
 			void InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing);
 			void InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims);
 			void InitMixedGridWorldtest(int numRows, int numCols, float rowSpacing, float colSpacing);
-			
-		
+
+
 
 			void InitDefaultFloor();
 			void InitDefaultFloorRunway();
@@ -176,25 +181,25 @@ namespace NCL {
 			GameObject* AddFloorToWorld(const Vector3& position, const Vector3& scale, bool rotated = false);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, bool render, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddRayMarchSphereToWorld(const Vector3& position, float radius);
-			
 
-			
+
+
 			GameObject* AddRunwayToWorld(const Vector3& position);
-			
+
 			Projectile* AddBulletToWorld(playerTracking* playableCharacter);
 			Projectile* useNewBullet(playerTracking* passedPlayableCharacter);
 
-			
+
 			Projectile* FireBullet(playerTracking* selectedPlayerCharacter);
 			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 1.0f, int rotation = 0);
 			GameObject* AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inversMass = 1.0f);
-			
+
 
 			GameObject* AddMonkeyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddMaxToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			GameObject* AddBunnyToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, bool physics = true);
 			GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
-			GameObject* AddWallToWorld2(const Vector3& position, Vector3 dimensions); 
+			GameObject* AddWallToWorld2(const Vector3& position, Vector3 dimensions);
 			GameObject* AddLadderToWorld(const Vector3& position, float height, bool rotated);
 
 			playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation, int team = 0, RespawnPoint* rp = nullptr);
@@ -210,19 +215,20 @@ namespace NCL {
 			void AddStructureToWorld();
 			void AddTowersToWorld();
 			void AddPlatformsToWorld();
-			void AddPowerUps(); 
-		
+
+			void AddPowerUps();
+
 			void AddRespawnPoints();
 			void LoadPlayerMesh(std::vector<MeshGeometry*> meshes);
 			MeshGeometry* GetPlayerMesh(int teamID);
 #ifdef USEVULKAN
-			GameTechVulkanRenderer*	renderer;
+			GameTechVulkanRenderer* renderer;
 #else
 
 			GameTechRenderer* renderer;
 #endif
 
-			PhysicsSystem*		physics;
+			PhysicsSystem* physics;
 
 			bool useGravity;
 			bool inSelectionMode;
@@ -237,7 +243,7 @@ namespace NCL {
 			RespawnPoint* respawnPoint; 
 
 			//Coursework Additional functionality	
-			GameObject* lockedObject	= nullptr;
+			GameObject* lockedObject = nullptr;
 			//Vector3 lockedOffset		= Vector3(0, 14, 20); - origonal
 			Vector3 lockedOffset = Vector3(0, 7, 20);
 
@@ -261,19 +267,18 @@ namespace NCL {
 
 			ObjectPool<Projectile>* objectpool;
 
-			
-			
-			
+
 			//this was me
 			OGLComputeShader* computeShader;
-			void RunComputeShader(GameObject* floor,int width, int height, int leftS, int rightS, int topT, int bottomT, int radius,Vector2 center, int teamID);
+			void RunComputeShader(GameObject* floor, int width, int height, int leftS, int rightS, int topT, int bottomT, int radius, Vector2 center, int teamID);
 			OGLShader* quadShader;
+
 			void InitQuadTexture();
 			TextureBase* floorTex = nullptr;
 			void InitPaintableTextureOnObject(GameObject* object, bool rotated = false);
 
 
-			
+
 
 			GLuint triangleSSBO;
 			GLuint debugTriangleSSBO;
@@ -295,7 +300,7 @@ namespace NCL {
 			float noHitDistance;
 			float debugValue;
 
-			
+
 
 			std::vector<GameObject*> spheres;
 			std::vector<RayMarchSphere*> rayMarchSpheres;
@@ -314,7 +319,7 @@ namespace NCL {
 			GameObject* monkey;
 			GameObject* bunny;
 			void AddDebugTriangleInfoToObject(GameObject* object);
-			
+
 			TextureBase* metalTex;
 			TextureBase* testBumpTex;
 			void SendRayMarchData();
@@ -327,10 +332,10 @@ namespace NCL {
 
 			GLuint tempSSBO;
 
-			
+
 			//Team currentTeam = Team::team2;
 			//int currentTeamInt = 1;
-			
+
 			int highestTriCount = 0;
 			
 			TextureBase* ironDiffuse = nullptr;
@@ -373,6 +378,7 @@ namespace NCL {
 			PBRTextures* rockPBR;
 			PBRTextures* grassWithWaterPBR;
 			PBRTextures* fencePBR;
+
 			PBRTextures* speakersPBR;
 			
 
@@ -396,10 +402,12 @@ namespace NCL {
 			bool pause = false;
 
 			int playerNum = 0;
+
 			float timer;
 			float endGameTimer;
 			bool gameEnded;
 			void EndGame();
+
 
 		};
 
@@ -413,5 +421,4 @@ namespace NCL {
 
 	}
 }
-
 

@@ -91,7 +91,9 @@ void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 	if (otherObject->isPaintable && otherObject != player && otherObject->GetName() != "invisible")
 	{
 		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(),explosionRadius, teamID);
+
 		player->AddScore(player->getWeaponType().addedScore);
+
 	}
 	else if (otherObject->id() == "character")
 	{
@@ -106,7 +108,9 @@ void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 			std::cout << player->GetScore() << std::endl;
 		}
 	}
+
 	//Bullet Recycle
+
 	if (player != nullptr)
 	{
 		player->ReTurnBullet(this);

@@ -36,6 +36,7 @@ Build/
 /FMOD/core/lib/x86
 /FMOD/studio/lib/x86
 
+
 /x64/Debug/OpenGLRendering.pdb
 /x64/Debug/NCLCoreClasses.pdb
 /x64/Debug/CSC8503CoreClasses.pdb
@@ -58,8 +59,4 @@ Build/
 /x64/Release
 /x64/Debug
 
-x64
-/x64/Debug/CSC8503.pdb
-/x64/Debug/NCLCoreClasses.pdb
-/x64/Debug/CSC8503CoreClasses.pdb
-/x64/Debug/OpenGLRendering.pdb
+

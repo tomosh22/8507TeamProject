@@ -161,6 +161,8 @@ namespace NCL {
 
 			//this was me
 			void RenderFullScreenQuadWithTexture(GLuint texture);
+			void DrawImGuiMainAssist();
+			void DrawImGuiStatistics();
 			void ImGui();
 
 			void LoadSkybox();

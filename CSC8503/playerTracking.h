@@ -10,7 +10,8 @@
 #include "NetworkObject.h"
 #include <map>
 #include "MeshAnimation.h"
-#include "RespawnPoint.h"
+#include "AudioSource.h"
+#include "AudioSystem.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -76,10 +77,6 @@ namespace NCL {
 				weaponInUse = newWeponType;
 			}
 
-			void SetRespawn(RespawnPoint* rp)
-			{
-				respawn = rp;
-			}
 
 			void addToBulletsUsed(Projectile* bulletToAdd) {
 				bulletsUsed.push_back(bulletToAdd);
@@ -163,17 +160,12 @@ namespace NCL {
 				playerProjectile->setGunType(weponType);
 			}*/
 
-			void OnCollisionBegin(GameObject* otherObject);
-			void OnCollisionEnd(GameObject* otherObject);
-
 			Projectile* getPlayerProjectile() {
 				return playerProjectile;
 			}
 
 			void TakeDamage(int damage);
-			void PlayerDie();
-			void PlayerRespawn();
-			void Respawning(float dt);
+
 
 
 			void FireBullet();
@@ -206,10 +198,16 @@ namespace NCL {
 				return currentAniamtion;
 			}
 			void TransferAnimation(std::string animationName);
+			void LoadAniamtion();
+			void LoadAudio();
+
+			std::map<std::string, AudioSource*> audioMap;
 
 			bool GetOnLadder() {
 				return onLadder;
 			}
+			bool onLadder;
+			bool playerDead;
 
 			int GetScore()
 			{
@@ -224,6 +222,7 @@ namespace NCL {
 			bool onLadder;
 			bool playerDead;
 
+
 			float playerYawOrientation;
 			float playerPitchOrientation;
 
@@ -234,8 +233,7 @@ namespace NCL {
 			Gun weaponInUse;
 			std::vector<Gun> weaponPool;
 			//Vector4 paintColor;
-			RespawnPoint* respawn;
-
+		
 			float moveSpeed;
 			float sprintTimer;
 			float speedUpTimer;
@@ -244,6 +242,7 @@ namespace NCL {
 			float damageUpTimer; 
 
 			GameObject* belowObject = nullptr;
+
 
 			float fireOffset; //this is is offset of firing position
 			Vector3 forwad;
@@ -264,5 +263,6 @@ namespace NCL {
 
 
 	}
+
 
 }

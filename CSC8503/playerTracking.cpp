@@ -1,8 +1,8 @@
+
 #include"playerTracking.h"
 #include <iostream>
 #include"PhysicsObject.h"
 #include "TutorialGame.h"
-#include "RespawnPoint.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -32,14 +32,11 @@ playerTracking::playerTracking()
 		weaponInUse = machineGun;
 		weaponPool.push_back(machineGun);
 		weaponPool.push_back(rocket);
-
-		animationMap["Idle"] = new  NCL::MeshAnimation("Idle.anm");
-		animationMap["MoveF"] = new  NCL::MeshAnimation("RunForward.anm");
-		animationMap["MoveB"] = new  NCL::MeshAnimation("RunBackward.anm");
-		animationMap["MoveL"] = new  NCL::MeshAnimation("RunLeft.anm");
-		animationMap["MoveR"] = new  NCL::MeshAnimation("RunRight.anm");
-		currentAniamtion = animationMap["Idle"];
-
+		LoadAniamtion();
+		LoadAudio();
+		audioMap["walk"]->Play();
+		audioMap["walk"]->SetVolume(5.0f);
+		
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
@@ -55,6 +52,13 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 		TakeDamage(50);
 	}
 	GetRenderObject()->anim = currentAniamtion;
+	audioMap["walk"]->Pause(currentAniamtion == animationMap["Idle"]);
+
+	
+	for (auto const& [key, val] : audioMap)
+	{
+		val->update(transform.GetPosition().x,transform.GetPosition().y,transform.GetPosition().z);
+	}
 }
 
 void NCL::CSC8503::playerTracking::Rotate()
@@ -117,6 +121,7 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 {
 	Projectile* newBullet = bulletPool->GetObject2();
 	newBullet->SetName("Bullet");
+	audioMap["shoot"]->Play();
 	ResetBullet(newBullet);
 	coolDownTimer = weaponInUse.rateOfFire;
 	Shooting(newBullet, target);
@@ -125,9 +130,11 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 //Call this function to init a new Bullet
 void playerTracking::ResetBullet(Projectile* bullet)
 {
+
 	bullet->GetTransform().SetScale(Vector3(weaponInUse.ProjectileSize, weaponInUse.ProjectileSize, weaponInUse.ProjectileSize))
 		.SetPosition(transform.GetPosition() + transform.GetDirVector().Normalised()*3.0f + Vector3(0.0f, 2.0f, 0.0f));
 	bullet->GetPhysicsObject()->SetInverseMass(weaponInUse.weight);;
+
 	bullet->SetTeamId(teamID);
 	bullet->SetPlayer(this);
 	bullet->setExplosionRadius(weaponInUse.radius);
@@ -194,18 +201,6 @@ void NCL::CSC8503::playerTracking::Weapon(float dt)
 	}
 }
 
-void NCL::CSC8503::playerTracking::OnCollisionBegin(GameObject* otherObject)
-{
-	if (otherObject->GetName() == "ladder")
-		onLadder = true;
-}
-
-void NCL::CSC8503::playerTracking::OnCollisionEnd(GameObject* otherObject)
-{
-	if (otherObject->GetName() == "ladder")
-		onLadder = false;
-}
-
 void NCL::CSC8503::playerTracking::TakeDamage(int damage)
 {
 	if (shield <= 0)
@@ -250,6 +245,7 @@ void NCL::CSC8503::playerTracking::Respawning(float dt)
 		{
 			PlayerRespawn();
 		}
+		std::cout << "Player Dead" << std::endl;
 	}
 }
 
@@ -333,6 +329,8 @@ void playerTracking::UpdateAction(ActionPacket packet) {
 	}
 }
 
+//UPDATE audioSource Pos 
+
 void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
 {
 
@@ -342,3 +340,24 @@ void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
 	}
 	currentAniamtion = animationMap[animationName];
 }
+
+
+void NCL::CSC8503::playerTracking::LoadAniamtion()
+{
+	animationMap["Idle"] = new  NCL::MeshAnimation("Idle.anm");
+	animationMap["MoveF"] = new  NCL::MeshAnimation("RunForward.anm");
+	animationMap["MoveB"] = new  NCL::MeshAnimation("RunBackward.anm");
+	animationMap["MoveL"] = new  NCL::MeshAnimation("RunLeft.anm");
+	animationMap["MoveR"] = new  NCL::MeshAnimation("RunRight.anm");
+	currentAniamtion = animationMap["Idle"];
+}
+
+void NCL::CSC8503::playerTracking::LoadAudio()
+{
+	audioMap["walk"] = new AudioSource("footStep.wav", FMOD_3D||FMOD_LOOP_NORMAL );
+	audioMap["shoot"] = new AudioSource("shoot.wav", FMOD_3D );
+	audioMap["powerUp"] = new AudioSource("powerUp.wav", FMOD_3D );
+	audioMap["die"] = new AudioSource("die.wav", FMOD_3D );
+}
+
+

@@ -16,10 +16,13 @@
 #include"PropSystem.h"
 #include "Projectile.h"
 
+
 #include<iostream>
 #include"PropSystem.h"
 #include <chrono>
 #include "RespawnPoint.h"
+
+#include "AudioSystem.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -475,10 +478,17 @@ void TutorialGame::InitialiseAssets() {
 
 	characterShader = new OGLShader("SkinningVertex.vert", "SkinningFrag.frag");
 
+	LoadAudio();
+
 	InitQuadTexture();
 
 	InitCamera();
 	InitWorld();
+}
+
+void NCL::CSC8503::TutorialGame::LoadAudio()
+{
+	audioMap["BK"] = new AudioSource("BKMusic.wav", FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
 }
 
 void TutorialGame::UpdateWorldCamera(float dt) {
@@ -975,13 +985,13 @@ void TutorialGame::ControlPlayer(float dt) {
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 		if (playerObject->GetOnLadder() && Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
 			playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + Vector3{0,1,0} *dt * speed);
-			//std::cout << "going up " << std::endl;
+
 		}
 		else
 		{
 			playerObject->GetTransform().SetPosition(playerObject->GetTransform().GetPosition() + fwdAxis * dt * speed);
 			playerObject->TransferAnimation("MoveF");
-			//std::cout << "going forward " << std::endl;
+
 		}
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
@@ -1024,7 +1034,14 @@ void TutorialGame::ControlPlayer(float dt) {
 	{
 		renderer->drawCrosshair = false;
 	}
+
 	playerObject->PrintPlayerInfo();
+
+	Vector3 pos = playerObject->GetTransform().GetPosition();
+
+
+	AudioSystem::GetInstance()->update(pos.x, pos.y, pos.z);
+
 }
 
 void TutorialGame::LockedObjectMovement() {
@@ -1156,12 +1173,23 @@ void TutorialGame::InitSingleGameMode() {
 	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
 
+	//add player
+
+	//InitGameObjects();
+	//floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	//InitPaintableTextureOnObject(floor);
+	audioMap["BK"]->Play();
+	audioMap["BK"]->SetVolume(0.25f);
 	//map
 	AddMapToWorld2();
 	AddStructureToWorld();
 	AddTowersToWorld();
 	AddPowerUps();
 	AddRespawnPoints();
+	//InitGameObjects();
+	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	InitPaintableTextureOnObject(floor);
+
 
 	//add player
 	auto q = Quaternion();
@@ -1293,6 +1321,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position, const Vector3
 	floor->GetTransform()
 		.SetScale(scale * 2)
 		.SetPosition(position);
+	floor->SetTeamId(TEAM_DEFAULT);
 
 	floor->isPaintable = true;
 
@@ -1675,6 +1704,9 @@ GameObject* TutorialGame::AddEnemyGoatToWorld(const Vector3& position) {
 	return BadGoat;
 }
 
+
+
+
 GameObject* TutorialGame::AddDebugTriangleToWorld(const Vector3& position) {
 	GameObject* triangle = new GameObject();
 
@@ -1744,6 +1776,7 @@ void TutorialGame::AddMapToWorld() {
 
 }
 
+
 void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 {
 	GameObject* invisWall;
@@ -1759,6 +1792,9 @@ void NCL::CSC8503::TutorialGame::AddMapToWorld2()
 
 	walls.push_back(AddWallToWorld2({ 0, 5, 200 }, { 100, 5, 1 }));
 	walls.push_back(AddWallToWorld2({ 0, 5, -200 }, { 100, 5, 1 }));
+
+
+
 
 	//invisible walls
 	/*invisWall = AddWallToWorld2({ 100, 5, 0 }, { 1, 50, 200 });

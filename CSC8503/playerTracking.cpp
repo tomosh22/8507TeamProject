@@ -160,7 +160,7 @@ bool NCL::CSC8503::playerTracking::CanJump(){
 	if (GameWorld::GetInstance()->Raycast(r, grounded, true)) {
 		belowObject = (playerTracking*)grounded.node;
 		std::cout << "obj name: " << belowObject->GetName() << std::endl;
-		float distanceFromPlatform = abs((this->GetTransform().GetPosition().y+2) - (belowObject->GetTransform().GetPosition().y));
+		float distanceFromPlatform = abs((this->GetTransform().GetPosition().y + 2) - (belowObject->GetTransform().GetPosition().y));
 		if (distanceFromPlatform < 2 && belowObject->GetName() != "Bulllet" && belowObject->GetName() != "character") {
 			return true;
 		}

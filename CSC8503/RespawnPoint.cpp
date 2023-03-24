@@ -10,16 +10,17 @@ using namespace CSC8503;
 
 NCL::CSC8503::RespawnPoint::RespawnPoint(Vector3 pos)
 {
-	Vector3 size = { 20.0f, 1.0f, 20.0f };
+	Vector3 size = { 20.0f, 6.0f, 20.0f };
 	AABBVolume* volume = new AABBVolume(size);
 	SetBoundingVolume((CollisionVolume*)volume);
 	GetTransform()
 		.SetScale(size)
 		.SetPosition(pos);
 
-	//SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->cubeMesh, nullptr, NetworkedGame::GetInstance()->basicShader));
+	SetRenderObject(new RenderObject(&GetTransform(), NetworkedGame::GetInstance()->cubeMesh, nullptr, NetworkedGame::GetInstance()->basicShader));
 	SetPhysicsObject(new PhysicsObject(&GetTransform(), GetBoundingVolume()));
 	GetPhysicsObject()->SetInverseMass(0.0f);
+	GetPhysicsObject()->InitCubeInertia();
 	
 	SetName("RespawnPoint");
 	SetLayerMask(Trigger);
@@ -66,7 +67,7 @@ void NCL::CSC8503::RespawnPoint::OnCollisionBegin(GameObject* otherObject)
 		team1Safe = false;
 
 	if (otherObject->GetName() == "character")
-		std::cout << "Colliding with player" << std::endl;
+		std::cout << "Entering respawn" << std::endl;
 }
 
 void NCL::CSC8503::RespawnPoint::OnCollisionEnd(GameObject* otherObject)
@@ -76,4 +77,7 @@ void NCL::CSC8503::RespawnPoint::OnCollisionEnd(GameObject* otherObject)
 
 	if (otherObject->GetTeamId() == 2)
 		team1Safe = true;
+
+	if (otherObject->GetName() == "character")
+		std::cout << "Exiting respawn" << std::endl;
 }

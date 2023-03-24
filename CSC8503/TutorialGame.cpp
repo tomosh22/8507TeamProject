@@ -1453,7 +1453,8 @@ GameObject* TutorialGame::AddRayMarchSphereToWorld(const Vector3& position, floa
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, int rotation) {
 	GameObject* cube = new GameObject();
 
-	OBBVolume* volume = new OBBVolume(dimensions);
+	//OBBVolume* volume = new OBBVolume(dimensions);
+	AABBVolume* volume = new AABBVolume(dimensions);
 	cube->SetBoundingVolume((CollisionVolume*)volume);
 
 	cube->GetTransform().SetPosition(position).SetScale(dimensions);
@@ -1554,7 +1555,8 @@ GameObject* NCL::CSC8503::TutorialGame::AddWallToWorld2(const Vector3& position,
 {
 	GameObject* myWall = new GameObject();
 
-	OBBVolume* volume = new OBBVolume(dimensions);
+	//OBBVolume* volume = new OBBVolume(dimensions);
+	AABBVolume* volume = new AABBVolume(dimensions);
 	myWall->SetBoundingVolume((CollisionVolume*)volume);
 
 	myWall->GetTransform()
@@ -1916,6 +1918,7 @@ void NCL::CSC8503::TutorialGame::AddPowerUps()
 
 void NCL::CSC8503::TutorialGame::AddRespawnPoints()
 {
+	float height = 0.0f;
 	//back respawn points
 	respawnPoint = new RespawnPoint({ 0, 5, 150 });
 	respawnPoint->AddRespawnPoint(respawnPoint);
@@ -1965,7 +1968,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 
 	playerTracking* character = new playerTracking();
 	OBBVolume* volume = new OBBVolume(Vector3{ 1.0,1.0,1.0 });
-
+	
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
 	character->GetTransform().SetScale(Vector3(meshSize, meshSize, meshSize)).SetPosition(position).SetOrientation(orientation);

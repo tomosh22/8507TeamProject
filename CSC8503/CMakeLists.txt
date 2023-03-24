@@ -50,7 +50,7 @@ set(Header_Files
 	"GameManager.h"
 	"AudioSystem.h"
     "RayMarchSphere.h"
-
+    	"AudioSource.h"
 
 )
 source_group("Header Files" FILES ${Header_Files})
@@ -70,7 +70,7 @@ set(Source_Files
     "RespawnPoint.cpp"
 
     "RayMarchSphere.cpp"
-
+    	  "AudioSource.cpp"
 )
 
 if(USE_VULKAN)

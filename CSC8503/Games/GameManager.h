@@ -4,7 +4,27 @@
 #include "GameTechRenderer.h"
 #include "GameWorld.h"
 
+#include <mutex>
+
 namespace NCL::CSC8503 {
+	class PaintSphere : public GameObject
+	{
+	public:
+		Vector3 center;
+		float radius;
+		Vector3 color;
+	};
+	struct TextureThing {
+		char* texData = nullptr;
+		int width = 0;
+		int height = 0;
+		int channels = 0;
+		int flags = 0;
+
+		TextureBase** myPointer;
+
+		TextureThing(char* texData, int width, int height, int channels, int flags, TextureBase** myPointer) : texData(texData), width(width), height(height), channels(channels), flags(flags), myPointer(myPointer) {}
+	};
 
 	enum class GameType
 	{

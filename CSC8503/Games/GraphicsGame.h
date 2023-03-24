@@ -6,13 +6,7 @@ namespace NCL::CSC8503 {
 
 	struct PBRTextures;
 
-	class PaintSphere : public GameObject
-	{
-	public:
-		Vector3 center;
-		float radius;
-		Vector3 color;
-	};
+	
 
 	class GraphicsGame : public GameBase
 	{

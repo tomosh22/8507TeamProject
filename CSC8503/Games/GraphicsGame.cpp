@@ -11,17 +11,7 @@
 using namespace NCL;
 using namespace CSC8503;
 
-struct TextureThing {
-	char* texData = nullptr;
-	int width = 0;
-	int height = 0;
-	int channels = 0;
-	int flags = 0;
 
-	TextureBase** myPointer;
-
-	TextureThing(char* texData, int width, int height, int channels, int flags, TextureBase** myPointer) : texData(texData), width(width), height(height), channels(channels), flags(flags), myPointer(myPointer) {}
-};
 
 std::vector<TextureThing> things;
 std::mutex texturesMutex;

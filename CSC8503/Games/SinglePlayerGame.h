@@ -39,7 +39,6 @@ namespace NCL::CSC8503 {
 		Vector3 testSphereCenter;
 		float testSphereRadius;
 
-		unsigned int highestTriCount = 0;
 		MeshGeometry* sphereMesh = nullptr;
 		MeshGeometry* floorMesh = nullptr;
 		MeshGeometry* playerMesh = nullptr;

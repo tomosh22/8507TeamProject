@@ -84,6 +84,8 @@ namespace NCL {
 			int currentFrame = 0;
 			std::vector<TextureBase*> matTextures;
 
+			bool useTriplanarMapping = true;
+
 
 		protected:
 			MeshGeometry*	mesh;

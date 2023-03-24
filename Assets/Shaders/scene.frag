@@ -46,6 +46,8 @@ uniform float noiseNormalNoiseMult;
 uniform bool toneMap = false;
 uniform float exposure = 1;
 
+uniform bool useTriplanarMapping;
+
 layout(std430, binding = 4) buffer PaintSSBO{
 	int paintData[];
 };
@@ -295,9 +297,35 @@ vec3 sampleTeamColor(vec2 uv) {
 	return color;
 }
 
+vec3 triplanarSample(sampler2D sampler){
+	if(!useTriplanarMapping) return texture(sampler,IN.texCoord).rgb;
+	vec3 xy = texture(sampler, IN.worldPos.xy * .1).rgb;//todo uniform
+	vec3 xz = texture(sampler, IN.worldPos.xz * .1).rgb;
+	vec3 yz = texture(sampler, IN.worldPos.yz * .1).rgb;
+
+	vec3 myNormal = abs(IN.normal);
+	myNormal = pow(myNormal, vec3(1));//todo uniform
+	myNormal /= myNormal.x + myNormal.y + myNormal.z;
+	vec3 result = xz*myNormal.y + xy*myNormal.z + yz*myNormal.x;
+	return result;
+}
+
+vec4 triplanarSampleVec4(sampler2D sampler){
+	if(!useTriplanarMapping) return texture(sampler,IN.texCoord);
+	vec4 xy = texture(sampler, IN.worldPos.xy * .1);//todo uniform
+	vec4 xz = texture(sampler, IN.worldPos.xz * .1);
+	vec4 yz = texture(sampler, IN.worldPos.yz * .1);
+
+	vec3 myNormal = abs(IN.normal);
+	myNormal = pow(myNormal, vec3(1));//todo uniform
+	myNormal /= myNormal.x + myNormal.y + myNormal.z;
+	vec4 result = xz*myNormal.y + xy*myNormal.z + yz*myNormal.x;
+	return result;
+}
+
 void main(void)
 {
-	vec4 diffuse = texture(baseTex,IN.texCoord);
+	vec4 diffuse = triplanarSampleVec4(baseTex);
 	diffuse.rgb = pow(diffuse.rgb, vec3(2.2));
 
 	float shadow = 1.0; // New !
@@ -309,15 +337,15 @@ void main(void)
 
 	mat3 TBN = mat3(normalize(IN.tangent),normalize(IN.binormal),normalize(IN.normal));
 
-	vec3 bumpNormal = useBumpMap ? (2.0 * texture(bumpTex,IN.texCoord).rgb - 1.0) : IN.normal;
+	vec3 bumpNormal = useBumpMap ? (2.0 * triplanarSample(bumpTex) - 1.0) : IN.normal;
 	
 	//PBR stuff
-	vec4 metallic = useMetallicMap ? texture(metallicTex,IN.texCoord) : vec4(0);
-	vec4 roughness = useRoughnessMap ? texture(roughnessTex,IN.texCoord) : vec4(0);
-	vec3 emission = useEmissionMap ? texture(emissionTex, IN.texCoord).xyz : vec3(0);
-	float AO = useAOMap ? texture(AOTex,IN.texCoord).r : 1;
-	float opacity = useOpacityMap ? texture(opacityTex,IN.texCoord).r : 1;
-	float reflectivity = useGlossMap ? texture(glossTex,IN.texCoord).r : 0.8;
+	vec3 metallic = useMetallicMap ? triplanarSample(metallicTex) : vec3(0);
+	vec3 roughness = useRoughnessMap ? triplanarSample(roughnessTex) : vec3(0);
+	vec3 emission = useEmissionMap ? triplanarSample(emissionTex) : vec3(0);
+	float AO = useAOMap ? triplanarSample(AOTex).r : 1;
+	float opacity = useOpacityMap ? triplanarSample(opacityTex).r : 1;
+	float reflectivity = useGlossMap ? triplanarSample(glossTex).r : 0.8;
 
 	emission = pow(emission, vec3(2.2));
 
@@ -345,7 +373,7 @@ void main(void)
 		bumpNormal = normalize(bumpNormal + normalSkew);
 
 		vec4 paintColor = vec4(maskAlbedo, 1.0);
-		point(paintColor,paintColor,bumpNormal,0,0.1,0.5);
+		point(paintColor,paintColor,normalize(bumpNormal),0,0.1,0.5);
 		paintColor *= shadow;
 
 		fragColor.rgb = mix(baseColor.rgb, paintColor.rgb, opacity);

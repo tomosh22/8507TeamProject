@@ -354,6 +354,7 @@ namespace NCL::CSC8503 {
 
 		tyres->GetRenderObject()->isPaintable = true;
 		tyres->GetRenderObject()->pbrTextures = tyresPBR;
+		tyres->GetRenderObject()->useTriplanarMapping = false;
 
 		world->AddGameObject(tyres);
 		tyres->SetName("tyres");

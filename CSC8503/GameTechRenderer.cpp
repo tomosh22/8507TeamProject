@@ -1019,6 +1019,8 @@ void GameTechRenderer::RenderCamera() {
 		glUniform1i(glGetUniformLocation(shader->GetProgramID(), "toneMap"), toneMap);
 		glUniform1f(glGetUniformLocation(shader->GetProgramID(), "exposure"), exposure);
 
+		glUniform1i(glGetUniformLocation(shader->GetProgramID(), "useTriplanarMapping"), i->useTriplanarMapping);
+
 		//glActiveTexture(GL_TEXTURE0);
 		//BindTextureToShader((OGLTexture*)(*i).GetDefaultTexture(), "mainTex", 0);
 

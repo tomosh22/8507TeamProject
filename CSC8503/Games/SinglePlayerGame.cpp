@@ -2,7 +2,6 @@
 
 #include "RenderObject.h"
 #include "PhysicsObject.h"
-#include "PhysicsSystem.h"
 #include "TextureLoader.h"
 #include "PropSystem.h"
 
@@ -44,8 +43,7 @@ namespace NCL::CSC8503 {
 		testSphereCenter = Vector3(0, 0, 0);
 		testSphereRadius = 10;
 
-		physics = new PhysicsSystem(*world);
-		propSystem = new PropSystem(world);
+		
 
 		//Start the game with the camera enabled
 		Window::GetWindow()->SeizeMouse(true);
@@ -74,7 +72,7 @@ namespace NCL::CSC8503 {
 		LoadPBRTextures();
 		
 		world->ClearAndErase();
-		physics->Clear();
+		
 
 		InitCamera();
 
@@ -137,7 +135,6 @@ namespace NCL::CSC8503 {
 			sphere->color = colours[i % 6];
 		}
 
-		physics->Update(dt);
 	}
 
 	void SinglePlayerGame::DrawImGuiSettings()
@@ -216,6 +213,25 @@ namespace NCL::CSC8503 {
 		world->GetMainCamera()->SetYaw(315.0f);
 		world->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
 		lockedObject = nullptr;
+	}
+
+	void SinglePlayerGame::Render()
+	{
+		for (size_t i = 0; i < rayMarchSpheres.size(); i++)
+		{
+			Vector3 position = rayMarchSpheres[i]->GetTransform().GetPosition();
+			Vector3 color = rayMarchSpheres[i]->color;
+			float radius = rayMarchSpheres[i]->radius;
+
+			renderer->SubmitRayMarchedSphere(position, color, radius);
+		}
+
+		//renderer->ApplyPaintTo(wall, testSphereCenter, testSphereRadius, 7);
+		world->OperateOnContents([&](GameObject* object)
+			{
+				if (!object->GetRenderObject() || !object->GetRenderObject()->isPaintable) return;
+				renderer->ApplyPaintTo(object, testSphereCenter, testSphereRadius, 7);
+			});
 	}
 
 	void SinglePlayerGame::LoadPBRTextures() {

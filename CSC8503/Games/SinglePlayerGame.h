@@ -28,9 +28,8 @@ namespace NCL::CSC8503 {
 		SinglePlayerGame(GameManager* manager, GameWorld* world, GameTechRenderer* renderer);
 		~SinglePlayerGame();
 		void Update(float dt) override;
+		void Render() override;
 	private:
-		PhysicsSystem* physics = nullptr;
-		PropSystem* propSystem = nullptr;
 
 		bool controllingCamera = false;
 

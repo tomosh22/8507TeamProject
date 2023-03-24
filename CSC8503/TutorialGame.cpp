@@ -1205,9 +1205,16 @@ void TutorialGame::InitOnlineGame(int teamID) {
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
 	playerObject->SetTeamId(teamID);
 
-	//InitGameObjects();
-	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
-	InitPaintableTextureOnObject(floor);
+	////InitGameObjects();
+	//floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
+	//InitPaintableTextureOnObject(floor);
+
+	//map
+	AddMapToWorld2();
+	AddStructureToWorld();
+	AddTowersToWorld();
+	AddPowerUps();
+	AddRespawnPoints();
 
 #ifdef TRI_DEBUG
 	AddDebugTriangleInfoToObject(floor);

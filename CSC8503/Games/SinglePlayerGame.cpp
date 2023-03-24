@@ -48,6 +48,7 @@ namespace NCL::CSC8503 {
 		propSystem = new PropSystem(world);
 
 		//Start the game with the camera enabled
+		Window::GetWindow()->SeizeMouse(true);
 		controllingCamera = true;
 
 		//Basic reosurces
@@ -86,6 +87,14 @@ namespace NCL::CSC8503 {
 		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q))
 		{
 			controllingCamera = !controllingCamera;
+			if (!controllingCamera)
+			{
+				Window::GetWindow()->SeizeMouse(false);
+			}
+			else
+			{
+				Window::GetWindow()->SeizeMouse(true);
+			}
 		}
 		else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::ESCAPE))
 		{

@@ -479,11 +479,11 @@ namespace NCL::CSC8503 {
 
 	void SinglePlayerGame::AddTowersToWorld()
 	{
-		/*	AddCubeToWorld({70, 12.5, 150}, {2.5 , 12.5, 2.5}, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
-			AddLadderToWorld({ 70, 12.5, 153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;
+		AddCubeToWorld({ 70, 12.5, 150 }, { 2.5 , 12.5, 2.5 }, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
+		AddLadderToWorld({ 70, 12.5, 153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;
 
-			AddCubeToWorld({ -70, 12.5, -150 }, { 2.5 , 12.5, 2.5 }, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
-			AddLadderToWorld({ -70, 12.5, -153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;*/
+		AddCubeToWorld({ -70, 12.5, -150 }, { 2.5 , 12.5, 2.5 }, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
+		AddLadderToWorld({ -70, 12.5, -153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;
 	}
 
 	void SinglePlayerGame::AddMapToWorld() {

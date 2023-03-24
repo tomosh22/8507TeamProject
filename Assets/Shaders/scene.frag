@@ -48,6 +48,8 @@ uniform float exposure = 1;
 
 uniform bool useTriplanarMapping;
 
+uniform int emissionStrength;
+
 layout(std430, binding = 4) buffer PaintSSBO{
 	int paintData[];
 };
@@ -323,6 +325,8 @@ vec4 triplanarSampleVec4(sampler2D sampler){
 	return result;
 }
 
+
+
 void main(void)
 {
 	vec4 diffuse = triplanarSampleVec4(baseTex);
@@ -345,15 +349,15 @@ void main(void)
 	vec3 emission = useEmissionMap ? triplanarSample(emissionTex) : vec3(0);
 	float AO = useAOMap ? triplanarSample(AOTex).r : 1;
 	float opacity = useOpacityMap ? triplanarSample(opacityTex).r : 1;
-	float reflectivity = useGlossMap ? triplanarSample(glossTex).r : 0.8;
+	float reflectivity = useGlossMap ? triplanarSample(glossTex).r : 0.9;
 
 	emission = pow(emission, vec3(2.2));
 
 	vec4 baseColor = vec4(0,0,0,1);
-	point(baseColor,diffuse,bumpNormal,metallic.r,roughness.r,reflectivity);
+	point(baseColor,diffuse,bumpNormal,length(metallic),length(roughness),reflectivity);
 	baseColor.rgb += diffuse.rgb * 0.5 * pow(AO,2);
 	baseColor.rgb *= shadow;
-	baseColor.rgb += emission * 100;
+	baseColor.rgb += emission * emissionStrength;
 	baseColor.a = 1;
 
 	//Paint stuff

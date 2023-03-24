@@ -176,6 +176,7 @@ namespace NCL::CSC8503 {
 			ImGui::Checkbox("Opacity Map", &settings.useOpacityMap);
 			ImGui::Checkbox("Gloss Map", &settings.useGlossMap);
 			ImGui::SliderFloat("Heightmap Strength", &settings.heightMapStrength, 0, 10);
+			ImGui::SliderFloat("Emission Strength", &settings.emissionStrength, 0, 10000);
 
 			ImGui::TreePop();
 		}
@@ -190,7 +191,7 @@ namespace NCL::CSC8503 {
 
 		if (ImGui::TreeNode("HDR")) {
 			ImGui::Checkbox("Tone map", &renderer->toneMap);
-			ImGui::SliderFloat("Edge Threshold", &renderer->exposure, -10, 10);
+			ImGui::SliderFloat("Exposure", &renderer->exposure, -10, 10);
 			ImGui::TreePop();
 		}
 

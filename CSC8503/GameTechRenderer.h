@@ -123,6 +123,7 @@ namespace NCL::CSC8503 {
 			bool useAOMap = true;
 			bool useOpacityMap = true;
 			bool useGlossMap = true;
+			float emissionStrength = 100;
 		} pbrSettings;
 
 		float timePassed = 0.419f;

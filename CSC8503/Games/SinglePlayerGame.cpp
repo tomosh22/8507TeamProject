@@ -55,6 +55,7 @@ namespace NCL::CSC8503 {
 		playerMesh = renderer->LoadMesh("Character/Character.msh");
 		playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
 		cubeMesh = renderer->LoadMesh("cube.msh");
+		tyresMesh = renderer->LoadMesh("tyres.msh");
 
 		basicTex = renderer->LoadTexture("checkerboard.png");
 		basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc", "scene.tese");
@@ -283,6 +284,17 @@ namespace NCL::CSC8503 {
 		threads.push_back(std::thread(SinglePlayerLoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_opacity.jpg", &fencePBR->opacity));
 		threads.push_back(std::thread(SinglePlayerLoadTextureThread, "PBR/fence1k/small_old_wooden_fence_47_66_glossiness.jpg", &fencePBR->gloss));
 
+		tyresPBR = new PBRTextures();
+		threads.push_back(std::thread(SinglePlayerLoadTextureThread, "PBR/tyres/diffuse 2k.jpeg", &tyresPBR->base));
+		threads.push_back(std::thread(SinglePlayerLoadTextureThread, "PBR/tyres/normal 2k.jpeg", &tyresPBR->bump));
+		threads.push_back(std::thread(SinglePlayerLoadTextureThread, "PBR/tyres/metalic 2k.jpeg", &tyresPBR->metallic));
+		threads.push_back(std::thread(SinglePlayerLoadTextureThread, "PBR/tyres/roughness 2k.jpeg", &tyresPBR->roughness));
+		tyresPBR->heightMap = nullptr;
+		tyresPBR->emission = nullptr;
+		threads.push_back(std::thread(SinglePlayerLoadTextureThread, "PBR/tyres/AO 2k.jpeg", &tyresPBR->ao));
+		tyresPBR->opacity = nullptr;
+		tyresPBR->gloss = nullptr;
+
 		for (std::thread& thread : threads) {
 			thread.join();
 		}
@@ -304,6 +316,7 @@ namespace NCL::CSC8503 {
 		AddMapToWorld();
 		AddStructureToWorld();
 		AddTowersToWorld();
+
 		//AddPowerUps();
 		//AddRespawnPoints();
 
@@ -324,6 +337,34 @@ namespace NCL::CSC8503 {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		object->GetRenderObject()->maskDimensions = { (float)w,(float)h };
+	}
+
+	GameObject* SinglePlayerGame::AddTyresToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+		GameObject* tyres = new GameObject();
+
+		AABBVolume* volume = new AABBVolume(dimensions);
+		tyres->SetBoundingVolume((CollisionVolume*)volume);
+
+		tyres->GetTransform()
+			.SetPosition(position)
+			.SetScale(dimensions * 2)
+			.SetOrientation(Quaternion::AxisAngleToQuaterion({ 1,0,0 }, 270));
+
+		tyres->SetRenderObject(new RenderObject(&tyres->GetTransform(), tyresMesh, nullptr, basicShader));
+		tyres->SetPhysicsObject(new PhysicsObject(&tyres->GetTransform(), tyres->GetBoundingVolume()));
+
+		tyres->GetPhysicsObject()->SetInverseMass(inverseMass);
+		tyres->GetPhysicsObject()->InitCubeInertia();
+
+		InitPaintableTextureOnObject(tyres);
+
+		tyres->GetRenderObject()->isPaintable = true;
+		tyres->GetRenderObject()->pbrTextures = tyresPBR;
+
+		world->AddGameObject(tyres);
+		tyres->SetName("tyres");
+
+		return tyres;
 	}
 
 	GameObject* SinglePlayerGame::AddFloorToWorld(const Vector3& position, const Vector3& scale) {
@@ -539,6 +580,16 @@ namespace NCL::CSC8503 {
 
 		walls.push_back(AddWallToWorld({ 75, 2.5, -50 }, { 10, 2.5, 1 }));
 		walls.push_back(AddWallToWorld({ -75, 2.5, -50 }, { 10, 2.5, 1 }));
+
+		AddTyresToWorld({ 40,1.5,50 }, { 2,2,2 }, 0);
+		AddTyresToWorld({ -40,1.5,50 }, { 2,2,2 }, 0);
+		AddTyresToWorld({ 40,1.5,-50 }, { 2,2,2 }, 0);
+		AddTyresToWorld({ -40,1.5,-50 }, { 2,2,2 }, 0);
+
+		AddTyresToWorld({ 10,1.5,-15 }, { 2,2,2 }, 0);
+		AddTyresToWorld({ -10,1.5,-15 }, { 2,2,2 }, 0);
+		AddTyresToWorld({ 10,1.5,15 }, { 2,2,2 }, 0);
+		AddTyresToWorld({ -10,1.5,15 }, { 2,2,2 }, 0);
 
 		//AddPowerUps();
 	}

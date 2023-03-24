@@ -58,13 +58,13 @@ TextureBase* OGLTexture::RGBATextureFromData(char* data, int width, int height, 
 	return tex;
 }
 
-TextureBase* OGLTexture::RGBATextureFromFilename(const std::string&name) {
+TextureBase* OGLTexture::RGBATextureFromFilename(const std::string&name, bool flipped) {
 	char* texData	= nullptr;
 	int width		= 0;
 	int height		= 0;
 	int channels	= 0;
 	int flags		= 0;
-	TextureLoader::LoadTexture(name, texData, width, height, channels, flags);  
+	TextureLoader::LoadTexture(name, texData, width, height, channels, flags,flipped);  
 
 	TextureBase* glTex = RGBATextureFromData(texData, width, height, channels);
 

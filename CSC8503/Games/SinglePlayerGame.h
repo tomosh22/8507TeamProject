@@ -42,6 +42,7 @@ namespace NCL::CSC8503 {
 		MeshGeometry* floorMesh = nullptr;
 		MeshGeometry* playerMesh = nullptr;
 		MeshGeometry* cubeMesh = nullptr;
+		MeshGeometry* tyresMesh = nullptr;
 
 		
 		static void LoadTextureThread(const std::string& name, TextureBase** ptr);
@@ -54,6 +55,7 @@ namespace NCL::CSC8503 {
 		PBRTextures* rockPBR;
 		PBRTextures* grassWithWaterPBR;
 		PBRTextures* fencePBR;
+		PBRTextures* tyresPBR;
 
 		ShaderBase* basicShader = nullptr;
 
@@ -72,6 +74,7 @@ namespace NCL::CSC8503 {
 		playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation, int team = 0, RespawnPoint* rp = nullptr);
 		void AddStructureToWorld();
 		GameObject* AddLadderToWorld(const Vector3& position, float height, bool rotated);
+		GameObject* AddTyresToWorld(const Vector3& position, Vector3 dimensions, float inverseMass);
 		void AddMapToWorld();
 		void AddTowersToWorld();
 		void AddPowerUps();

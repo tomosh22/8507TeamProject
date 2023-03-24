@@ -21,7 +21,7 @@ using namespace Rendering;
 std::map<std::string, TextureLoadFunction> TextureLoader::fileHandlers;
 APILoadFunction TextureLoader::apiFunction = nullptr;
 
-bool TextureLoader::LoadTexture(const std::string& filename, char*& outData, int& width, int &height, int &channels, int&flags) {
+bool TextureLoader::LoadTexture(const std::string& filename, char*& outData, int& width, int &height, int &channels, int&flags, bool flipped) {
 	if (filename.empty()) {
 		return false;
 	}
@@ -41,6 +41,7 @@ bool TextureLoader::LoadTexture(const std::string& filename, char*& outData, int
 		return it->second(realPath, outData, width, height, channels, flags);
 	}
 	//By default, attempt to use stb image to get this texture
+	stbi_set_flip_vertically_on_load(flipped);
 	stbi_uc *texData = stbi_load(realPath.c_str(), &width, &height, &channels, 4); //4 forces this to always be rgba!
 
 	channels = 4; //it gets forced, we don't care about the 'real' channel size
@@ -70,10 +71,10 @@ void TextureLoader::RegisterAPILoadFunction(APILoadFunction f) {
 	apiFunction = f;
 }
 
-TextureBase* TextureLoader::LoadAPITexture(const std::string&filename) {
+TextureBase* TextureLoader::LoadAPITexture(const std::string&filename, bool flipped) {
 	if (apiFunction == nullptr) {
 		std::cout << __FUNCTION__ << " no API Function has been defined!\n";
 		return nullptr;
 	}
-	return apiFunction(filename);
+	return apiFunction(filename,flipped);
 }

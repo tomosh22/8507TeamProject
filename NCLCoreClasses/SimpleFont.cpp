@@ -26,7 +26,7 @@ SimpleFont::SimpleFont(const std::string&filename, const std::string&texName)
 	numChars	= 0;
 	allCharData	= nullptr;
 
-	texture		= TextureLoader::LoadAPITexture(texName);
+	texture		= TextureLoader::LoadAPITexture(texName,false);
 
 	std::ifstream fontFile(Assets::FONTSSDIR + filename);
 

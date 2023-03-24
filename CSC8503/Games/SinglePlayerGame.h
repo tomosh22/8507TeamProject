@@ -2,8 +2,6 @@
 
 #include "GameManager.h"
 
-
-
 namespace NCL::CSC8503 {
 
 	struct PBRTextures;
@@ -34,13 +32,6 @@ namespace NCL::CSC8503 {
 		PhysicsSystem* physics = nullptr;
 		PropSystem* propSystem = nullptr;
 
-#ifdef USEVULKAN
-		GameTechVulkanRenderer* renderer;
-#else
-
-		GameTechRenderer* renderer = nullptr;
-#endif
-
 		bool controllingCamera = false;
 
 		std::vector<PaintSphere*> rayMarchSpheres;
@@ -70,7 +61,7 @@ namespace NCL::CSC8503 {
 
 		GameObject* lockedObject = nullptr;
 
-		void UpdateGame(float dt);
+		void DrawImGuiSettings();
 
 		void LoadPBRTextures();
 

@@ -106,7 +106,7 @@ namespace NCL::CSC8503 {
 			world->GetMainCamera()->UpdateCamera(dt);
 		}
 
-		//DrawImGuiSettings();
+		DrawImGuiSettings();
 
 		//Update shperes
 		std::function<Vector3(float)> sinFunctions[] = {
@@ -136,18 +136,77 @@ namespace NCL::CSC8503 {
 			sphere->radius = sphere->GetTransform().GetScale().x;
 			sphere->color = colours[i % 6];
 		}
+
+		physics->Update(dt);
 	}
 
-	void SinglePlayerGame::UpdateGame(float dt) {
-		
-		world->GetMainCamera()->UpdateCamera(dt);
-		
+	void SinglePlayerGame::DrawImGuiSettings()
+	{
+		Vector3 camPos = world->GetMainCamera()->GetPosition();
+		std::string camPosStr = std::to_string(camPos.x) + " "
+			+ std::to_string(camPos.y) + " " + std::to_string(camPos.z);
 
-		world->UpdateWorld(dt);
-		renderer->Update(dt);
-		physics->Update(dt);
-		renderer->Render();
-		Debug::UpdateRenderables(dt);
+		ImGui::Begin("Single Player Game");
+
+		ImGui::Text(camPosStr.c_str());
+
+		if (ImGui::TreeNode("Ray Marching")) {
+			auto& settings = renderer->rayMarchingSettings;
+			ImGui::Checkbox("Raymarch", &settings.enabled);
+			ImGui::SliderInt("Max Steps", &settings.maxSteps, 1, 1000);
+			ImGui::SliderFloat("Hit Distance", &settings.hitDistance, 0, 1);
+			ImGui::SliderFloat("No Hit Distance", &settings.noHitDistance, 0, 1000);
+			ImGui::SliderFloat("Debug Value", &settings.debugValue, -1, 10);
+			ImGui::Checkbox("Depth Test", &settings.rayMarchDepthTest);
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("Paint Testing")) {
+			ImGui::SliderFloat3("Position", testSphereCenter.array, -200, 500);
+			ImGui::SliderFloat("Sphere Radius", &testSphereRadius, 0, 2000);
+			ImGui::SliderFloat("Noise Scale", &renderer->noiseScale, 0, 10);
+			ImGui::SliderFloat("Noise Offset Size", &renderer->noiseOffsetSize, 0, 0.1f);
+			ImGui::SliderFloat("Noise Normal Strength", &renderer->noiseNormalStrength, 0, 10);
+			ImGui::SliderFloat("Noise Normal Multiplier", &renderer->noiseNormalNoiseMult, 0, 10);
+			ImGui::SliderFloat("Time Scale", &renderer->noiseTimeScale, 0, 1);
+
+			if (ImGui::Button("Move to Center")) testSphereCenter = Vector3(0, 0, 0);
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("PBR")) {
+			auto& settings = renderer->pbrSettings;
+			ImGui::Checkbox("Bump Map", &settings.useBumpMap);
+			ImGui::Checkbox("Metallic Map", &settings.useMetallicMap);
+			ImGui::Checkbox("Roughness Map", &settings.useRoughnessMap);
+			ImGui::Checkbox("Height Map", &settings.useHeightMap);
+			ImGui::Checkbox("Emission Map", &settings.useEmissionMap);
+			ImGui::Checkbox("AO Map", &settings.useAOMap);
+			ImGui::Checkbox("Opacity Map", &settings.useOpacityMap);
+			ImGui::Checkbox("Gloss Map", &settings.useGlossMap);
+			ImGui::SliderFloat("Heightmap Strength", &settings.heightMapStrength, 0, 10);
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("FXAA")) {
+			ImGui::Checkbox("Use FXAA", &renderer->fxaaEnabled);
+			ImGui::Checkbox("Edge Detection", &renderer->fxaaEdgeDetection);
+			ImGui::SliderFloat("Edge Threshold", &renderer->fxaaEdgeThreshold, 0, 0.5);
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("HDR")) {
+			ImGui::Checkbox("Tone map", &renderer->toneMap);
+			ImGui::SliderFloat("Edge Threshold", &renderer->exposure, -10, 10);
+			ImGui::TreePop();
+		}
+
+		ImGui::SliderFloat3("Light Position", renderer->lightPosition.array, -200, 200);
+
+		ImGui::End();
 	}
 
 	void SinglePlayerGame::InitCamera() {

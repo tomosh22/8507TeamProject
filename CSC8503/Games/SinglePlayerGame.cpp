@@ -337,6 +337,7 @@ namespace NCL::CSC8503 {
 
 		floor->GetRenderObject()->useHeightMap = true;
 		floor->GetRenderObject()->isPaintable = true;
+		floor->GetRenderObject()->pbrTextures = crystalPBR;
 
 		floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 
@@ -368,7 +369,7 @@ namespace NCL::CSC8503 {
 		myWall->GetPhysicsObject()->InitCubeInertia();
 
 		InitPaintableTextureOnObject(myWall);
-		//myWall->GetRenderObject()->pbrTextures = spaceShipPBR;
+		myWall->GetRenderObject()->pbrTextures = spaceShipPBR;
 
 		world->AddGameObject(myWall);
 

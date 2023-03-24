@@ -48,8 +48,6 @@ namespace NCL::CSC8503 {
 		propSystem = new PropSystem(world);
 
 		//Start the game with the camera enabled
-		Window::GetWindow()->ShowOSPointer(false);
-		Window::GetWindow()->LockMouseToWindow(true);
 		controllingCamera = true;
 
 		//Basic reosurces
@@ -88,16 +86,6 @@ namespace NCL::CSC8503 {
 		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q))
 		{
 			controllingCamera = !controllingCamera;
-			if (!controllingCamera)
-			{
-				Window::GetWindow()->ShowOSPointer(true);
-				Window::GetWindow()->LockMouseToWindow(false);
-			}
-			else
-			{
-				Window::GetWindow()->ShowOSPointer(false);
-				Window::GetWindow()->LockMouseToWindow(true);
-			}
 		}
 		else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::ESCAPE))
 		{

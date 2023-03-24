@@ -50,19 +50,11 @@ namespace NCL::CSC8503 {
 		controllingCamera = true;
 
 		//Basic reosurces
-		std::vector<MeshGeometry*> meshes;
-		sphereMesh = renderer->LoadMesh("sphere.msh", &meshes);
-		floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh", &meshes);
-		playerMesh = renderer->LoadMesh("Character/Character.msh", &meshes);
+		sphereMesh = renderer->LoadMesh("sphere.msh");
+		floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh");
+		playerMesh = renderer->LoadMesh("Character/Character.msh");
 		playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
-		cubeMesh = renderer->LoadMesh("cube.msh", &meshes);
-
-		for (MeshGeometry*& mesh : meshes) {
-			if (mesh->GetIndexData().size() == 0) std::cout << "mesh doesn't use indices, could be a problem\n";
-			if (mesh->GetIndexCount() / 3 > highestTriCount) {
-				highestTriCount = mesh->GetIndexCount() / 3;
-			}
-		}
+		cubeMesh = renderer->LoadMesh("cube.msh");
 
 		basicTex = renderer->LoadTexture("checkerboard.png");
 		basicShader = renderer->LoadShader("scene.vert", "scene.frag", "scene.tesc", "scene.tese");

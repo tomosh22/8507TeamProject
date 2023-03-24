@@ -302,6 +302,10 @@ namespace NCL::CSC8503 {
 		//playerObject->SetTeamId(TEAM_RED);
 
 		AddMapToWorld();
+		AddStructureToWorld();
+		AddTowersToWorld();
+		//AddPowerUps();
+		//AddRespawnPoints();
 
 
 	}
@@ -350,7 +354,7 @@ namespace NCL::CSC8503 {
 		return floor;
 	}
 
-	GameObject* SinglePlayerGame::AddWallToWorld2(const Vector3& position, Vector3 dimensions)
+	GameObject* SinglePlayerGame::AddWallToWorld(const Vector3& position, Vector3 dimensions)
 	{
 		GameObject* myWall = new GameObject();
 
@@ -376,59 +380,165 @@ namespace NCL::CSC8503 {
 		return myWall;
 	}
 
+	GameObject* SinglePlayerGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+		GameObject* cube = new GameObject();
+
+		OBBVolume* volume = new OBBVolume(dimensions);
+		cube->SetBoundingVolume((CollisionVolume*)volume);
+
+		cube->GetTransform().SetPosition(position).SetScale(dimensions * 2.0f);
+
+		cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, nullptr, basicShader));
+		cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));
+
+		cube->GetPhysicsObject()->SetInverseMass(inverseMass);
+		cube->GetPhysicsObject()->InitCubeInertia();
+
+		InitPaintableTextureOnObject(cube);
+		cube->GetRenderObject()->pbrTextures = rockPBR;
+
+		world->AddGameObject(cube);
+		cube->SetName("cube");
+		return cube;
+	}
+
+	GameObject* SinglePlayerGame::AddLadderToWorld(const Vector3& position, float height, bool rotated)
+	{
+		Vector3 dimensions;
+		if (rotated)
+			dimensions = Vector3(1.0f, height, 0.1f);
+		else
+			dimensions = Vector3(0.1f, height, 1.0f);
+		GameObject* ladder = new GameObject();
+		AABBVolume* volume = new AABBVolume(dimensions);
+		ladder->SetBoundingVolume((CollisionVolume*)volume);
+
+		ladder->GetTransform()
+			.SetPosition(position)
+			.SetScale(dimensions * 2);
+
+		ladder->SetRenderObject(new RenderObject(&ladder->GetTransform(), cubeMesh, nullptr, basicShader));
+		ladder->SetPhysicsObject(new PhysicsObject(&ladder->GetTransform(), ladder->GetBoundingVolume()));
+
+		ladder->GetPhysicsObject()->SetInverseMass(0);
+		ladder->GetPhysicsObject()->InitCubeInertia();
+
+		ladder->SetName("ladder");
+
+		world->AddGameObject(ladder);
+		return ladder;
+	}
+
+	void SinglePlayerGame::AddStructureToWorld()
+	{
+		//middle structure
+		//pillars
+		AddCubeToWorld({ 12, 7, 8 }, { 1, 7, 1 }, 0.0f);
+		AddCubeToWorld({ -12, 7, 8 }, { 1, 7, 1 }, 0.0f);
+		AddCubeToWorld({ 12, 7, -8 }, { 1, 7, 1 }, 0.0f);
+		AddCubeToWorld({ -12, 7, -8 }, { 1, 7, 1 }, 0.0f);
+
+		//platform 
+		AddCubeToWorld({ 0, 13, 0 }, { 13, 1, 9 }, 0.0f);
+
+		//side structures
+		//pillars
+		AddCubeToWorld({ 87, 7, 8 }, { 1, 7, 1 }, 0.0f);
+		AddCubeToWorld({ 63, 7, 8 }, { 1, 7, 1 }, 0.0f);
+		AddCubeToWorld({ 87, 7, -8 }, { 1, 7, 1 }, 0.0f);
+		AddCubeToWorld({ 63, 7, -8 }, { 1, 7, 1 }, 0.0f);
+
+		//platform 
+		AddCubeToWorld({ 75, 13, 0 }, { 13, 1, 9 }, 0.0f);
+		AddLadderToWorld({ 88.5, 7, 0 }, 7.0f, false);
+
+		//pillars
+		AddCubeToWorld({ -87, 7, 8 }, { 1, 7, 1 }, 0.0f);
+		AddCubeToWorld({ -63, 7, 8 }, { 1, 7, 1 }, 0.0f);
+		AddCubeToWorld({ -87, 7, -8 }, { 1, 7, 1 }, 0.0f);
+		AddCubeToWorld({ -63, 7, -8 }, { 1, 7, 1 }, 0.0f);
+
+		//platform 
+		AddCubeToWorld({ -75, 13, 0 }, { 13, 1, 9 }, 0.0f);
+		AddLadderToWorld({ -88.5, 7, 0 }, 7.0f, false);
+
+		//paths betweeen platforms
+		AddCubeToWorld({ 38, 13, 0 }, { 25, 1, 6 }, 0.0f);
+		AddCubeToWorld({ -38, 13, 0 }, { 25, 1, 6 }, 0.0f);
+
+		//walls on platforms
+		AddCubeToWorld({ 0, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
+		AddCubeToWorld({ 0, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+
+		AddCubeToWorld({ -75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
+		AddCubeToWorld({ -75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+
+		AddCubeToWorld({ 75, 15.5, 8 }, { 13, 1.5, 1 }, 0.0f);
+		AddCubeToWorld({ 75, 15.5, -8 }, { 13, 1.5, 1 }, 0.0f);
+	}
+
+	void SinglePlayerGame::AddTowersToWorld()
+	{
+		/*	AddCubeToWorld({70, 12.5, 150}, {2.5 , 12.5, 2.5}, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
+			AddLadderToWorld({ 70, 12.5, 153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;
+
+			AddCubeToWorld({ -70, 12.5, -150 }, { 2.5 , 12.5, 2.5 }, 0.0f)->GetRenderObject()->pbrTextures = rockPBR;
+			AddLadderToWorld({ -70, 12.5, -153 }, 12.5f, true)->GetRenderObject()->pbrTextures = rockPBR;*/
+	}
+
 	void SinglePlayerGame::AddMapToWorld() {
 		//floor and enclosing walls 
 		AddFloorToWorld({ 0, 0, 0 }, { 100, 1, 200 });
 
 		//visible walls
-		walls.push_back(AddWallToWorld2({ 100, 5, 0 }, { 1, 5, 200 }));
-		walls.push_back(AddWallToWorld2({ -100, 5, 0 }, { 1, 5, 200 }));
+		walls.push_back(AddWallToWorld({ 100, 5, 0 }, { 1, 5, 200 }));
+		walls.push_back(AddWallToWorld({ -100, 5, 0 }, { 1, 5, 200 }));
 
-		walls.push_back(AddWallToWorld2({ 0, 5, 200 }, { 100, 5, 1 }));
-		walls.push_back(AddWallToWorld2({ 0, 5, -200 }, { 100, 5, 1 }));
+		walls.push_back(AddWallToWorld({ 0, 5, 200 }, { 100, 5, 1 }));
+		walls.push_back(AddWallToWorld({ 0, 5, -200 }, { 100, 5, 1 }));
 
 		//invisible walls
-		AddWallToWorld2({ 100, 5, 0 }, { 1, 50, 200 })->SetRenderObject(nullptr);
-		AddWallToWorld2({ -100, 5, 0 }, { 1, 50, 200 })->SetRenderObject(nullptr);
+		AddWallToWorld({ 100, 5, 0 }, { 1, 50, 200 })->SetRenderObject(nullptr);
+		AddWallToWorld({ -100, 5, 0 }, { 1, 50, 200 })->SetRenderObject(nullptr);
 
-		AddWallToWorld2({ 0, 5, 200 }, { 100, 50, 1 })->SetRenderObject(nullptr);
-		AddWallToWorld2({ 0, 5, -200 }, { 100, 50, 1 })->SetRenderObject(nullptr);
+		AddWallToWorld({ 0, 5, 200 }, { 100, 50, 1 })->SetRenderObject(nullptr);
+		AddWallToWorld({ 0, 5, -200 }, { 100, 50, 1 })->SetRenderObject(nullptr);
 
 		//dividing walls
 		/*walls.push_back(AddWallToWorld2({ -50, 7, 0 }, { 1, 7, 100 }));
 		walls.push_back(AddWallToWorld2({ 50, 7, 0 }, { 1, 7, 100 }));*/
 
-		walls.push_back(AddWallToWorld2({ -50, 7, 50 }, { 1, 7, 40 }));
-		walls.push_back(AddWallToWorld2({ -50, 7, -50 }, { 1, 7, 40 }));
+		walls.push_back(AddWallToWorld({ -50, 7, 50 }, { 1, 7, 40 }));
+		walls.push_back(AddWallToWorld({ -50, 7, -50 }, { 1, 7, 40 }));
 
-		walls.push_back(AddWallToWorld2({ 50, 7, 50 }, { 1, 7, 40 }));
-		walls.push_back(AddWallToWorld2({ 50, 7, -50 }, { 1, 7, 40 }));
+		walls.push_back(AddWallToWorld({ 50, 7, 50 }, { 1, 7, 40 }));
+		walls.push_back(AddWallToWorld({ 50, 7, -50 }, { 1, 7, 40 }));
 
 		//back cover walls
-		walls.push_back(AddWallToWorld2({ 0, 5, 125 }, { 25, 5, 1 }));
-		walls.push_back(AddWallToWorld2({ 0, 5, -125 }, { 25, 5, 1 }));
+		walls.push_back(AddWallToWorld({ 0, 5, 125 }, { 25, 5, 1 }));
+		walls.push_back(AddWallToWorld({ 0, 5, -125 }, { 25, 5, 1 }));
 
 		//middle low cover walls
-		walls.push_back(AddWallToWorld2({ 30, 2.5, 75 }, { 10, 2.5, 1 }));
-		walls.push_back(AddWallToWorld2({ -30, 2.5, 75 }, { 10, 2.5, 1 }));
-		walls.push_back(AddWallToWorld2({ 0, 2.5, 75 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ 30, 2.5, 75 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ -30, 2.5, 75 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ 0, 2.5, 75 }, { 10, 2.5, 1 }));
 
-		walls.push_back(AddWallToWorld2({ -15, 2.5, 35 }, { 10, 2.5, 1 }));
-		walls.push_back(AddWallToWorld2({ 15, 2.5, 35 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ -15, 2.5, 35 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ 15, 2.5, 35 }, { 10, 2.5, 1 }));
 
-		walls.push_back(AddWallToWorld2({ 30, 2.5, -75 }, { 10, 2.5, 1 }));
-		walls.push_back(AddWallToWorld2({ -30, 2.5, -75 }, { 10, 2.5, 1 }));
-		walls.push_back(AddWallToWorld2({ 0, 2.5, -75 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ 30, 2.5, -75 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ -30, 2.5, -75 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ 0, 2.5, -75 }, { 10, 2.5, 1 }));
 
-		walls.push_back(AddWallToWorld2({ -15, 2.5, -35 }, { 10, 2.5, 1 }));
-		walls.push_back(AddWallToWorld2({ 15, 2.5, -35 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ -15, 2.5, -35 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ 15, 2.5, -35 }, { 10, 2.5, 1 }));
 
 		//side low cover walls 
-		walls.push_back(AddWallToWorld2({ 75, 2.5, 50 }, { 10, 2.5, 1 }));
-		walls.push_back(AddWallToWorld2({ -75, 2.5, 50 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ 75, 2.5, 50 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ -75, 2.5, 50 }, { 10, 2.5, 1 }));
 
-		walls.push_back(AddWallToWorld2({ 75, 2.5, -50 }, { 10, 2.5, 1 }));
-		walls.push_back(AddWallToWorld2({ -75, 2.5, -50 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ 75, 2.5, -50 }, { 10, 2.5, 1 }));
+		walls.push_back(AddWallToWorld({ -75, 2.5, -50 }, { 10, 2.5, 1 }));
 
 		//AddPowerUps();
 	}

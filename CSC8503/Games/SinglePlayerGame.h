@@ -70,11 +70,18 @@ namespace NCL::CSC8503 {
 		void InitGameWorld();
 		playerTracking* playerObject = nullptr;
 		playerTracking* AddPlayerToWorld(const Vector3& position, Quaternion& orientation, int team = 0, RespawnPoint* rp = nullptr);
+		void AddStructureToWorld();
+		GameObject* AddLadderToWorld(const Vector3& position, float height, bool rotated);
 		void AddMapToWorld();
+		void AddTowersToWorld();
+		void AddPowerUps();
+		void AddRespawnPoints();
 		GameObject* AddFloorToWorld(const Vector3& position, const Vector3& scale);
+		GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass);
+
 
 		std::vector<GameObject*> walls;
-		GameObject* AddWallToWorld2(const Vector3& position, Vector3 dimensions);
+		GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions);
 
 		ShaderBase* characterShader;
 		MeshMaterial* playerMaterial;

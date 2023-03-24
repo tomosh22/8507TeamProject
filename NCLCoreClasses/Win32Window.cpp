@@ -14,6 +14,7 @@ using namespace Win32Code;
 #include "../CSC8503/imgui_impl_opengl3.h"
 #include "../CSC8503/imgui_impl_opengl3_loader.h"
 #include "../CSC8503/imgui_impl_win32.h"
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 Win32Window::Win32Window(const std::string& title, int sizeX, int sizeY, bool fullScreen, int offsetX, int offsetY)	{
@@ -21,7 +22,6 @@ Win32Window::Win32Window(const std::string& title, int sizeX, int sizeY, bool fu
 	init			= false;
 	mouseLeftWindow	= false;
 	lockMouse		= false;
-	showMouse		= true;
 	active			= true;
 
 	this->fullScreen = fullScreen;
@@ -98,8 +98,7 @@ Win32Window::Win32Window(const std::string& title, int sizeX, int sizeY, bool fu
 	winMouse->Wake();
 	winKeyboard->Wake();
 
-	LockMouseToWindow(lockMouse);
-	ShowOSPointer(showMouse);
+	SeizeMouse(lockMouse);
 
 	SetConsolePosition(1500, 200);
 
@@ -114,15 +113,18 @@ Win32Window::~Win32Window(void)	{
 	init = false;
 }
 
-bool	Win32Window::InternalUpdate() {
-	MSG		msg;
+bool Win32Window::InternalUpdate() {
+	MSG	msg;
 
 	POINT pt;
 	GetCursorPos(&pt);
+
+
+
 	ScreenToClient(windowHandle, &pt);
 	winMouse->SetAbsolutePosition(Vector2((float)pt.x, (float)pt.y));
 
-	while(PeekMessage(&msg,windowHandle,0,0,PM_REMOVE)) {
+	while (PeekMessage(&msg,windowHandle,0,0,PM_REMOVE)) {
 		CheckMessages(msg); 
 	}
 
@@ -181,42 +183,43 @@ void	Win32Window::SetFullScreen(bool fullScreen) {
 
 void Win32Window::CheckMessages(MSG &msg)	{
 	Win32Window* thisWindow = (Win32Window*)window;
-	switch (msg.message)	{				// Is There A Message Waiting?
-		case (WM_QUIT):
-		case (WM_CLOSE): {					// Have We Received A Quit Message?
-			thisWindow->ShowOSPointer(true);
-			thisWindow->LockMouseToWindow(false);
+	switch (msg.message)// Is There A Message Waiting?
+	{
+		case WM_QUIT:
+		case WM_CLOSE: // Have We Received A Quit Message?
+			thisWindow->SeizeMouse(false);
 			forceQuit = true;
-		}break;
-		case (WM_INPUT): {
-			UINT dwSize;
-			GetRawInputData((HRAWINPUT)msg.lParam, RID_INPUT, NULL, &dwSize,sizeof(RAWINPUTHEADER));
+			break;
+		case WM_INPUT:
+		{
+			UINT dwSize = 0;
+			GetRawInputData((HRAWINPUT)msg.lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
 
 			BYTE* lpb = new BYTE[dwSize];
-	
-			GetRawInputData((HRAWINPUT)msg.lParam, RID_INPUT, lpb, &dwSize,sizeof(RAWINPUTHEADER));
+
+			GetRawInputData((HRAWINPUT)msg.lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
 			RAWINPUT* raw = (RAWINPUT*)lpb;
 
 			if (keyboard && raw->header.dwType == RIM_TYPEKEYBOARD && active) {
 				thisWindow->winKeyboard->UpdateRAW(raw);
 			}
 
-			if (mouse && raw->header.dwType == RIM_TYPEMOUSE && active) {			
+			if (mouse && raw->header.dwType == RIM_TYPEMOUSE && active) {
 				thisWindow->winMouse->UpdateRAW(raw);
 			}
 
-			delete lpb;
-		}break;
-
-		default: {								// If Not, Deal With Window Messages
+			delete[] lpb;
+			break;
+		}
+		default: 								// If Not, Deal With Window Messages
 			TranslateMessage(&msg);				// Translate The Message
 			DispatchMessage(&msg);				// Dispatch The Message
-		}
 	}
 }
 
 LRESULT CALLBACK Win32Window::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)	{
 	Win32Window* thisWindow = (Win32Window*)window;
+
 	if (ImGui_ImplWin32_WndProcHandler(thisWindow->GetHandle(), message, wParam, lParam)) {
 		return true;
 	}
@@ -224,8 +227,7 @@ LRESULT CALLBACK Win32Window::WindowProc(HWND hWnd, UINT message, WPARAM wParam,
 
     switch(message)	 {
         case(WM_DESTROY):	{
-			thisWindow->ShowOSPointer(true);
-			thisWindow->LockMouseToWindow(false);
+			thisWindow->SeizeMouse(false);
 
 			PostQuitMessage(0);
 			thisWindow->forceQuit = true;
@@ -247,7 +249,7 @@ LRESULT CALLBACK Win32Window::WindowProc(HWND hWnd, UINT message, WPARAM wParam,
 					thisWindow->winKeyboard->Wake();
 
 					if(thisWindow->lockMouse) {
-						thisWindow->LockMouseToWindow(true);
+						thisWindow->SeizeMouse(true);
 					}
 				}
 			}
@@ -259,14 +261,14 @@ LRESULT CALLBACK Win32Window::WindowProc(HWND hWnd, UINT message, WPARAM wParam,
 					ShowWindow(thisWindow->windowHandle, SW_RESTORE);
 					if (thisWindow->init) {
 						thisWindow->winMouse->SetAbsolutePositionBounds(thisWindow->size);
-						thisWindow->LockMouseToWindow(thisWindow->lockMouse);
+						thisWindow->SeizeMouse(thisWindow->lockMouse);
 					}
 				}
 			}
 		}break;
 		case (WM_LBUTTONDOWN): {
 			if(thisWindow->init && thisWindow->lockMouse) {
-				thisWindow->LockMouseToWindow(true);
+				thisWindow->SeizeMouse(true);
 			}
 		}break;
 		case (WM_MOUSEMOVE): {
@@ -334,45 +336,56 @@ LRESULT CALLBACK Win32Window::WindowProc(HWND hWnd, UINT message, WPARAM wParam,
 		thisWindow->ResizeRenderer();
 		if (thisWindow->init) {
 			thisWindow->winMouse->SetAbsolutePositionBounds(thisWindow->size);
-			thisWindow->LockMouseToWindow(thisWindow->lockMouse);
+			thisWindow->SeizeMouse(thisWindow->lockMouse);
 		}
 	}
 
     return DefWindowProc (hWnd, message, wParam, lParam);
 }
 
-void	Win32Window::LockMouseToWindow(bool lock)	{
-	lockMouse = lock;
-	if(lock) {
-		RECT		windowRect;
-		GetWindowRect (windowHandle, &windowRect);
+void Win32Window::SeizeMouse(bool hide)
+{
+	if (lockMouse == hide) return;
+	lockMouse = hide;
 
+	if (hide)
+	{
+		const RAWINPUTDEVICE rid = { 0x01, 0x02, 0, windowHandle };
+
+		if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
+		{
+			std::cerr << "Failed to register raw input device";
+			std::exit(-1);
+		}
+
+		RECT clipRect;
+		GetClientRect(windowHandle, &clipRect);
+		ClientToScreen(windowHandle, (POINT*)&clipRect.left);
+		ClientToScreen(windowHandle, (POINT*)&clipRect.right);
+		ClipCursor(&clipRect);
 		SetCapture(windowHandle);
-		ClipCursor(&windowRect);
-	}
-	else{
-		ReleaseCapture();
-		ClipCursor(NULL);
-	}
-}
 
-void	Win32Window::ShowOSPointer(bool show)	{
-	if(show == showMouse) {
-		return;	//ShowCursor does weird things, due to being a counter internally...
-	}
-
-	showMouse = show;
-	if(show) {
-		ShowCursor(1);
-	}
-	else{
 		ShowCursor(0);
 	}
+	else
+	{
+		const RAWINPUTDEVICE rid = { 0x01, 0x02, RIDEV_REMOVE, NULL };
+
+		if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
+		{
+			std::cerr << "Failed to remove raw input device";
+			std::exit(-1);
+		}
+
+		ClipCursor(NULL);
+		ReleaseCapture();
+		ShowCursor(1);
+	}
 }
 
-bool Win32Window::IsPointerVisible() const
+bool Win32Window::IsMouseLocked() const
 {
-	return showMouse;
+	return lockMouse;
 }
 
 void	Win32Window::SetConsolePosition(int x, int y)	{

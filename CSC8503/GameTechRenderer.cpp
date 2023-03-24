@@ -119,7 +119,7 @@ void GameTechRenderer::BeginImGui()
 	ImGuiIO& io = ImGui::GetIO();
 
 	//Tell ImGui to ignore mouse movement when the cursor is hidden
-	if (Window::GetWindow()->IsPointerVisible())
+	if (!Window::GetWindow()->IsMouseLocked())
 		io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
 	else
 		io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
@@ -177,6 +177,22 @@ void GameTechRenderer::RenderFrame()
 	RenderSkybox();
 	RenderCamera();
 
+	if (rayMarchingSettings.enabled)
+	{
+		//NOTE(Jason): I'm if a memory barrier is necessary. The driver might automactically place barriers
+		//when switching FBOs.
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 9, "Ray march");
+		ExecuteRayMarching();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
+
+		RenderFullScreenQuadWithTexture(rayMarchTexture);
+		glPopDebugGroup();
+	}
+
 	//////////////////////////////////////////////////////////////////
 	// Apply post-processing
 	//////////////////////////////////////////////////////////////////
@@ -185,14 +201,6 @@ void GameTechRenderer::RenderFrame()
 	glViewport(0, 0, renderWidth, renderHeight);
 	
 	RenderFullScreenQuadWithTexture(sceneColor);//todo fix rotation
-
-	if (rayMarchingSettings.enabled)
-	{
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, 9, "Ray march");
-		ExecuteRayMarching();
-		RenderFullScreenQuadWithTexture(rayMarchTexture);
-		glPopDebugGroup();
-	}
 
 	if (fxaaEnabled)
 	{

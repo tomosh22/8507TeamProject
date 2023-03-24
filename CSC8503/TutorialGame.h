@@ -214,7 +214,7 @@ namespace NCL {
 		
 			void AddRespawnPoints();
 			void LoadPlayerMesh(std::vector<MeshGeometry*> meshes);
-			MeshGeometry* GetPlayerMesh();
+			MeshGeometry* GetPlayerMesh(int teamID);
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;
 #else

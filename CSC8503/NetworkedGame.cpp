@@ -241,7 +241,7 @@ void NetworkedGame::HandleUpdateState(bool delta, int pid, GamePacket* payload) 
 void NetworkedGame::AddNewNetworkPlayerToWorld(int pid, int teamID, NetworkState state) {
 	auto it = serverPlayers.find(pid);
 	if (it != serverPlayers.end()) { return; } //player already exist;
-	auto player = this->AddPlayerToWorld(state.position, state.orientation);
+	auto player = this->AddPlayerToWorld(state.position, state.orientation,teamID);
 	//todo
 	player->SetTeamId(teamID);
 	player->SetNetworkId(pid);

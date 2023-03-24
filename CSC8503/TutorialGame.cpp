@@ -1186,7 +1186,7 @@ void TutorialGame::InitOnlineGame(int teamID) {
 	physics->Clear();
 	//add player
 	auto q = Quaternion();
-	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q);
+	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q,teamID);
 	playerObject->SetTeamId(teamID);
 
 	//InitGameObjects();
@@ -1942,9 +1942,9 @@ void NCL::CSC8503::TutorialGame::LoadPlayerMesh(std::vector<MeshGeometry*> meshe
 	}
 }
 
-MeshGeometry* NCL::CSC8503::TutorialGame::GetPlayerMesh()
+MeshGeometry* NCL::CSC8503::TutorialGame::GetPlayerMesh(int team)
 {
-	MeshGeometry* msh = playerMeshes[rand() % playerMeshes.size()];
+	MeshGeometry* msh = playerMeshes[team];
 	return msh;
 }
 
@@ -1961,7 +1961,7 @@ playerTracking* TutorialGame::AddPlayerToWorld(const Vector3& position, Quaterni
 	//character->GetTransform().setGoatID(7);
 	character->setImpactAbsorbtionAmount(0.9f);
 
-	MeshGeometry* playerMsh = GetPlayerMesh();
+	MeshGeometry* playerMsh = GetPlayerMesh(team);
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), playerMsh, nullptr, characterShader ));
 	character->GetRenderObject()->isAnimated = true;
 

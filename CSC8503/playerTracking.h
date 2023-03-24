@@ -12,6 +12,7 @@
 #include "MeshAnimation.h"
 #include "AudioSource.h"
 #include "AudioSystem.h"
+#include "RespawnPoint.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -165,6 +166,9 @@ namespace NCL {
 			}
 
 			void TakeDamage(int damage);
+			void PlayerDie();
+			void PlayerRespawn();
+			void Respawning(float dt);
 
 
 
@@ -206,12 +210,15 @@ namespace NCL {
 			bool GetOnLadder() {
 				return onLadder;
 			}
-			bool onLadder;
-			bool playerDead;
 
 			int GetScore()
 			{
 				return IndividualplayerScore;
+			}
+
+			void SetRespawn(RespawnPoint* rp)
+			{
+				respawn = rp;
 			}
 
 		protected:
@@ -221,7 +228,7 @@ namespace NCL {
 			bool damageUp;
 			bool onLadder;
 			bool playerDead;
-
+			RespawnPoint* respawn;
 
 			float playerYawOrientation;
 			float playerPitchOrientation;

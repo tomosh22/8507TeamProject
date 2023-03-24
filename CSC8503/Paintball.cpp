@@ -1,35 +1,36 @@
 #include "Paintball.h"
+#include "PhysicsObject.h"
 
-NCL::CSC8503::Paintball::Paintball()
-{
+#include <algorithm>
 
-}
-
-NCL::CSC8503::Paintball::~Paintball()
-{
-}
-
-void NCL::CSC8503::Paintball::Update(float dt)
-{
-}
-
-void NCL::CSC8503::Paintball::OnCollisionBegin(GameObject* object)
-{
-	if (object->GetName() == "Floor")
+namespace NCL::CSC8503 {
+	
+	Paintball::Paintball(float paintRadius, float collisionRadius, uint8_t teamId) :
+		paintRadius(paintRadius), collisionRadius(collisionRadius), teamId(teamId),
+		moveSpeed(200), artificalGravity()
 	{
-		this->GetTransform().SetPosition(Vector3(1000, 1000, 1000));
-		std::cout << "Paintball hit floor";
-		//add paint splat logic here
-		this->SetActive(false);
+		
 	}
-}
 
-bool NCL::CSC8503::Paintball::isRed()
-{
-	return red;
-}
+	Paintball::~Paintball()
+	{
 
-void NCL::CSC8503::Paintball::toggleRed()
-{
-	red = !red;
+	}
+
+	void Paintball::Update(float dt)
+	{
+		lifeTime += dt;
+		if (lifeTime >= 0.1) GetPhysicsObject()->SetLinearVelocity(GetPhysicsObject()->GetLinearVelocity() + Vector3(0,-1,0) * (dt * 50.0f));
+		
+		GetTransform().SetPosition(GetTransform().GetPosition() + forward * (dt * moveSpeed));
+	}
+
+	void Paintball::OnCollisionBegin(GameObject* object)
+	{
+		//Ignore the collision if the other object is a paintball
+		if (dynamic_cast<Paintball*>(object)) return;
+
+		hasHit = true;
+	}
+
 }

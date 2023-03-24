@@ -17,7 +17,6 @@ namespace NCL::CSC8503 {
 		Trigger, 
 	};
 
-
 	class NetworkObject;
 	class RenderObject;
 	class PhysicsObject;
@@ -40,12 +39,7 @@ namespace NCL::CSC8503 {
 		}
 		// end ignoring detection
 
-		virtual void Update(float dt)
-		{
-
-		}
-
-
+		virtual void Update(float dt) {}
 
 		const CollisionVolume* GetBoundingVolume() const {
 			return boundingVolume;
@@ -60,6 +54,10 @@ namespace NCL::CSC8503 {
 		}
 
 		Transform& GetTransform() {
+			return transform;
+		}
+
+		const Transform& GetTransform() const {
 			return transform;
 		}
 

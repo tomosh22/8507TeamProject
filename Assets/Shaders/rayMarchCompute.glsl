@@ -60,11 +60,13 @@ vec4 Blend( float a, float b, vec3 colA, vec3 colB, float k )
     return vec4(blendCol, blendDst);
 }
 
-
 float SDFJustDistance(vec3 from){
 	return 0;
 }
 
+float ItemSDF(vec3 sphereCenter, float sphereRadius, vec3 point) {
+	return length(point - sphereCenter) - (sphereRadius);
+}
 
 HitInformation SDF(vec3 from) {
 	
@@ -79,7 +81,9 @@ HitInformation SDF(vec3 from) {
 		float sphereRadius = sphere.radius;
 		if(sphereCenter == vec3(0) && sphereRadius == 0)continue;
 		vec3 nextCol = vec3(sphere.r,sphere.g,sphere.b);
-		float newDistance = length(from - sphereCenter) - (sphereRadius);
+		
+		float newDistance = ItemSDF(sphereCenter, sphereRadius, from);
+		
 		vec4 result = Blend(hit.closestDistance,newDistance,hit.color,nextCol,10);
 		hit.closestDistance = result.w;
 		hit.color =  result.rgb;
@@ -159,7 +163,7 @@ void main() {
 
 	if (result.a < sceneDistanceFromCamera && result.a != -1) {
 		//sphere was hit and depth test passed
-		result.w = 0.9;//will need to rework if we want transparent spheres
+		result.w = 1.0;//will need to rework if we want transparent spheres
 		imageStore(tex, IMAGE_COORD, result);
 	}
 	else {

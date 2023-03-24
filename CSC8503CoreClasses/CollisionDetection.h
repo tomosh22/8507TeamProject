@@ -104,6 +104,8 @@ namespace NCL {
 		static bool AABBIntersection(const AABBVolume& volumeA, const Transform& worldTransformA,
 			const AABBVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo);
 		//Sphere
+		static bool SphereObjectIntersection(const SphereVolume& volumeA, const Transform& worldTransformA,
+			const GameObject& object, CollisionInfo& collisionInfo);
 		static bool SphereIntersection(const SphereVolume& volumeA, const Transform& worldTransformA,
 			const SphereVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo);
 		static bool AABBSphereIntersection(const AABBVolume& volumeA, const Transform& worldTransformA,

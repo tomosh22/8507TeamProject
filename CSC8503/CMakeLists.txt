@@ -53,6 +53,7 @@ set(Header_Files
 	"Games/SinglePlayerGame.h"
 	"AudioSystem.h"
     "RayMarchSphere.h"
+	"Paintball.h"
 
 
 )
@@ -72,6 +73,7 @@ set(Source_Files
     "RespawnPoint.cpp"
 
     "RayMarchSphere.cpp"
+	"Paintball.cpp"
 
 	"Games/GameManager.cpp"
 	"Games/GraphicsGame.cpp"

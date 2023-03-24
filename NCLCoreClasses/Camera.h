@@ -109,14 +109,9 @@ namespace NCL {
 		//Sets pitch, in degrees
 		Camera& SetPitch(float p) { pitch = p; return *this; }
 
-		Vector3 GetForward()
-		{
-			forward.z = -cos(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
-			forward.y = sin(Maths::DegreesToRadians(pitch));
-			forward.x = -sin(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
-			forward = forward.Normalised();
-			return forward;
-		}
+		Vector3 GetForward() { return ForwardFromPitchAndYaw(pitch, yaw); }
+		Vector3 GetRight() { return ForwardFromPitchAndYaw(pitch, yaw - 90.0f); }
+		Vector3 GetUp() { return ForwardFromPitchAndYaw(pitch + 90.0f, yaw); }
 
 		void SetCameraMode(bool mode)
 		{
@@ -125,6 +120,15 @@ namespace NCL {
 
 		static Camera BuildPerspectiveCamera(const Vector3& pos, float pitch, float yaw, float fov, float near, float far);
 		static Camera BuildOrthoCamera(const Vector3& pos, float pitch, float yaw, float left, float right, float top, float bottom, float near, float far);
+
+		inline static Vector3 ForwardFromPitchAndYaw(float pitch, float yaw)
+		{
+			Vector3 forward = {};
+			forward.z = -cos(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
+			forward.y = sin(Maths::DegreesToRadians(pitch));
+			forward.x = -sin(Maths::DegreesToRadians(yaw)) * cos(Maths::DegreesToRadians(pitch));
+			return forward.Normalised();
+		}
 	protected:
 		CameraType camType;
 

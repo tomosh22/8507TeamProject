@@ -1,6 +1,9 @@
 #pragma once
 
 #include "GameManager.h"
+#include "Paintball.h"
+
+#include <random>
 
 namespace NCL::CSC8503 {
 
@@ -30,8 +33,11 @@ namespace NCL::CSC8503 {
 		void Update(float dt) override;
 		void Render() override;
 	private:
+		PhysicsSystem* physics = nullptr;
 
 		bool controllingCamera = false;
+		float shotRechargeTimer = 0.0f;
+		std::mt19937 shootMT;
 
 		std::vector<PaintSphere*> rayMarchSpheres;
 
@@ -55,7 +61,6 @@ namespace NCL::CSC8503 {
 		ShaderBase* basicShader = nullptr;
 
 		GameObject* lockedObject = nullptr;
-		GameObject* theFloor = nullptr;
 
 		void DrawImGuiSettings();
 
@@ -77,9 +82,10 @@ namespace NCL::CSC8503 {
 		void AddRespawnPoints();
 		GameObject* AddFloorToWorld(const Vector3& position, const Vector3& scale);
 		GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass);
-
+		GameObject* AddPaintballToWorld(const Vector3& position, Vector3 direction, float radius, float paintRadius, uint8_t teamID);
 
 		std::vector<GameObject*> walls;
+		std::vector<Paintball*> paintballs;
 		GameObject* AddWallToWorld(const Vector3& position, Vector3 dimensions);
 
 		ShaderBase* characterShader;

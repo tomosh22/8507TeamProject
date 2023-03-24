@@ -46,6 +46,21 @@ void PhysicsSystem::Clear() {
 
 }
 
+
+void PhysicsSystem::CleanUpPhysics()
+{
+	for (GameObject* object : objectsToRemove)
+	{
+		for (auto it = allCollisions.begin(); it != allCollisions.end();)
+		{
+			if (it->a == object || it->b == object) it = allCollisions.erase(it);
+			else it++;
+		}
+	}
+
+	objectsToRemove.clear();
+}
+
 /*
 
 This is the core of the physics engine update
@@ -648,7 +663,7 @@ void PhysicsSystem::IntegrateAccel(float dt) {
 		//	accel += gravity;
 		//}
 		if (applyGravity && inverseMass > 0) {
-			accel += gravity;
+			accel += gravity * object->GetGravityMultiplier();
 		}
 		// testing drag
 		float drag;

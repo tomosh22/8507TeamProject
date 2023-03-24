@@ -93,9 +93,6 @@ namespace NCL {
 			ShaderBase*		shader;
 			Transform*		transform;
 			Vector4			colour;
-
-			
-			
 		};
 	}
 }

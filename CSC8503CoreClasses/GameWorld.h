@@ -1,5 +1,6 @@
 #pragma once
 #include <random>
+#include <functional>
 
 #include "Ray.h"
 #include "CollisionDetection.h"
@@ -29,8 +30,10 @@ namespace NCL {
 			void RemoveConstraint(Constraint* c, bool andDelete = false);
 
 			bool Raycast(Ray& r, RayCollision& closestCollision, bool closestObject = false, GameObject* ignore = nullptr) const;
+			void QuerySphere(Vector3 pos, float radius, const std::function<void(GameObject*)>& callback, GameObject* ignore = nullptr) const;
 
 			virtual void UpdateWorld(float dt);
+			void CleanUpWorld();
 
 			void OperateOnContents(GameObjectFunc f);
 
@@ -48,6 +51,7 @@ namespace NCL {
 			inline Camera* GetMainCamera() const { return mainCamera; }
 			inline int GetWorldStateID() const { return worldStateCounter; }
 		protected:
+			std::vector<std::pair<GameObject*, bool>> gameObjectsToRemove;
 			std::vector<GameObject*> gameObjects;
 			std::vector<Constraint*> constraints;
 

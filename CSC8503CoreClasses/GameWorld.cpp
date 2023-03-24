@@ -44,11 +44,7 @@ void GameWorld::AddGameObject(GameObject* o) {
 }
 
 void GameWorld::RemoveGameObject(GameObject* o, bool andDelete) {
-	gameObjects.erase(std::remove(gameObjects.begin(), gameObjects.end(), o), gameObjects.end());
-	if (andDelete) {
-		delete o;
-	}
-	worldStateCounter++;
+	gameObjectsToRemove.push_back(std::make_pair(o, andDelete));
 }
 
 void GameWorld::GetObjectIterators(
@@ -84,6 +80,20 @@ void GameWorld::UpdateWorld(float dt) {
 
 }
 
+void GameWorld::CleanUpWorld()
+{
+	for (auto [ object, andDelete ] : gameObjectsToRemove)
+	{
+		gameObjects.erase(std::find(gameObjects.begin(), gameObjects.end(), object));
+
+		if (andDelete) delete object;
+
+		worldStateCounter++;
+	}
+
+	gameObjectsToRemove.clear();
+}
+
 bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObject, GameObject* ignoreThis) const {
 	//The simplest raycast just goes through each object and sees if there's a collision
 	RayCollision collision;
@@ -116,7 +126,26 @@ bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObje
 		closestCollision.node	= collision.node;
 		return true;
 	}
+
 	return false;
+}
+
+void GameWorld::QuerySphere(Vector3 pos, float radius, const std::function<void(GameObject*)>& callback, GameObject* ignore) const
+{
+	SphereVolume volume(radius);
+	Transform transform;
+	transform.SetPosition(pos);
+
+	for (GameObject* object : gameObjects)
+	{
+		if (!object->GetBoundingVolume() || object == ignore) continue;
+
+		CollisionDetection::CollisionInfo thisCollision;
+		if (CollisionDetection::SphereObjectIntersection(volume, transform, *object, thisCollision))
+		{
+			callback(object);
+		}
+	}
 }
 
 

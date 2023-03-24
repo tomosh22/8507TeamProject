@@ -4,6 +4,9 @@
 #include "PhysicsObject.h"
 #include "TextureLoader.h"
 #include "PropSystem.h"
+#include "PhysicsSystem.h"
+
+#include "Paintball.h"
 
 #include <unordered_map>
 #include <thread>
@@ -13,8 +16,6 @@
 
 using namespace NCL;
 using namespace CSC8503;
-
-
 
 std::vector<TextureThing> singlePlayerThings;
 std::mutex singlePlayerTexturesMutex;
@@ -38,12 +39,12 @@ void SinglePlayerLoadTextureThread(const std::string& name, TextureBase** ptr) {
 namespace NCL::CSC8503 {
 
 	SinglePlayerGame::SinglePlayerGame(GameManager* manager, GameWorld* world, GameTechRenderer* renderer) :
-		GameBase(manager, world, renderer)
+		GameBase(manager, world, renderer), shootMT(std::random_device()())
 	{
+		physics = new PhysicsSystem(*world);
+
 		testSphereCenter = Vector3(0, 0, 0);
 		testSphereRadius = 10;
-
-		
 
 		//Start the game with the camera enabled
 		Window::GetWindow()->SeizeMouse(true);
@@ -54,7 +55,7 @@ namespace NCL::CSC8503 {
 		floorMesh = renderer->LoadMesh("Corridor_Floor_Basic.msh");
 		playerMesh = renderer->LoadMesh("Character/Character.msh");
 		playerMesh->SetPrimitiveType(GeometryPrimitive::Triangles);
-		cubeMesh = renderer->LoadMesh("cube.msh");
+		cubeMesh = renderer->LoadMesh("newCube.msh");
 		tyresMesh = renderer->LoadMesh("tyres.msh");
 
 		basicTex = renderer->LoadTexture("checkerboard.png");
@@ -65,11 +66,15 @@ namespace NCL::CSC8503 {
 		LoadPBRTextures();
 		
 		world->ClearAndErase();
-		
 
 		InitCamera();
 
 		InitGameWorld();
+	}
+
+	SinglePlayerGame::~SinglePlayerGame()
+	{
+		delete physics;
 	}
 
 	void SinglePlayerGame::Update(float dt)
@@ -94,7 +99,49 @@ namespace NCL::CSC8503 {
 
 		if (controllingCamera)
 		{
-			world->GetMainCamera()->UpdateCamera(dt);
+			Camera* camera = world->GetMainCamera();
+
+			camera->UpdateCamera(dt);
+
+			MouseButtons btn = MouseButtons::LEFT;
+			uint8_t teamid = 10;
+
+			if (!Window::GetMouse()->ButtonHeld(MouseButtons::LEFT) && Window::GetMouse()->ButtonHeld(MouseButtons::RIGHT))
+			{
+				btn = MouseButtons::RIGHT;
+				teamid = 65;
+			}
+
+			if (Window::GetMouse()->ButtonPressed(btn))
+			{
+				shotRechargeTimer = 0.0f;
+			}
+
+			if (Window::GetMouse()->ButtonHeld(btn))
+			{
+				const float FIRE_RATE = 20.0f;
+				const float SPRAY_STRENGTH = 0.05f;
+
+				std::uniform_real_distribution dist(-1.0f, 1.0f);
+
+				if (shotRechargeTimer <= 0.0f)
+				{
+					Vector3 spawnPos = camera->GetPosition();
+					spawnPos += camera->GetForward() * 8.0f;
+					spawnPos += camera->GetRight() * 2.8f;
+					spawnPos += camera->GetUp() * -2.0f;
+
+					Vector3 spawnDir = camera->GetForward();
+					spawnDir += camera->GetRight() * (SPRAY_STRENGTH * dist(shootMT));
+					spawnDir += camera->GetUp() * (SPRAY_STRENGTH * dist(shootMT));
+					spawnDir.Normalise();
+
+					AddPaintballToWorld(spawnPos, spawnDir, 1.0f, 5.0f, teamid);
+
+					shotRechargeTimer = 1.0 / FIRE_RATE;
+				}
+				else shotRechargeTimer -= dt;
+			}
 		}
 
 		DrawImGuiSettings();
@@ -128,6 +175,33 @@ namespace NCL::CSC8503 {
 			sphere->color = colours[i % 6];
 		}
 
+		physics->Update(dt);
+
+		//Find all paintballs that have hit and paint the world around them
+		for (auto it = paintballs.begin(); it != paintballs.end();)
+		{
+			Paintball* ball = *it;
+
+			if (ball->hasHit)
+			{
+				Vector3 hitPos = ball->GetTransform().GetPosition();
+
+				world->QuerySphere(hitPos, ball->paintRadius, [&](GameObject* object)
+				{
+					if (!object->GetRenderObject() || !object->GetRenderObject()->isPaintable) return;
+					renderer->ApplyPaintTo(object, hitPos, ball->paintRadius, ball->teamId);
+				}, ball);
+
+				it = paintballs.erase(it);
+
+				physics->RemoveObject(ball);
+				world->RemoveGameObject(ball, true);
+			}
+			else it++;
+		}
+
+		physics->CleanUpPhysics();
+		world->CleanUpWorld();
 	}
 
 	void SinglePlayerGame::DrawImGuiSettings()
@@ -211,22 +285,16 @@ namespace NCL::CSC8503 {
 
 	void SinglePlayerGame::Render()
 	{
-
-		for (size_t i = 0; i < rayMarchSpheres.size(); i++)
+		for (Paintball* ball : paintballs)
 		{
-			Vector3 position = rayMarchSpheres[i]->GetTransform().GetPosition();
-			Vector3 color = rayMarchSpheres[i]->color;
-			float radius = rayMarchSpheres[i]->radius;
-
-			renderer->SubmitRayMarchedSphere(position, color, radius);
+			renderer->SubmitRayMarchedSphere(ball->GetTransform().GetPosition(), Vector3(1, 1, 1), ball->collisionRadius);
 		}
 
-		//renderer->ApplyPaintTo(wall, testSphereCenter, testSphereRadius, 7);
 		world->OperateOnContents([&](GameObject* object)
-			{
-				if (!object->GetRenderObject() || !object->GetRenderObject()->isPaintable) return;
-				renderer->ApplyPaintTo(object, testSphereCenter, testSphereRadius, 7);
-			});
+		{
+			if (!object->GetRenderObject() || !object->GetRenderObject()->isPaintable) return;
+			renderer->ApplyPaintTo(object, testSphereCenter, testSphereRadius, 7);
+		});
 	}
 
 	void SinglePlayerGame::LoadPBRTextures() {
@@ -321,8 +389,6 @@ namespace NCL::CSC8503 {
 
 		//AddPowerUps();
 		//AddRespawnPoints();
-
-
 	}
 
 	void SinglePlayerGame::InitPaintableTextureOnObject(GameObject* object) {
@@ -353,7 +419,6 @@ namespace NCL::CSC8503 {
 
 		InitPaintableTextureOnObject(tyres);
 
-		tyres->GetRenderObject()->isPaintable = true;
 		tyres->GetRenderObject()->pbrTextures = tyresPBR;
 		tyres->GetRenderObject()->useTriplanarMapping = false;
 
@@ -375,10 +440,8 @@ namespace NCL::CSC8503 {
 		floor->SetRenderObject(new RenderObject(&floor->GetTransform(), floorMesh, nullptr, basicShader));
 
 		InitPaintableTextureOnObject(floor);
-		glObjectLabel(GL_TEXTURE, static_cast<OGLTexture*>(floor->GetRenderObject()->maskTex)->GetObjectID(), 10, "Floor Mask");
 
 		floor->GetRenderObject()->useHeightMap = true;
-		floor->GetRenderObject()->isPaintable = true;
 		floor->GetRenderObject()->pbrTextures = crystalPBR;
 
 		floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
@@ -402,7 +465,6 @@ namespace NCL::CSC8503 {
 		myWall->GetTransform()
 			.SetPosition(position)
 			.SetScale(dimensions * 2);
-
 
 		myWall->SetRenderObject(new RenderObject(&myWall->GetTransform(), cubeMesh, nullptr, basicShader));
 		myWall->SetPhysicsObject(new PhysicsObject(&myWall->GetTransform(), myWall->GetBoundingVolume()));
@@ -438,6 +500,25 @@ namespace NCL::CSC8503 {
 		world->AddGameObject(cube);
 		cube->SetName("cube");
 		return cube;
+	}
+
+	GameObject* SinglePlayerGame::AddPaintballToWorld(const Vector3& position, Vector3 direction, float radius, float paintRadius, uint8_t teamID)
+	{
+		Paintball* ball = new Paintball(paintRadius, radius, teamID);
+		ball->hasHit = false;
+		ball->forward = direction;
+
+		ball->SetBoundingVolume(new SphereVolume(radius));
+		ball->GetTransform().SetPosition(position);
+
+		ball->SetPhysicsObject(new PhysicsObject(&ball->GetTransform(), ball->GetBoundingVolume()));
+
+		ball->GetPhysicsObject()->SetInverseMass(1);
+
+		world->AddGameObject(ball);
+		paintballs.push_back(ball);
+
+		return ball;
 	}
 
 	GameObject* SinglePlayerGame::AddLadderToWorld(const Vector3& position, float height, bool rotated)
@@ -526,7 +607,7 @@ namespace NCL::CSC8503 {
 
 	void SinglePlayerGame::AddMapToWorld() {
 		//floor and enclosing walls 
-		theFloor = AddFloorToWorld({ 0, 0, 0 }, { 100, 1, 200 });
+		AddFloorToWorld({ 0, 0, 0 }, { 100, 1, 200 });
 
 		//visible walls
 		walls.push_back(AddWallToWorld({ 100, 5, 0 }, { 1, 5, 200 }));
@@ -628,11 +709,6 @@ namespace NCL::CSC8503 {
 		character->SetName("character");
 		character->SetTeamId(1);
 		return character;
-	}
-
-	SinglePlayerGame::~SinglePlayerGame()
-	{
-
 	}
 
 }

@@ -359,6 +359,29 @@ bool CollisionDetection::AABBIntersection(const AABBVolume& volumeA, const Trans
 	return false;
 }
 
+bool CollisionDetection::SphereObjectIntersection(const SphereVolume& volumeA, const Transform& worldTransformA,
+	const GameObject& object, CollisionInfo& collisionInfo)
+{
+	bool hasCollided = false;
+
+	const Transform& worldTransform = object.GetTransform();
+	const CollisionVolume* volume = object.GetBoundingVolume();
+
+	if (!volume) {
+		return false;
+	}
+
+	switch (volume->type) {
+	case VolumeType::AABB:		hasCollided = AABBSphereIntersection((const AABBVolume&)*volume, worldTransform, volumeA, worldTransformA, collisionInfo); break;
+	case VolumeType::OBB:		hasCollided = OBBSphereIntersection((const OBBVolume&)*volume, worldTransform, volumeA, worldTransformA, collisionInfo); break;
+	case VolumeType::Sphere:	hasCollided = SphereIntersection((const SphereVolume&)*volume, worldTransform, volumeA, worldTransformA, collisionInfo); break;
+
+	case VolumeType::Capsule:	hasCollided = SphereCapsuleIntersection((const CapsuleVolume&)*volume, worldTransform, volumeA, worldTransformA, collisionInfo); break;
+	}
+
+	return hasCollided;
+}
+
 //Sphere / Sphere Collision
 bool CollisionDetection::SphereIntersection(const SphereVolume& volumeA, const Transform& worldTransformA,
 	const SphereVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo) {

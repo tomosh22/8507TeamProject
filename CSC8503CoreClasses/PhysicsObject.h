@@ -35,6 +35,10 @@ namespace NCL {
 				return force;
 			}
 
+			float GetGravityMultiplier() const {
+				return gravityMultiplier;
+			}
+
 			float GetElasticity() const {
 				return elasticity;
 			}
@@ -57,6 +61,10 @@ namespace NCL {
 
 			float GetInverseMass() const {
 				return inverseMass;
+			}
+
+			void SetGravityMultiplier(float gravMultiplier) {
+				this->gravityMultiplier = gravityMultiplier;
 			}
 
 			void SetElasticity(float e) {
@@ -174,6 +182,7 @@ namespace NCL {
 			float inverseMass;
 			float elasticity;
 			float friction;
+			float gravityMultiplier = 1.0f;
 			int layerID = 0;
 			bool floorcontact;
 			bool canJump;

@@ -16,8 +16,14 @@ namespace NCL {
 			};
 
 			void Clear();
+			void CleanUpPhysics();
 
 			void Update(float dt);
+
+			inline void RemoveObject(GameObject* object)
+			{
+				objectsToRemove.push_back(object);
+			}
 
 			void UseGravity(bool state) {
 				applyGravity = state;
@@ -55,6 +61,7 @@ namespace NCL {
 			float	dTOffset;
 			float	globalDamping;
 
+			std::vector<GameObject*> objectsToRemove;
 			std::set<CollisionDetection::CollisionInfo> allCollisions;
 			std::set<CollisionDetection::CollisionInfo> broadphaseCollisions;
 			std::vector<CollisionDetection::CollisionInfo> broadphaseCollisionsVec;

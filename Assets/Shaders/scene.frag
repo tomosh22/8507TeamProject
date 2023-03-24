@@ -354,7 +354,7 @@ void main(void)
 	emission = pow(emission, vec3(2.2));
 
 	vec4 baseColor = vec4(0,0,0,1);
-	point(baseColor,diffuse,bumpNormal,length(metallic),length(roughness),reflectivity);
+	point(baseColor,diffuse,normalize(bumpNormal),length(metallic),length(roughness),reflectivity);
 	baseColor.rgb += diffuse.rgb * 0.5 * pow(AO,2);
 	baseColor.rgb *= shadow;
 	baseColor.rgb += emission * emissionStrength;

@@ -23,6 +23,7 @@
 #include <mutex>
 
 #include "RayMarchSphere.h"
+#include "AudioSource.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -126,6 +127,9 @@ namespace NCL {
 
 			MeshGeometry* playerMesh = nullptr;
 			std::vector<MeshGeometry*> playerMeshes;
+
+			void LoadAudio();
+			std::map<std::string, AudioSource*> audioMap;
 		protected:
 			void InitialiseAssets();
 

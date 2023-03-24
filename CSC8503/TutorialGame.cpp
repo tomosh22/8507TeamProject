@@ -21,6 +21,9 @@
 #include <chrono>
 #include "RespawnPoint.h"
 
+#include "AudioSystem.h"
+
+
 using namespace NCL;
 using namespace CSC8503;
 
@@ -474,6 +477,8 @@ void TutorialGame::InitialiseAssets() {
 	rayMarchComputeShader = new OGLComputeShader("rayMarchCompute.glsl");
 
 	characterShader = new OGLShader("SkinningVertex.vert", "SkinningFrag.frag");
+
+	LoadAudio();
 
 	InitQuadTexture();
 
@@ -1025,6 +1030,10 @@ void TutorialGame::ControlPlayer(float dt) {
 		renderer->drawCrosshair = false;
 	}
 	playerObject->PrintPlayerInfo();
+
+	Vector3 pos = playerObject->GetTransform().GetPosition();
+	AudioSystem::GetInstance()->update(pos.x, pos.y, pos.z);
+
 }
 
 void TutorialGame::LockedObjectMovement() {
@@ -1155,7 +1164,8 @@ void TutorialGame::InitSingleGameMode() {
 	GameWorld::GetInstance()->ClearAndErase();
 	GameWorld::GetInstance()->GetMainCamera()->SetCameraMode(true);
 	physics->Clear();
-
+	audioMap["BK"]->Play();
+	audioMap["BK"]->SetVolume(0.45f);
 	//map
 	AddMapToWorld2();
 	AddStructureToWorld();
@@ -1188,7 +1198,8 @@ void TutorialGame::InitOnlineGame(int teamID) {
 	auto q = Quaternion();
 	playerObject = AddPlayerToWorld(Vector3(0, 5.0f, 10.0f), q,teamID);
 	playerObject->SetTeamId(teamID);
-
+	audioMap["BK"]->Play();
+	audioMap["BK"]->SetVolume(0.45f);
 	//InitGameObjects();
 	floor = AddFloorToWorld({ 0,0,0 }, { 100,1,100 });
 	InitPaintableTextureOnObject(floor);
@@ -2514,6 +2525,11 @@ bool TutorialGame::SphereTriangleIntersection(Vector3 sphereCenter, float sphere
 	intersectionPoint = projection;
 	
 	return true;
+}
+
+void NCL::CSC8503::TutorialGame::LoadAudio()
+{
+	audioMap["BK"] = new AudioSource("BKMusic.wav", FMOD_LOOP_NORMAL | FMOD_CREATESTREAM);
 }
 
 void TutorialGame::UpdateAnimations(float dt) {

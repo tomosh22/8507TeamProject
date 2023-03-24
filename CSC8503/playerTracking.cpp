@@ -40,6 +40,10 @@ playerTracking::playerTracking()
 		animationMap["MoveR"] = new  NCL::MeshAnimation("RunRight.anm");
 		currentAniamtion = animationMap["Idle"];
 
+
+		LoadAudio();
+		audioMap["walk"]->Play();
+		audioMap["walk"]->SetVolume(5.0f);
 }
 
 void NCL::CSC8503::playerTracking::Update(float dt)
@@ -55,6 +59,11 @@ void NCL::CSC8503::playerTracking::Update(float dt)
 		TakeDamage(50);
 	}
 	GetRenderObject()->anim = currentAniamtion;
+	audioMap["walk"]->Pause(currentAniamtion == animationMap["Idle"]);
+	for (auto const& [key, val] : audioMap)
+	{
+		val->update(transform.GetPosition().x, transform.GetPosition().y, transform.GetPosition().z);
+	}
 }
 
 void NCL::CSC8503::playerTracking::Rotate()
@@ -117,6 +126,7 @@ void NCL::CSC8503::playerTracking::StartShooting(Vector3 target)
 {
 	Projectile* newBullet = bulletPool->GetObject2();
 	newBullet->SetName("Bullet");
+	audioMap["shoot"]->Play();
 	ResetBullet(newBullet);
 	coolDownTimer = weaponInUse.rateOfFire;
 	Shooting(newBullet, target);
@@ -341,4 +351,11 @@ void NCL::CSC8503::playerTracking::TransferAnimation(std::string animationName)
 		return;
 	}
 	currentAniamtion = animationMap[animationName];
+}
+void NCL::CSC8503::playerTracking::LoadAudio()
+{
+	audioMap["walk"] = new AudioSource("footStep.wav", FMOD_3D || FMOD_LOOP_NORMAL);
+	audioMap["shoot"] = new AudioSource("shoot.wav", FMOD_3D);
+	audioMap["powerUp"] = new AudioSource("powerUp.wav", FMOD_3D);
+	audioMap["die"] = new AudioSource("die.wav", FMOD_3D);
 }

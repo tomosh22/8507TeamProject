@@ -5,7 +5,7 @@
 #include"GameObject.h"
 #include"GameWorld.h"
 #include <vector>
-
+#include "AudioSource.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -187,7 +187,8 @@ namespace NCL {
 			{
 				this->player = player;
 			}
-
+			void LoadAudio();
+			std::map<std::string, AudioSource*> audioMap;
 		protected:
 			float explosionRadius;
 			float ProjectileRadius;

@@ -31,6 +31,7 @@ Projectile::Projectile()
 	AffectedGravity = true;
 	SetActive(false);
 	GameWorld::GetInstance()->AddGameObject(this);
+	LoadAudio();
 }
 
 
@@ -43,6 +44,7 @@ Projectile::Projectile(Gun GunToUse) {
 		aimingYaw = 0.0f;
 		//physicsProjectile = nullptr;
 		bulletDirectionVector = { 0,0,0 };		
+		LoadAudio();
 }
 
 Projectile::Projectile(Vector3& position)
@@ -60,12 +62,17 @@ Projectile::Projectile(Vector3& position)
 	GetPhysicsObject()->InitSphereInertia();
 
 	GameWorld::GetInstance()->AddGameObject(this);
+	LoadAudio();
 }
 	
 
 
 void NCL::CSC8503::Projectile::Update(float dt)
 {
+	for (auto const& [key, val] : audioMap)
+	{
+		val->update(transform.GetPosition().x, transform.GetPosition().y, transform.GetPosition().z);
+	}
 }
 
 void Projectile::setGunType(Gun wepType) {
@@ -92,6 +99,8 @@ void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 	{
 		NetworkedGame::GetInstance()->DispatchComputeShaderForEachTriangle(otherObject, transform.GetPosition(),explosionRadius, teamID);
 		player->AddScore(player->getWeaponType().addedScore);
+
+		audioMap["Spary"]->Play();
 	}
 	else if (otherObject->id() == "character")
 	{
@@ -116,6 +125,12 @@ void NCL::CSC8503::Projectile::OnCollisionBegin(GameObject* otherObject)
 void NCL::CSC8503::Projectile::OnCollisionEnd(GameObject* otherObject)
 {
 
+}
+
+void NCL::CSC8503::Projectile::LoadAudio()
+{
+	audioMap["Spary"] = new AudioSource("Spray.wav", FMOD_3D);
+	audioMap["Spary"]->SetVolume(4.0f);
 }
 	
 

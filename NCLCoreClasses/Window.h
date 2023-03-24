@@ -51,9 +51,8 @@ namespace NCL {
 			UpdateTitle();
 		};
 
-		virtual void	LockMouseToWindow(bool lock) = 0;
-		virtual void	ShowOSPointer(bool show) = 0;
-		virtual bool    IsPointerVisible() const = 0;
+		virtual void	SeizeMouse(bool hide) = 0;
+		virtual bool    IsMouseLocked() const = 0;
 
 		virtual void	SetWindowPosition(int x, int y) {};
 		virtual void	SetFullScreen(bool state) {};

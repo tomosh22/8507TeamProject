@@ -119,7 +119,7 @@ void GameTechRenderer::BeginImGui()
 	ImGuiIO& io = ImGui::GetIO();
 
 	//Tell ImGui to ignore mouse movement when the cursor is hidden
-	if (Window::GetWindow()->IsPointerVisible())
+	if (!Window::GetWindow()->IsMouseLocked())
 		io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
 	else
 		io.ConfigFlags |= ImGuiConfigFlags_NoMouse;

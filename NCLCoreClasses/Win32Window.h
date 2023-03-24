@@ -41,9 +41,8 @@ namespace NCL::Win32Code {
 	class Win32Window : public Window {
 	public:
 		friend class Window;
-		void	LockMouseToWindow(bool lock)		override;
-		void	ShowOSPointer(bool show)			override;
-		bool    IsPointerVisible() const            override;
+		void	SeizeMouse(bool hide)	override;
+		bool    IsMouseLocked() const            override;
 		void	SetConsolePosition(int x, int y)	override;
 		void	ShowConsole(bool state)				override;
 		void	SetFullScreen(bool state)			override;
@@ -70,7 +69,6 @@ namespace NCL::Win32Code {
 		bool			active;
 		bool			fullScreen;
 		bool			lockMouse;
-		bool			showMouse;
 		bool			mouseLeftWindow;
 		bool			maximised;
 

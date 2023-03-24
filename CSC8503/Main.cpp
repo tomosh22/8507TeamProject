@@ -16,8 +16,7 @@ int main() {
 		return -1;
 	}	
 
-	w->ShowOSPointer(false);
-	w->LockMouseToWindow(true);
+	w->SeizeMouse(true);
 
 	GameManager* gameManager = new GameManager(w);
 

@@ -50,9 +50,8 @@ namespace NCL::CSC8503 {
 		testSphereRadius = 10;
 
 		//Start the game with the camera enabled
-		Window::GetWindow()->ShowOSPointer(false);
-		Window::GetWindow()->LockMouseToWindow(true);
 		controllingCamera = true;
+		Window::GetWindow()->SeizeMouse(controllingCamera);
 
 		//Basic reosurces
 		sphereMesh = renderer->LoadMesh("sphere.msh");
@@ -148,16 +147,8 @@ namespace NCL::CSC8503 {
 		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q))
 		{
 			controllingCamera = !controllingCamera;
-			if (!controllingCamera)
-			{
-				Window::GetWindow()->ShowOSPointer(true);
-				Window::GetWindow()->LockMouseToWindow(false);
-			}
-			else
-			{
-				Window::GetWindow()->ShowOSPointer(false);
-				Window::GetWindow()->LockMouseToWindow(true);
-			}
+
+			Window::GetWindow()->SeizeMouse(controllingCamera);
 		}
 		else if (Window::GetKeyboard()->KeyDown(KeyboardKeys::ESCAPE))
 		{
